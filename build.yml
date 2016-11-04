@@ -29,7 +29,7 @@
 
 jtaghal:
     toolchain:      c++/generic
-    type:           shared
+    type:           shlib
 
     sources:
         - jtaghal.cpp
