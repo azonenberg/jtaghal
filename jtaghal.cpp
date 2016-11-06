@@ -43,7 +43,6 @@
  */
 
 #include "jtaghal.h"
-#include <memory.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Byte manipulation
@@ -247,10 +246,9 @@ void FlipBitAndEndian32Array(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 double GetTime()
 {
-#ifdef _WINDOWS
+#ifdef _WIN32
 	uint64_t tm;
 	static uint64_t freq = 0;
 	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tm));
@@ -266,4 +264,3 @@ double GetTime()
 	return d;
 #endif
 }
-*/

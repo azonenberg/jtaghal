@@ -37,22 +37,16 @@
 #define jtaghal_h
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Global config stuff
-
-//#include <config.h>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // System headers
 
 #include <unistd.h>
 #include <stdint.h>
-#include <math.h>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 /*
-#ifdef _WINDOWS
+#ifdef _WIN32
 #include <ws2tcpip.h>
 #include <windows.h>
 #endif
@@ -62,22 +56,25 @@
 // libc headers
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include <memory.h>
+#include <time.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // libstdc++ headers
 
 #include <map>
-/*
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File handle stuff
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 	#define ZFILE_DESCRIPTOR HANDLE
 #else
 	#define ZFILE_DESCRIPTOR int
 #endif
-*/
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Class includes
 /*
@@ -130,9 +127,8 @@ extern "C" void FlipBitAndEndianArray(unsigned char* data, int len);
 extern "C" void FlipBitAndEndian32Array(unsigned char* data, int len);
 
 extern "C" void MirrorBitArray(unsigned char* data, int bitlen);
-/*
+
 //Performance measurement
 extern "C" double GetTime();
-*/
 
 #endif
