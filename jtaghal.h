@@ -82,8 +82,6 @@
 #include "JtagException.h"
 
 //General helpers
-#include "Mutex.h"
-#include "Thread.h"
 #include "Socket.h"
 
 //GPIO interface classes
