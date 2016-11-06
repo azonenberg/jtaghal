@@ -46,15 +46,18 @@
 
 #include <unistd.h>
 #include <stdint.h>
+#include <math.h>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+/*
 #ifdef _WINDOWS
 #include <ws2tcpip.h>
 #include <windows.h>
 #endif
-/*
+*/
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // libc headers
 
@@ -65,7 +68,7 @@
 // libstdc++ headers
 
 #include <map>
-
+/*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File handle stuff
 
@@ -74,10 +77,10 @@
 #else
 	#define ZFILE_DESCRIPTOR int
 #endif
-
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Class includes
-
+/*
 //Error handling
 #include "JtagException.h"
 
@@ -111,6 +114,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global functions
+*/
 
 //Byte manipulation
 extern "C" bool PeekBit(const unsigned char* data, int nbit);
@@ -126,7 +130,7 @@ extern "C" void FlipBitAndEndianArray(unsigned char* data, int len);
 extern "C" void FlipBitAndEndian32Array(unsigned char* data, int len);
 
 extern "C" void MirrorBitArray(unsigned char* data, int bitlen);
-
+/*
 //Performance measurement
 extern "C" double GetTime();
 */

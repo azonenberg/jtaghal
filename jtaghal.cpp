@@ -60,7 +60,6 @@
 	
 	\ingroup libjtaghal
  */
-/*
 bool PeekBit(const unsigned char* data, int nbit)
 {
 	unsigned char w = data[nbit/8];
@@ -68,7 +67,7 @@ bool PeekBit(const unsigned char* data, int nbit)
 	w &= 1;
 	return w;
 }
-*/
+
 
 /**
 	@brief Writes a bit to a bit string.
@@ -81,7 +80,6 @@ bool PeekBit(const unsigned char* data, int nbit)
 	
 	\ingroup libjtaghal
  */
-/*
 void PokeBit(unsigned char* data, int nbit, bool val)
 {
 	unsigned char w = data[nbit/8];
@@ -91,7 +89,6 @@ void PokeBit(unsigned char* data, int nbit, bool val)
 	w |= (val << bitpos);
 	data[nbit/8] = w;
 }
-*/
 
 /**
 	@brief Flips the bits in a byte
@@ -101,7 +98,6 @@ void PokeBit(unsigned char* data, int nbit, bool val)
 	
 	\ingroup libjtaghal
  */
-/*
 unsigned char FlipByte(unsigned char c)
 {
 	return
@@ -114,7 +110,6 @@ unsigned char FlipByte(unsigned char c)
 		( ( (c >> 6) & 1) << 1 ) |
 		( ( (c >> 7) & 1) << 0 );
 }
-*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Array manipulation
@@ -127,7 +122,6 @@ unsigned char FlipByte(unsigned char c)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipByteArray(unsigned char* data, int len)
 {
 	unsigned char* temp = new unsigned char[len];
@@ -136,7 +130,6 @@ void FlipByteArray(unsigned char* data, int len)
 		data[i] = temp[len-i-1];
 	delete[] temp;
 }
-*/
 
 /**
 	@brief Reverses the bit ordering in an array of bytes, but does not change byte ordering
@@ -146,13 +139,11 @@ void FlipByteArray(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipBitArray(unsigned char* data, int len)
 {
 	for(int i=0; i<len; i++)
 		data[i] = FlipByte(data[i]);
 }
-*/
 
 /**
 	@brief Reverses the bit ordering in an array of bits (need not be integer byte size)
@@ -162,7 +153,6 @@ void FlipBitArray(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 void MirrorBitArray(unsigned char* data, int bitlen)
 {
 	int bytesize = ceil(bitlen / 8.0f);
@@ -172,7 +162,6 @@ void MirrorBitArray(unsigned char* data, int bitlen)
 		PokeBit(data, i, PeekBit(temp, bitlen-(i+1)));
 	delete[] temp;
 }
-*/
 
 /**
 	@brief Swaps endianness in an array of 16-bit values
@@ -182,7 +171,6 @@ void MirrorBitArray(unsigned char* data, int bitlen)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipEndianArray(unsigned char* data, int len)
 {
 	//make sure len is even
@@ -195,7 +183,6 @@ void FlipEndianArray(unsigned char* data, int len)
 		data[i+1] = temp;
 	}
 }
-*/
 
 /**
 	@brief Swaps endianness in an array of 32-bit values
@@ -205,7 +192,6 @@ void FlipEndianArray(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipEndian32Array(unsigned char* data, int len)
 {
 	//make sure len is even
@@ -220,7 +206,6 @@ void FlipEndian32Array(unsigned char* data, int len)
 		data[i+3] = temp[0];
 	}
 }
-*/
 
 /**
 	@brief Reverses the bit ordering in an array of bytes, as well as 16-bit endianness
@@ -230,13 +215,12 @@ void FlipEndian32Array(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipBitAndEndianArray(unsigned char* data, int len)
 {
 	FlipEndianArray(data, len);
 	FlipBitArray(data, len);
 }
-*/
+
 /**
 	@brief Reverses the bit ordering in an array of bytes, as well as 32-bit endianness
 	
@@ -245,13 +229,12 @@ void FlipBitAndEndianArray(unsigned char* data, int len)
 	
 	\ingroup libjtaghal
  */
-/*
 void FlipBitAndEndian32Array(unsigned char* data, int len)
 {
 	FlipEndian32Array(data, len);
 	FlipBitArray(data, len);
 }
-*/
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Performance measurement
 

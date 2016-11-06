@@ -33,4 +33,8 @@ jtaghal:
 
     sources:
         - jtaghal.cpp
+
+    flags:
+        - output/reloc
+
     # todo: more here
