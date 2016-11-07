@@ -30,135 +30,58 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of JtagException
+	@brief Declaration of JtagException
  */
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <vector>
-#include "JtagException.h"
-
-using namespace std;
+#ifndef JtagException_h
+#define JtagException_h
 
 /**
-	@brief Constructor for an exception object.
+	@brief Base class for all exceptions thrown by libjtaghal
 	
-	The JtagExceptionWrapper() macro may be used to pass the last three parameters automatically.
-	
-	@param message			Human-readable error message. Include as much detail as reasonably possible.
-	@param library_error	Human-readable error string returned from a library (ex: libusb)
-	@param type				Enumerated type of the exception. May be used by catching code to decide 
-							whether the error is fatal or not.
-	@param prettyfunction	Pretty-printed name of the current function. Pass __PRETTY_FUNCTION__
-	@param file				The current source file. Pass __FILE__
-	@param line				The current line number. Pass __LINE__
+	\ingroup libjtaghal
  */
-JtagException::JtagException(
-	std::string message,
-	std::string library_error,
-	JtagException::ExceptionTypes type,
-	std::string prettyfunction,
-	std::string file,
-	int line)
-	: m_message(message)
-	, m_system_error(strerror(errno))
-	, m_lib_error(library_error)
-	, m_type(type)
-	, m_prettyfunction(prettyfunction)
-	, m_file(file)
-	, m_line(line)
+class JtagException
 {
-}
+public:
+	
+	JtagException(
+		std::string message,
+		std::string library_error,
+		std::string prettyfunction,
+		std::string file,
+		int line);
+	
+	std::string GetDescription() const;
+	
+	static void ThrowDummyException();
+	
+protected:
+
+	///Error message
+	std::string m_message;
+	
+	///String version of errno
+	std::string m_system_error;
+	
+	///String version of library error
+	std::string m_lib_error;
+	
+	///Pretty-printed function name
+	std::string m_prettyfunction;
+	
+	///File name
+	std::string m_file;
+	
+	///Line number
+	int m_line;
+};
 
 /**
-	@brief Gets the description of this exception.
+	@brief Wrapper for JtagException constructor that passes function, file, and line number automatically
 	
-	The file name is truncated to the last 3 components for cleaner output.
-	
-	Example output:
-	
-	\verbatim
-	JtagException object thrown from static void JtagException::ThrowDummyException()
-        File         : .../src/jtaghal/JtagException.cpp/
-        Line         : 136
-        Library error: 
-        System error : Permission denied
-        Type         : EXCEPTION_TYPE_TEST
-        Message      : Test exception
-    \endverbatim
-	
-	@return Printable exception description
+	@param err			Human-readable error message. Include as much detail as reasonably possible.
+	@param lib_err		Human-readable error string returned from a library (ex: libusb)
  */
-string JtagException::GetDescription() const
-{
-	//Parse the pathname at slashes
-	vector<string> path_segments;
-	string seg;
-	for(size_t i=0; i<m_file.length(); i++)
-	{
-		//Separator
-		if(m_file[i] == '/' || m_file[i] == '\\')
-		{
-			if(!seg.empty())
-			{
-				path_segments.push_back(seg);
-				seg = "";
-			}
-			continue;
-		}
-		
-		//Character
-		seg += m_file[i];
-	}
-	if(!seg.empty())
-		path_segments.push_back(seg);
-		
-	//Generate the short file name
-	string shortfile;
-	for(size_t i=0; i<path_segments.size() && i<3; i++)
-		shortfile = path_segments[path_segments.size() - i - 1] + string("/") + shortfile;
-	if(path_segments.size() > 3)
-		shortfile = ".../" + shortfile;
-	//TODO: add earlier part of path?
-	
-	static const char* exception_types[]=
-	{
-		//must be in same order as header file
-		"EXCEPTION_TYPE_ADAPTER",
-		"EXCEPTION_TYPE_BOARD_FAULT",
-		"EXCEPTION_TYPE_GIGO",
-		"EXCEPTION_TYPE_UNIMPLEMENTED",
-		"EXCEPTION_TYPE_NETWORK",
-		"EXCEPTION_TYPE_FIRMWARE",
-		"EXCEPTION_TYPE_TEST"
-	};
-	
-	char temp_buf[2048];
-	snprintf(
-		temp_buf,
-		sizeof(temp_buf)-1,
-		"JtagException object thrown from %s\n"
-		"    File         : %s\n"
-		"    Line         : %d\n"
-		"    Library error: %s\n"
-		"    System error : %s\n"
-		"    Type         : %s\n"
-		"    Message      : %s\n",
-			m_prettyfunction.c_str(),
-			shortfile.c_str(),
-			m_line,
-			m_lib_error.c_str(),
-			m_system_error.c_str(),
-			exception_types[m_type],
-			m_message.c_str()
-		);
-	return string(temp_buf);
-}
+#define JtagExceptionWrapper(err, lib_err) JtagException(err, lib_err, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 
-/**
-	@brief Throws an exception to test error handling code
- */
-void JtagException::ThrowDummyException()
-{
-	throw JtagExceptionWrapper("Test exception", "", JtagException::EXCEPTION_TYPE_TEST);
-}
+#endif
