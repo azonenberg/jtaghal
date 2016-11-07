@@ -44,7 +44,7 @@ class JtagInterface;
 
 /**
 	@brief Represents a single device in the JTAG chain
-	
+
 	\ingroup libjtaghal
  */
 class JtagDevice
@@ -52,22 +52,22 @@ class JtagDevice
 public:
 	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
 	virtual ~JtagDevice();
-	
+
 	/**
 		@brief Gets a human-readable description of this device.
-		
+
 		Example: "Xilinx XC6SLX45 stepping 3"
-		
+
 		@return Device description
 	 */
 	virtual std::string GetDescription()=0;
-	
+
 	unsigned int GetIDCode();
-	
+
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-	
+
 	virtual void PrintInfo();
-	
+
 public:
 	//JTAG interface helpers
 	void SetIR(const unsigned char* data, int count);
@@ -82,20 +82,20 @@ public:
 	void SendDummyClocksDeferred(int n);
 	void ResetToIdle();
 	void Commit();
-	
+
 protected:
 	///Length of this device's instruction registr, in bits
 	int m_irlength;
-	
+
 	///32-bit JEDEC ID code of this device
 	unsigned int m_idcode;
-	
+
 	///The JTAGInterface associated with this device
 	JtagInterface* m_iface;
-	
+
 	///Position of this device in the interface's scan chain
 	size_t m_pos;
-	
+
 	///Cached IR
 	unsigned char m_cachedIR[4];
 };

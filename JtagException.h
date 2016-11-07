@@ -37,48 +37,48 @@
 
 /**
 	@brief Base class for all exceptions thrown by libjtaghal
-	
+
 	\ingroup libjtaghal
  */
 class JtagException
 {
 public:
-	
+
 	JtagException(
 		std::string message,
 		std::string library_error,
 		std::string prettyfunction,
 		std::string file,
 		int line);
-	
+
 	std::string GetDescription() const;
-	
+
 	static void ThrowDummyException();
-	
+
 protected:
 
 	///Error message
 	std::string m_message;
-	
+
 	///String version of errno
 	std::string m_system_error;
-	
+
 	///String version of library error
 	std::string m_lib_error;
-	
+
 	///Pretty-printed function name
 	std::string m_prettyfunction;
-	
+
 	///File name
 	std::string m_file;
-	
+
 	///Line number
 	int m_line;
 };
 
 /**
 	@brief Wrapper for JtagException constructor that passes function, file, and line number automatically
-	
+
 	@param err			Human-readable error message. Include as much detail as reasonably possible.
 	@param lib_err		Human-readable error string returned from a library (ex: libusb)
  */

@@ -38,9 +38,9 @@ using namespace std;
 
 /**
 	@brief Constructor for an exception object.
-	
+
 	The JtagExceptionWrapper() macro may be used to pass the last three parameters automatically.
-	
+
 	@param message			Human-readable error message. Include as much detail as reasonably possible.
 	@param library_error	Human-readable error string returned from a library (ex: libusb)
 	@param prettyfunction	Pretty-printed name of the current function. Pass __PRETTY_FUNCTION__
@@ -64,20 +64,20 @@ JtagException::JtagException(
 
 /**
 	@brief Gets the description of this exception.
-	
+
 	The file name is truncated to the last 3 components for cleaner output.
-	
+
 	Example output:
-	
+
 	\verbatim
 	JtagException object thrown from static void JtagException::ThrowDummyException()
         File         : .../src/jtaghal/JtagException.cpp/
         Line         : 136
-        Library error: 
+        Library error:
         System error : Permission denied
         Message      : Test exception
     \endverbatim
-	
+
 	@return Printable exception description
  */
 string JtagException::GetDescription() const
@@ -97,13 +97,13 @@ string JtagException::GetDescription() const
 			}
 			continue;
 		}
-		
+
 		//Character
 		seg += m_file[i];
 	}
 	if(!seg.empty())
 		path_segments.push_back(seg);
-		
+
 	//Generate the short file name
 	string shortfile;
 	for(size_t i=0; i<path_segments.size() && i<3; i++)
@@ -111,7 +111,7 @@ string JtagException::GetDescription() const
 	if(path_segments.size() > 3)
 		shortfile = ".../" + shortfile;
 	//TODO: add earlier part of path?
-	
+
 	char temp_buf[2048];
 	snprintf(
 		temp_buf,

@@ -40,13 +40,13 @@
 
 /**
 	@brief Default constructor
-	
+
 	Initializes the interface's mutex and creates an empty scan chain.
  */
 JtagInterface::JtagInterface()
 {
 	m_devicecount = 0;
-	
+
 	m_perfShiftOps = 0;
 	m_perfRecoverableErrs = 0;
 	m_perfDataBits = 0;
@@ -57,7 +57,7 @@ JtagInterface::JtagInterface()
 
 /**
 	@brief Interface destructor
-	
+
 	Deletes the mutex and destroys all JtagDevice objects in the scan chain
  */
 JtagInterface::~JtagInterface()
@@ -71,20 +71,20 @@ JtagInterface::~JtagInterface()
 
 /**
 	@brief Creates a default JTAG interface on a best-effort basis.
-	
+
 	First, the JTAGD_HOST environment variable is checked. If it exists, and is a string of the form host:port, then
 	a NetworkedJtagInterface is returned, connecting to that host:port.
-	
+
 	If it is not set, and there is at least one Digilent JTAG device present, a DigilentJtagInterface is returned,
 	connecting to the first available interface.
-	
+
 	Future implementations will fall back to an FTDIJtagInterface, or other interfaces, if nothing is found at this
 	point.
-	
+
 	If all attempts have failed, NULL is returned.
-	
+
 	@throw JtagException may be thrown by the constructor for a derived class if creation fails.
-	
+
 	@return The interface object, or NULL if no suitable interface could be found
  */
 JtagInterface* JtagInterface::CreateDefaultInterface()
@@ -103,14 +103,14 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 			return iface;
 		}
 	}
-	
+
 	#ifdef HAVE_DJTG
 		//Create a DigilentJtagInterface on adapter 0 if we can find it
 		int ndigilent = DigilentJtagInterface::GetInterfaceCount();
 		if(ndigilent != 0)
 			return new DigilentJtagInterface(0);
 	#endif	//#ifdef HAVE_DJTG
-	
+
 	//TODO: Create FTDIJtagInterface
 	*/
 	//No interfaces found
@@ -127,7 +127,7 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 
 /**
 	@brief Enters Test-Logic-Reset state by shifting six ones into TMS
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::TestLogicReset()
@@ -138,20 +138,20 @@ void JtagInterface::TestLogicReset()
 
 /**
 	@brief Resets the TAP and enters Run-Test-Idle state
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::ResetToIdle()
 {
 	TestLogicReset();
-	
+
 	unsigned char zero = 0x00;
 	ShiftTMS(false, &zero, 1);
 }
 
-/** 
+/**
 	@brief Enters Shift-IR state from Run-Test-Idle state
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::EnterShiftIR()
@@ -161,14 +161,14 @@ void JtagInterface::EnterShiftIR()
 	//1 - SELECT-IR-SCAN
 	//0 - CAPTURE-IR
 	//0 - SHIFT-IR
-		
+
 	unsigned char data = 0x03;
 	ShiftTMS(false, &data, 4);
 }
 
-/** 
+/**
 	@brief Leaves Exit1-IR state and returns to Run-Test-Idle
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::LeaveExit1IR()
@@ -176,14 +176,14 @@ void JtagInterface::LeaveExit1IR()
 	//Shifted out LSB first:
 	//1 - UPDATE-IR
 	//0 - RUNTEST-IDLE
-	
+
 	unsigned char data = 0x1;
 	ShiftTMS(false, &data, 2);
 }
-	
-/** 
+
+/**
 	@brief Enters Shift-DR state from Run-Test-Idle state
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::EnterShiftDR()
@@ -192,14 +192,14 @@ void JtagInterface::EnterShiftDR()
 	//1 - SELECT-DR-SCAN
 	//0 - CAPTURE-DR
 	//0 - SHIFT-DR
-	
+
 	unsigned char data = 0x1;
 	ShiftTMS(false, &data, 3);
 }
 
-/** 
+/**
 	@brief Leaves Exit1-DR state and returns to Run-Test-Idle
-	
+
 	@throw JtagException if ShiftTMS() fails
  */
 void JtagInterface::LeaveExit1DR()
@@ -207,7 +207,7 @@ void JtagInterface::LeaveExit1DR()
 	//Shifted out LSB first:
 	//1 - UPDATE-IR
 	//0 - RUNTEST-IDLE
-	
+
 	unsigned char data = 0x1;
 	ShiftTMS(false, &data, 2);
 }
@@ -215,24 +215,24 @@ void JtagInterface::LeaveExit1DR()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // High-level JTAG interface
 
-/**	
+/**
 	@brief Initializes the scan chain and gets the number of devices present
-	
+
 	Assumes less than 1024 bits of total IR length.
-	
+
 	@throw JtagException if any of the scan operations fails.
  */
 void JtagInterface::InitializeChain()
-{	
+{
 	unsigned char lots_of_ones[128];
 	memset(lots_of_ones, 0xff, sizeof(lots_of_ones));
 	unsigned char lots_of_zeros[128];
 	memset(lots_of_zeros, 0x00, sizeof(lots_of_zeros));
 	unsigned char temp[128] = {0};
-	
+
 	//Reset the TAP to run-test-idle state
 	ResetToIdle();
-	
+
 	//Flush the instruction registers with zero bits
 	EnterShiftIR();
 	ShiftData(false, lots_of_zeros, temp, 1024);
@@ -242,7 +242,7 @@ void JtagInterface::InitializeChain()
 			"TDO is still 1 after 1024 clocks of TDI=0 in SHIFT-IR state, possible board fault",
 			"");
 	}
-	
+
 	//Shift the BYPASS instruction into everyone's instruction register
 	ShiftData(true, lots_of_ones, temp, 1024);
 	if(0 == (temp[127] & 0x80))
@@ -252,11 +252,11 @@ void JtagInterface::InitializeChain()
 			"");
 	}
 	LeaveExit1IR();
-	
+
 	//Shift zeros into everyone's DR
 	EnterShiftDR();
 	ShiftData(false, lots_of_zeros, temp, 1024);
-			
+
 	//Sanity check that we got a zero bit back
 	if(0 != (temp[127] & 0x80))
 	{
@@ -264,12 +264,12 @@ void JtagInterface::InitializeChain()
 			"TDO is still 1 after 1024 clocks in SHIFT-DR state, possible board fault",
 			"");
 	}
-	
+
 	//Shift 1s into the DR one at a time and see when we get one back
 	for(int i=0; i<1024; i++)
 	{
 		unsigned char one = 1;
-		
+
 		ShiftData(false, &one, temp, 1);
 		if(temp[0] & 1)
 		{
@@ -277,12 +277,12 @@ void JtagInterface::InitializeChain()
 			break;
 		}
 	}
-	
+
 	//printf("DEBUG: Got %d devices\n", (int)m_devicecount);
-	
+
 	//Now we know how many devices we have! Reset the TAP
 	ResetToIdle();
-	
+
 	//Shift out the ID codes and reset the scan chain
 	EnterShiftDR();
 	for(size_t i=0; i<m_devicecount; i++)
@@ -290,9 +290,9 @@ void JtagInterface::InitializeChain()
 		unsigned int idcode;
 		ShiftData(false, lots_of_zeros, (unsigned char*)&idcode, 32);
 		m_idcodes.push_back(idcode);
-		
+
 		//printf("IDCODE = %08x\n", idcode);
-		
+
 		//ID code should always begin with a one
 		//If we get a zero it's a bypass register
 		//TODO: Support devices not implementing IDCODE
@@ -310,9 +310,9 @@ void JtagInterface::InitializeChain()
 		m_devices.push_back(JtagDevice::CreateDevice(m_idcodes[i], this, i));
 }
 
-/** 
+/**
 	@brief Returns the number of devices in the scan chain (only valid after InitializeChain() has been called)
-	
+
 	@return Device count
  */
 size_t JtagInterface::GetDeviceCount()
@@ -320,25 +320,25 @@ size_t JtagInterface::GetDeviceCount()
 	return m_devicecount;
 }
 
-/** 
+/**
 	@brief Commits the outstanding transactions to the adapter.
-	
+
 	No-op unless the adapter supports queueing of multiple writes.
-	
+
 	@throw JtagException in case of error
  */
 void JtagInterface::Commit()
 {
-	
+
 }
 
-/** 
+/**
 	@brief Returns the ID for the supplied device (zero-based indexing)
-	
+
 	@throw JtagException if the index is out of range
-	
+
 	@param device Device index
-	
+
 	@return The 32-bit JTAG ID code
  */
 unsigned int JtagInterface::GetIDCode(unsigned int device)
@@ -354,14 +354,14 @@ unsigned int JtagInterface::GetIDCode(unsigned int device)
 
 /**
 	@brief Gets the Nth device in the chain.
-	
+
 	WARNING: If the device ID is unrecognized, this function will return NULL. It is the caller's responsibility
 	to verify the pointer is non-NULL before using it.
-	
+
 	@throw JtagException if the index is out of range
-	
+
 	@param device Device index
-	
+
 	@return The device object
  */
 JtagDevice* JtagInterface::GetDevice(unsigned int device)
@@ -377,11 +377,11 @@ JtagDevice* JtagInterface::GetDevice(unsigned int device)
 
 /**
 	@brief Sets the IR for a specific device in the chain.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device	Zero-based index of the target device. All other devices are set to BYPASS mode.
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param count 	Instruction register length, in bits
@@ -394,11 +394,11 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, int co
 
 /**
 	@brief Sets the IR for a specific device in the chain.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device	Zero-based index of the target device. All other devices are set to BYPASS mode.
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param count 	Instruction register length, in bits
@@ -411,7 +411,7 @@ void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* 
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-	
+
 	EnterShiftIR();
 	ShiftData(true, data, NULL, count);
 	LeaveExit1IR();
@@ -419,11 +419,11 @@ void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* 
 
 /**
 	@brief Sets the IR for a specific device in the chain and returns the IR capture value.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device	Zero-based index of the target device. All other devices are set to BYPASS mode.
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param data_out	IR capture value
@@ -437,21 +437,21 @@ void JtagInterface::SetIR(unsigned int /*device*/, const unsigned char* data, un
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-	
+
 	EnterShiftIR();
 	ShiftData(true, data, data_out, count);
 	LeaveExit1IR();
-	
+
 	Commit();
 }
 
 /**
 	@brief Sets the DR for a specific device in the chain and optionally returns the previous DR contents.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device		Zero-based index of the target device. All other devices are assumed to be in BYPASS mode and
 						their DR is set to zero.
 	@param send_data	The data value to scan (see ShiftData() for bit/byte ordering)
@@ -466,25 +466,25 @@ void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_da
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-		
+
 	EnterShiftDR();
 	ShiftData(true, send_data, rcv_data, count);
 	LeaveExit1DR();
-	
+
 	Commit();
 }
 
 /**
 	@brief Sets the DR for a specific device in the chain and defers the operation if possible.
-	
+
 	The scan operation may not actually execute until Commit() is called. When the operation executes is dependent on
 	whether the interface supports deferred writes, how full the interface's buffer is, and when the next operation
 	forcing a commit (call to Commit() or a read operation) takes place.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device		Zero-based index of the target device. All other devices are assumed to be in BYPASS mode and
 						their DR is set to zero.
 	@param send_data	The data value to scan (see ShiftData() for bit/byte ordering)
@@ -498,7 +498,7 @@ void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char*
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-		
+
 	EnterShiftDR();
 	ShiftData(true, send_data, NULL, count);
 	LeaveExit1DR();
@@ -511,10 +511,10 @@ void JtagInterface::SendDummyClocksDeferred(int n)
 
 /**
 	@brief Indicates if split (pipelined) DR scanning is supported.
-	
+
 	Split scanning allows the write halves of several scan operations to take place in one driver-level write call,
 	followed by the read halves in order, to reduce the impact of driver/bus latency on throughput.
-	
+
 	If split scanning is not supported, ScanDRSplitWrite() will behave identically to ScanDR() and ScanDRSplitRead()
 	will be a no-op.
  */
@@ -525,15 +525,15 @@ bool JtagInterface::IsSplitScanSupported()
 
 /**
 	@brief Sets the DR for a specific device in the chain and optionally returns the previous DR contents.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	If split (pipelined) scanning is supported, this call performs the write half of the scan only; the read is
 	performed by ScanDRSplitRead(). Several writes may occur in a row, and must be followed by an equivalent number of
 	reads with matching length values.
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device		Zero-based index of the target device. All other devices are assumed to be in BYPASS mode and
 						their DR is set to zero.
 	@param send_data	The data value to scan (see ShiftData() for bit/byte ordering)
@@ -548,7 +548,7 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-		
+
 	EnterShiftDR();
 	ShiftDataWriteOnly(true, send_data, rcv_data, count);
 	LeaveExit1DR();
@@ -556,13 +556,13 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
 
 /**
 	@brief Sets the DR for a specific device in the chain and optionally returns the previous DR contents.
-	
+
 	Starts and ends in Run-Test-Idle state.
-	
+
 	If split (pipelined) scanning is supported, this call performs the read half of the scan only/
-	
+
 	@throw JtagException if any shift operation fails.
-	
+
 	@param device		Zero-based index of the target device. All other devices are assumed to be in BYPASS mode and
 						their DR is set to zero.
 	@param rcv_data		Output data to scan, or NULL if no output is desired (faster)
@@ -576,7 +576,7 @@ void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_
 			"Bypassing extra devices not yet supported!",
 			"");
 	}
-	
+
 	ShiftDataReadOnly(rcv_data, count);
 }
 
@@ -598,9 +598,9 @@ bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, int /*count*/
 
 /**
 	@brief Gets the number of shift operations performed on this interface
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of shift operations
  */
 size_t JtagInterface::GetShiftOpCount()
@@ -610,9 +610,9 @@ size_t JtagInterface::GetShiftOpCount()
 
 /**
 	@brief Gets the number of errors this interface has recovered from (USB retransmits, etc)
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of recoverable errors
  */
 size_t JtagInterface::GetRecoverableErrorCount()
@@ -622,9 +622,9 @@ size_t JtagInterface::GetRecoverableErrorCount()
 
 /**
 	@brief Gets the number of data bits this interface has shifted
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of data bits shifted
  */
 size_t JtagInterface::GetDataBitCount()
@@ -634,9 +634,9 @@ size_t JtagInterface::GetDataBitCount()
 
 /**
 	@brief Gets the number of mode bits this interface has shifted
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of mode bits shifted
  */
 size_t JtagInterface::GetModeBitCount()
@@ -646,9 +646,9 @@ size_t JtagInterface::GetModeBitCount()
 
 /**
 	@brief Gets the number of dummy clocks this interface has sent
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of dummy clocks sent
  */
 size_t JtagInterface::GetDummyClockCount()
@@ -658,9 +658,9 @@ size_t JtagInterface::GetDummyClockCount()
 
 /**
 	@brief Gets the number of dummy clocks this interface has sent
-	
+
 	@throw JtagException on failure
-	
+
 	@return Number of dummy clocks sent
  */
 double JtagInterface::GetShiftTime()

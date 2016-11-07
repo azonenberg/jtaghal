@@ -32,13 +32,13 @@
 	@author Andrew D. Zonenberg
 	@brief Implementation of global functions
  */
- 
-/** 
+
+/**
 	\defgroup libjtaghal libjtaghal: JTAG Hardware Abstraction Layer
-	
+
 	Libjtaghal is a hardware abstraction layer which presents a device-independent interface for manipulating devices in
 	a JTAG scan chain.
-	
+
 	Libjtaghal is released under the same permissive 3-clause BSD license as the remainder of the project.
  */
 
@@ -49,14 +49,14 @@
 
 /**
 	@brief Extracts a bit from a bit string
-	
+
 	(data[0] & 1) is considered to be the LSB.
-	
+
 	@param data		The bit string
 	@param nbit		Index (zero based) of the bit to extract
-	
+
 	@return Value of the bit
-	
+
 	\ingroup libjtaghal
  */
 bool PeekBit(const unsigned char* data, int nbit)
@@ -70,13 +70,13 @@ bool PeekBit(const unsigned char* data, int nbit)
 
 /**
 	@brief Writes a bit to a bit string.
-	
+
 	(data[0] & 1) is considered to be the LSB.
-	
+
 	@param data		The bit string
 	@param nbit		Index (zero based) of the bit to write
 	@param val		The value to write at that bit
-	
+
 	\ingroup libjtaghal
  */
 void PokeBit(unsigned char* data, int nbit, bool val)
@@ -91,10 +91,10 @@ void PokeBit(unsigned char* data, int nbit, bool val)
 
 /**
 	@brief Flips the bits in a byte
-	
+
 	@param c	Input byte
 	@return		Output byte
-	
+
 	\ingroup libjtaghal
  */
 unsigned char FlipByte(unsigned char c)
@@ -115,10 +115,10 @@ unsigned char FlipByte(unsigned char c)
 
 /**
 	@brief Reverses an array of bytes in place without changing bit ordering
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer
-	
+
 	\ingroup libjtaghal
  */
 void FlipByteArray(unsigned char* data, int len)
@@ -132,10 +132,10 @@ void FlipByteArray(unsigned char* data, int len)
 
 /**
 	@brief Reverses the bit ordering in an array of bytes, but does not change byte ordering
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer
-	
+
 	\ingroup libjtaghal
  */
 void FlipBitArray(unsigned char* data, int len)
@@ -146,10 +146,10 @@ void FlipBitArray(unsigned char* data, int len)
 
 /**
 	@brief Reverses the bit ordering in an array of bits (need not be integer byte size)
-	
+
 	@param data		The buffer to manipulate
 	@param bitlen	Length, in bits, of the buffer
-	
+
 	\ingroup libjtaghal
  */
 void MirrorBitArray(unsigned char* data, int bitlen)
@@ -164,17 +164,17 @@ void MirrorBitArray(unsigned char* data, int bitlen)
 
 /**
 	@brief Swaps endianness in an array of 16-bit values
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer (must be even)
-	
+
 	\ingroup libjtaghal
  */
 void FlipEndianArray(unsigned char* data, int len)
 {
 	//make sure len is even
 	len &= ~1;
-	
+
 	for(int i=0; i<len; i+= 2)
 	{
 		unsigned char temp = data[i];
@@ -185,17 +185,17 @@ void FlipEndianArray(unsigned char* data, int len)
 
 /**
 	@brief Swaps endianness in an array of 32-bit values
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer (must be a multiple of 4)
-	
+
 	\ingroup libjtaghal
  */
 void FlipEndian32Array(unsigned char* data, int len)
 {
 	//make sure len is even
 	len &= ~3;
-	
+
 	for(int i=0; i<len; i+= 4)
 	{
 		unsigned char temp[4] = { data[i], data[i+1], data[i+2], data[i+3] };
@@ -208,10 +208,10 @@ void FlipEndian32Array(unsigned char* data, int len)
 
 /**
 	@brief Reverses the bit ordering in an array of bytes, as well as 16-bit endianness
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer
-	
+
 	\ingroup libjtaghal
  */
 void FlipBitAndEndianArray(unsigned char* data, int len)
@@ -222,10 +222,10 @@ void FlipBitAndEndianArray(unsigned char* data, int len)
 
 /**
 	@brief Reverses the bit ordering in an array of bytes, as well as 32-bit endianness
-	
+
 	@param data		The buffer to manipulate
 	@param len		Length, in bytes, of the buffer
-	
+
 	\ingroup libjtaghal
  */
 void FlipBitAndEndian32Array(unsigned char* data, int len)
@@ -239,11 +239,11 @@ void FlipBitAndEndian32Array(unsigned char* data, int len)
 
 /**
 	@brief Returns a timestamp suitable for performance measurement.
-	
+
 	The base unit is seconds.
-	
+
 	@return The timestamp.
-	
+
 	\ingroup libjtaghal
  */
 double GetTime()

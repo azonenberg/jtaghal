@@ -49,7 +49,7 @@
 
 /**
 	@brief Initializes this device
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
@@ -61,7 +61,7 @@ JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//should be set by derived class
 	m_irlength = 0;
-	
+
 	memset(m_cachedIR, 0xFF, sizeof(m_cachedIR));
 }
 
@@ -74,11 +74,11 @@ JtagDevice::~JtagDevice()
 
 /**
 	@brief Creates a JtagDevice given an ID code
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
-	
+
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
 JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
@@ -90,19 +90,19 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 	//Switch on the ID code and create the appropriate device
 	switch(idcode_s & 0x7FF)
 	{
-	
+
 	case IDCODE_ARM:
 		return ARMDevice::CreateDevice(idcode, iface, pos);
 		break;
-	
+
 	case IDCODE_XILINX:
 		return XilinxDevice::CreateDevice(idcode, iface, pos);
 		break;
-		
+
 	case IDCODE_MICROCHIP:
 		return MicrochipDevice::CreateDevice(idcode, iface, pos);
 		break;
-		
+
 	default:
 		//TODO: Throw exception instead?
 		printf("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s & 0x7FF, idcode);
@@ -131,16 +131,16 @@ void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
 		//do nothing, cache hit
 		return;
 	}
-	
+
 	else
 		m_iface->SetIRDeferred((int)m_pos, data, count);
-		
+
 	memcpy(m_cachedIR, data, ceil(count / 8.0f));
 }
 
 /**
 	@brief Wrapper around JtagInterface::SetIR()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::SetIR(const unsigned char* data, int count)
@@ -150,16 +150,16 @@ void JtagDevice::SetIR(const unsigned char* data, int count)
 		//do nothing, cache hit
 		return;
 	}
-	
+
 	else
 		m_iface->SetIR((int)m_pos, data, count);
-		
+
 	memcpy(m_cachedIR, data, ceil(count / 8.0f));
 }
 
 /**
 	@brief Wrapper around JtagInterface::Commit()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::Commit()
@@ -169,7 +169,7 @@ void JtagDevice::Commit()
 
 /**
 	@brief Wrapper around JtagInterface::SetIR()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::SetIR(const unsigned char* data, unsigned char* data_out, int count)
@@ -180,7 +180,7 @@ void JtagDevice::SetIR(const unsigned char* data, unsigned char* data_out, int c
 
 /**
 	@brief Wrapper around JtagInterface::ScanDR()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count)
@@ -190,7 +190,7 @@ void JtagDevice::ScanDR(const unsigned char* send_data, unsigned char* rcv_data,
 
 /**
 	@brief Wrapper around JtagInterface::IsSplitScanSupported()
-	
+
 	See JtagInterface documentation for more details.
  */
 bool JtagDevice::IsSplitScanSupported()
@@ -200,7 +200,7 @@ bool JtagDevice::IsSplitScanSupported()
 
 /**
 	@brief Wrapper around JtagInterface::ScanDRSplitWrite()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count)
@@ -210,7 +210,7 @@ void JtagDevice::ScanDRSplitWrite(const unsigned char* send_data, unsigned char*
 
 /**
 	@brief Wrapper around JtagInterface::ScanDRSplitRead()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::ScanDRSplitRead(unsigned char* rcv_data, int count)
@@ -220,7 +220,7 @@ void JtagDevice::ScanDRSplitRead(unsigned char* rcv_data, int count)
 
 /**
 	@brief Wrapper around JtagInterface::ScanDRDeferred()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::ScanDRDeferred(const unsigned char* send_data, int count)
@@ -230,7 +230,7 @@ void JtagDevice::ScanDRDeferred(const unsigned char* send_data, int count)
 
 /**
 	@brief Wrapper around JtagInterface::SendDummyClocks()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::SendDummyClocks(int n)
@@ -240,7 +240,7 @@ void JtagDevice::SendDummyClocks(int n)
 
 /**
 	@brief Wrapper around JtagInterface::SendDummyClocksDeferred()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::SendDummyClocksDeferred(int n)
@@ -250,7 +250,7 @@ void JtagDevice::SendDummyClocksDeferred(int n)
 
 /**
 	@brief Wrapper around JtagInterface::ResetToIdle()
-	
+
 	See JtagInterface documentation for more details.
  */
 void JtagDevice::ResetToIdle()
@@ -262,18 +262,18 @@ void JtagDevice::PrintInfo()
 {
 	/*
 	printf("%2d: %s\n", (int)m_pos, GetDescription().c_str());
-	
+
 	//Is it programmable? If so, get some more details
 	ProgrammableDevice* pprog = dynamic_cast<ProgrammableDevice*>(this);
 	if(pprog != NULL)
 	{
 		printf("    Device is programmable\n");
-		
+
 		if(pprog->IsProgrammed())
 			printf("    Device is configured\n");
 		else
 			printf("    Device is blank\n");
-		
+
 		//Is it an FPGA? If so, get FPGA-specific information
 		//Get the serial number only if the device is blank since some FPGAs can't get the S/N when they're configured
 		FPGA* pfpga = dynamic_cast<FPGA*>(this);
@@ -281,12 +281,12 @@ void JtagDevice::PrintInfo()
 		{
 			printf("    Device is an FPGA\n");
 			if(pprog->IsProgrammed())
-			{		
+			{
 				//Probe the FPGA and see if it has any virtual TAPs on board
 				pfpga->ProbeVirtualTAPs();
 				if(pfpga->HasRPCInterface())
 					printf("    Device has RPC network interface\n");
-					
+
 				if(pfpga->HasSerialNumber())
 				{
 					int bitlen = pfpga->GetSerialNumberLengthBits();
@@ -314,13 +314,13 @@ void JtagDevice::PrintInfo()
 				}
 			}
 		}
-		
+
 		//Is it a CPLD? If so, get CPLD-specific information
 		CPLD* pcpld = dynamic_cast<CPLD*>(this);
 		if(pcpld != NULL)
 			printf("    Device is a CPLD\n");
 	}
-	
+
 	//Is it debuggable? If so, get some more details
 	DebuggerInterface* pdebug = dynamic_cast<DebuggerInterface*>(this);
 	if(pdebug != NULL)
