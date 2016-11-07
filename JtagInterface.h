@@ -36,11 +36,6 @@
 #ifndef JtagInterface_h
 #define JtagInterface_h
 
-#include <string>
-#include <vector>
-
-#include "JtagDevice.h"
-
 /**
 	@brief Abstract representation of a JTAG adapter.
 	

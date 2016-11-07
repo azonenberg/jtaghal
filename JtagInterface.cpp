@@ -34,9 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -65,8 +62,6 @@ JtagInterface::JtagInterface()
  */
 JtagInterface::~JtagInterface()
 {
-	//may not be equal to m_devicecount if we threw an exception during InitializeChain()
-	//see bug #107
 	for(size_t i=0; i<m_devices.size(); i++)
 	{
 		if(m_devices[i] != NULL)
@@ -94,6 +89,7 @@ JtagInterface::~JtagInterface()
  */
 JtagInterface* JtagInterface::CreateDefaultInterface()
 {
+	/*
 	//Check environment variable first
 	char* jhost = getenv("JTAGD_HOST");
 	if(jhost != NULL)
@@ -116,7 +112,7 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 	#endif	//#ifdef HAVE_DJTG
 	
 	//TODO: Create FTDIJtagInterface
-	
+	*/
 	//No interfaces found
 	return NULL;
 }
@@ -244,8 +240,7 @@ void JtagInterface::InitializeChain()
 	{
 		throw JtagExceptionWrapper(
 			"TDO is still 1 after 1024 clocks of TDI=0 in SHIFT-IR state, possible board fault",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 	
 	//Shift the BYPASS instruction into everyone's instruction register
@@ -254,8 +249,7 @@ void JtagInterface::InitializeChain()
 	{
 		throw JtagExceptionWrapper(
 			"TDO is still 0 after 1024 clocks of TDI=1 in SHIFT-IR state, possible board fault",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 	LeaveExit1IR();
 	
@@ -268,8 +262,7 @@ void JtagInterface::InitializeChain()
 	{
 		throw JtagExceptionWrapper(
 			"TDO is still 1 after 1024 clocks in SHIFT-DR state, possible board fault",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 	
 	//Shift 1s into the DR one at a time and see when we get one back
@@ -307,8 +300,7 @@ void JtagInterface::InitializeChain()
 		{
 			throw JtagExceptionWrapper(
 				"Devices without IDCODE are not supported",
-				"",
-				JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+				"");
 		}
 	}
 	ResetToIdle();
@@ -355,8 +347,7 @@ unsigned int JtagInterface::GetIDCode(unsigned int device)
 	{
 		throw JtagExceptionWrapper(
 			"Device index out of range",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	return m_idcodes[device];
 }
@@ -379,8 +370,7 @@ JtagDevice* JtagInterface::GetDevice(unsigned int device)
 	{
 		throw JtagExceptionWrapper(
 			"Device index out of range",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	return m_devices[device];
 }
@@ -419,8 +409,7 @@ void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* 
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	
 	EnterShiftIR();
@@ -446,8 +435,7 @@ void JtagInterface::SetIR(unsigned int /*device*/, const unsigned char* data, un
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	
 	EnterShiftIR();
@@ -476,8 +464,7 @@ void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_da
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 		
 	EnterShiftDR();
@@ -509,8 +496,7 @@ void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char*
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 		
 	EnterShiftDR();
@@ -560,8 +546,7 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 		
 	EnterShiftDR();
@@ -589,8 +574,7 @@ void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	
 	ShiftDataReadOnly(rcv_data, count);

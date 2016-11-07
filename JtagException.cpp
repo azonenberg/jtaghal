@@ -32,11 +32,7 @@
 	@author Andrew D. Zonenberg
 	@brief Implementation of JtagException
  */
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <vector>
-#include "JtagException.h"
+#include "jtaghal.h"
 
 using namespace std;
 

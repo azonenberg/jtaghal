@@ -34,15 +34,15 @@
  */
 
 #include "jtaghal.h"
-#include <stdio.h>
-#include <memory.h>
-#include <math.h>
+
+/*
 #include "JtagDevice.h"
 #include "JtagInterface.h"
 #include "XilinxDevice.h"
 #include "MicrochipDevice.h"
 #include "ARMDevice.h"
 #include "DebuggerInterface.h"
+*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -83,6 +83,7 @@ JtagDevice::~JtagDevice()
  */
 JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
+	/*
 	//Rightmost bit is always a zero, ignore it
 	unsigned int idcode_s = idcode >> 1;
 
@@ -107,6 +108,8 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 		printf("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s & 0x7FF, idcode);
 		return NULL;
 	}
+	*/
+	return NULL;
 
 }
 
@@ -257,6 +260,7 @@ void JtagDevice::ResetToIdle()
 
 void JtagDevice::PrintInfo()
 {
+	/*
 	printf("%2d: %s\n", (int)m_pos, GetDescription().c_str());
 	
 	//Is it programmable? If so, get some more details
@@ -327,4 +331,5 @@ void JtagDevice::PrintInfo()
 		for(size_t i=0; i<ntargets; i++)
 			printf("        %zu: %s\n", i, pdebug->GetTarget(i)->GetDescription().c_str());
 	}
+	*/
 }

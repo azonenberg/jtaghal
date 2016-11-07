@@ -66,6 +66,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File handle stuff
@@ -81,15 +82,17 @@
 
 //Error handling
 #include "JtagException.h"
-/*
+
 //General helpers
-#include "Socket.h"
+//#include "Socket.h"
 
-//GPIO interface classes
-#include "GPIOInterface.h"
-
-//JTAG interface classes
+//Base interfaces
+//#include "GPIOInterface.h"
+#include "JtagDevice.h"
 #include "JtagInterface.h"
+
+/*
+//JTAG adapter drivers
 #include "DigilentJtagInterface.h"
 #include "FTDIJtagInterface.h"
 #include "NetworkedJtagInterface.h"

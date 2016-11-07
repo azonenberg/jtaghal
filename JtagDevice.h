@@ -36,11 +36,11 @@
 #ifndef JtagDevice_h
 #define JtagDevice_h
 
-#include <string>
 class JtagInterface;
-class FPGA;
-class CPLD;
-class ProgrammableDevice;
+//class FPGA;
+//class CPLD;
+//class ProgrammableDevice;
+
 
 /**
 	@brief Represents a single device in the JTAG chain
