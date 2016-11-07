@@ -35,6 +35,7 @@ jtaghal:
         - jtaghal.cpp
 
         - JtagDevice.cpp
+        - JtagException.cpp
         - JtagInterface.cpp
 
     flags:
