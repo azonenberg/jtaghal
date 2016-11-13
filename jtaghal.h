@@ -98,10 +98,10 @@
 #include "JtagDevice.h"
 #include "JtagInterface.h"
 
-/*
 //JTAG adapter drivers
-#include "DigilentJtagInterface.h"
+//#include "DigilentJtagInterface.h"
 #include "FTDIJtagInterface.h"
+/*
 #include "NetworkedJtagInterface.h"
 #include "NocJtagInterface.h"
 
