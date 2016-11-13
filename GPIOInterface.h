@@ -40,7 +40,7 @@ class GPIOInterface
 {
 public:
 	virtual ~GPIOInterface();
-	
+
 	/**
 		@brief Gets the number of GPIO pins on the device.
 	 */
@@ -48,17 +48,17 @@ public:
 	{
 		return static_cast<int>(m_gpioValue.size());
 	}
-	
+
 	/**
 		@brief Reads all of the device's GPIO pins into the internal buffer.
 	 */
 	virtual void ReadGpioState() =0;
-	
+
 	/**
 		@brief Writes all of the device's GPIO pin values to the device.
 	 */
 	virtual void WriteGpioState() =0;
-	
+
 	/**
 		@brief Updates the direction of a GPIO pin but does not push the changes to the device
 	 */
@@ -66,7 +66,7 @@ public:
 	{
 		m_gpioDirection[pin] = output;
 	}
-	
+
 	/**
 		@brief Updates the value of a GPIO pin but does not push the changes to the device
 	 */
@@ -74,7 +74,7 @@ public:
 	{
 		m_gpioValue[pin] = value;
 	}
-	
+
 	/**
 		@brief Reads the cached value of a GPIO pin but does not poll the device
 	 */
@@ -82,7 +82,7 @@ public:
 	{
 		return m_gpioValue[pin];
 	}
-	
+
 	/**
 		@brief Updates the direction of a GPIO pin and pushes changes to the device immediately
 	 */
@@ -91,7 +91,7 @@ public:
 		SetGpioDirectionDeferred(pin, output);
 		WriteGpioState();
 	}
-	
+
 	/**
 		@brief Updates the value of a GPIO pin and pushes changes to the device immediately
 	 */
@@ -100,7 +100,7 @@ public:
 		SetGpioValueDeferred(pin, value);
 		WriteGpioState();
 	}
-	
+
 	/**
 		@brief Reads the current value of a GPIO pin, polling the device
 	 */
@@ -109,7 +109,7 @@ public:
 		ReadGpioState();
 		return GetGpioValueCached(pin);
 	}
-	
+
 	/**
 		@brief Reads the current direction of a GPIO pin
 	 */
@@ -117,12 +117,12 @@ public:
 	{
 		return m_gpioDirection[pin];
 	}
-	
+
 protected:
 
 	///Value bits (1=high, contains the read value for inputs and the write value for outputs)
 	std::vector<bool> m_gpioValue;
-	
+
 	///Direction bits (1=output)
 	std::vector<bool> m_gpioDirection;
 };

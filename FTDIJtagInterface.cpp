@@ -74,11 +74,11 @@ enum MPSSE_Commands
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device enumeration
 
-/**	
+/**
 	@brief Gets the version of the API
-	
+
 	@throw JtagException if the FTD2xx call fails
-	
+
 	@return FTDI driver and API version
  */
 string FTDIJtagInterface::GetAPIVersion()
@@ -92,21 +92,21 @@ string FTDIJtagInterface::GetAPIVersion()
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	unsigned int build = lver & 0xff;
 	unsigned int minor = (lver >> 8) && 0xff;
 	unsigned int major = (lver >> 16) && 0xff;
-	
+
 	char sout[32];
 	snprintf(sout, sizeof(sout)-1, "libftd2xx %u.%u.%u", major, minor, build);
 	return sout;
 }
 
-/** 
+/**
 	@brief Gets the number of interfaces on the system (may include non-JTAG-capable devices)
-	
+
 	@throw JtagException if the FTD2xx call fails
-	
+
 	@return Number of interfaces found
  */
 int FTDIJtagInterface::GetInterfaceCount()
@@ -120,7 +120,7 @@ int FTDIJtagInterface::GetInterfaceCount()
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	DWORD ndev_raw;
 	if(FT_OK != (err = FT_CreateDeviceInfoList(&ndev_raw)))
 	{
@@ -129,7 +129,7 @@ int FTDIJtagInterface::GetInterfaceCount()
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	return ndev_raw;
 }
 
@@ -150,21 +150,21 @@ bool FTDIJtagInterface::IsJtagCapable(int index)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//printf("device %d type %d desc %s serial %s flags %d\n", index, type, desc, serial, flags);
 	//return true;
 
 	if( (type == FT_DEVICE_2232H) || (type == FT_DEVICE_4232H) || (type == FT_DEVICE_232H) )
 		return true;
-	
+
 	return false;
 }
 
 /**
 	@brief Returns the description of the Nth device
-	
+
 	@throw JtagException if the index is invalid or data could not be read
-	
+
 	@return Serial number string
  */
 std::string FTDIJtagInterface::GetSerialNumber(int index)
@@ -183,9 +183,9 @@ std::string FTDIJtagInterface::GetSerialNumber(int index)
 
 /**
 	@brief Returns the description of the Nth device
-	
+
 	@throw JtagException if the index is invalid or data could not be read
-	
+
 	@return Description string
  */
 std::string FTDIJtagInterface::GetDescription(int index)
@@ -204,9 +204,9 @@ std::string FTDIJtagInterface::GetDescription(int index)
 
 /**
 	@brief Returns the default clock frequency of the Nth device
-	
+
 	@throw JtagException if the index is invalid or data could not be read
-	
+
 	@return Clock frequency
  */
 int FTDIJtagInterface::GetDefaultFrequency(int /*index*/)
@@ -219,9 +219,9 @@ int FTDIJtagInterface::GetDefaultFrequency(int /*index*/)
 
 /**
 	@brief Connects to an FTDI JTAG interface
-	
+
 	@throw JtagException if the connection could not be establishes or the serial number is invalid
-	
+
 	@param serial		Serial number of the device to connect to
  */
 FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
@@ -235,7 +235,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Open the device
 	if(FT_OK != (err = FT_OpenEx(
 		const_cast<void*>(static_cast<const void*>(serial.c_str())),
@@ -247,7 +247,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Get some info
 	DWORD type;
 	DWORD id;
@@ -263,11 +263,11 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 	m_serial = serial;
 	m_userid = serial;
 	m_name = desc;
-	
+
 	//Set clock rate to 10 MHz
 	m_freq = 10000000;
-	
-	//Do the real init	
+
+	//Do the real init
 	SharedCtorInit(type);
 }
 
@@ -277,7 +277,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 {
 	FT_STATUS err = FT_OK;
-	
+
 	//Get the chip type and append to the name (see FT_DEVICE enum)
 	const char* chiptypes[]=
 	{
@@ -294,7 +294,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	};
 	if(type <= static_cast<int>((sizeof(chiptypes) / sizeof(chiptypes[0]))))
 		m_name += string(" (") + chiptypes[type] + ")";
-	
+
 	//Reset the adapter and purge buffers
 	//TODO: reset device or only the port?
 	if(FT_OK != (err = FT_ResetDevice(m_context)))
@@ -311,9 +311,9 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
-	//No need to set interface as with libftdi, we're opening the port directly rather than the device 
-	
+
+	//No need to set interface as with libftdi, we're opening the port directly rather than the device
+
 	//Disable event/error characters
 	if(FT_OK != (err = FT_SetChars(m_context, 0, 0, 0, 0)))
 	{
@@ -322,7 +322,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Set latency timer
 	//Go as low as possible to improve RPC/DMA performance
 	if(FT_OK != (err = FT_SetLatencyTimer(m_context, 2)))
@@ -332,7 +332,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Set timeouts
 	if(FT_OK != (err = FT_SetTimeouts(m_context, 1000, 1000)))
 	{
@@ -341,7 +341,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Set USB transfer sizes
 	if(FT_OK != (FT_SetUSBParameters(m_context, 1024, 4096)))
 	{
@@ -350,7 +350,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_ADAPTER);
 	}
-	
+
 	//Reset MPSSE
 	if(FT_OK != (err = FT_SetBitMode(m_context, 0x0, BIT_MODE_RESET)))
 	{
@@ -373,7 +373,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 
 	//Sleep, as per AN129
 	usleep(50 * 1000);
-		
+
 	//Send bogus command to synchronize the MPSSE (as per FTDI AN129)
 	WriteData(MPSSE_INVALID_COMMAND);
 
@@ -385,7 +385,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 		dummy_response[0] = dummy_response[1];
 		ReadData(dummy_response+1, 1);
 	}
-	
+
 	//Initialize the MPSSE clock divider (see FTDI AN108)
 	//TODO: Support stuff other than the -H types
 	/*
@@ -406,13 +406,13 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 			"",
 			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 		break;
-		
+
 	//libftdi 0.20 or later is required for 232H support
 	case TYPE_232H:
 	case TYPE_2232H:
 	case TYPE_4232H:
 		break;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown FTDI chip type",
@@ -421,10 +421,10 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 		break;
 	}
 	*/
-	
+
 	//Set clock rate to 10 MHz
 	m_freq = 10000000;
-	
+
 	//General setup commands
 	unsigned char cmd_setup[]=
 	{
@@ -438,7 +438,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	};
 	WriteData(cmd_setup, sizeof(cmd_setup));
 	Commit();
-	
+
 	//Initialize the GPIO pins
 	//GPIOL3 has to be high by default in order to enable outputs in HS1 and usb-jtag-mini boards
 	for(int i=0; i<12; i++)
@@ -449,7 +449,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	SetGpioDirectionDeferred(3, true);
 	SetGpioValueDeferred(3, true);
 	WriteGpioState();
-	
+
 	//Set timeouts
 	if(FT_OK != (err = FT_SetTimeouts(m_context, 1000, 1000)))
 	{
@@ -462,7 +462,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 
 /**
 	@brief Interface destructor
-	
+
 	Closes handles and disconnects from the adapter.
  */
 FTDIJtagInterface::~FTDIJtagInterface()
@@ -471,10 +471,10 @@ FTDIJtagInterface::~FTDIJtagInterface()
 	SetGpioDirectionDeferred(3, true);
 	SetGpioValueDeferred(3, false);
 	WriteGpioState();
-	
+
 	//Commit pending operations
 	Commit();
-	
+
 	if(m_context != NULL)
 	{
 		FT_Close(m_context);
@@ -496,11 +496,11 @@ void FTDIJtagInterface::Commit()
 
 /**
 	@brief Writes FTDI MPSSE data to the interface.
-	
+
 	Writes may be deferred until Commit() is called to improve performance.
-	
+
 	@throw JtagException on failure
-	
+
 	@param data				Data to write
 	@param bytesToWrite		Number of bytes to write
  */
@@ -509,7 +509,7 @@ void FTDIJtagInterface::WriteData(const void* data, size_t bytesToWrite)
 	const unsigned char* p = reinterpret_cast<const unsigned char*>(data);
 	for(size_t i=0; i<bytesToWrite; i++)
 		m_writeBuffer.push_back(p[i]);
-		
+
 	//Don't let the buffer get TOO big
 	if(m_writeBuffer.size() >= 4096)
 		Commit();
@@ -517,9 +517,9 @@ void FTDIJtagInterface::WriteData(const void* data, size_t bytesToWrite)
 
 /**
 	@brief Wrapper around FT_Write()
-	
+
 	@throw JtagException on failure
-	
+
 	@param data				Data to write
 	@param bytesToWrite		Number of bytes to write
  */
@@ -528,14 +528,14 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 	FT_STATUS status;
 	DWORD bytesWritten;
 	size_t bytes_left = bytesToWrite;
-	
+
 	//for some reason the buffer isn't a const... are we certain d2xx won't change it?
 	unsigned char* pdata = reinterpret_cast<unsigned char*>(
 								const_cast<void*>(
 									data
 									)
 								);
-	
+
 	while(bytes_left != 0)
 	{
 		if(FT_OK != (status = FT_Write(m_context, pdata, bytes_left, &bytesWritten)))
@@ -545,7 +545,7 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 				"",
 				JtagException::EXCEPTION_TYPE_ADAPTER);
 		}
-		
+
 		if(bytesWritten > bytes_left)
 		{
 			throw JtagExceptionWrapper(
@@ -553,7 +553,7 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 				"",
 				JtagException::EXCEPTION_TYPE_ADAPTER);
 		}
-		
+
 		bytes_left -= bytesWritten;
 		pdata += bytesWritten;
 	}
@@ -561,9 +561,9 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 
 /**
 	@brief Wrapper around FT_Write()
-	
+
 	@throw JtagException on failure
-	
+
 	@param cmd		The single byte to write
  */
 void FTDIJtagInterface::WriteData(unsigned char cmd)
@@ -573,9 +573,9 @@ void FTDIJtagInterface::WriteData(unsigned char cmd)
 
 /**
 	@brief Wrapper around FT_Read()
-	
+
 	@throw JtagException on failure
-	
+
 	@param data				Data to write
 	@param bytesToRead		Number of bytes to read
  */
@@ -583,7 +583,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 {
 	//Push outstanding writes
 	Commit();
-	
+
 	unsigned char* p = (unsigned char*)data;
 	DWORD bytesRead;
 	size_t bytesTotal = bytesToRead;
@@ -593,7 +593,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 	while(true)
 	{
 		j++;
-		
+
 		//Get the status of the device.
 		//Apparently we need to call FT_GetStatus() before a second read operation will succeed.
 		//See http://www.alecjacobson.com/weblog/?p=2934
@@ -607,7 +607,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 				"",
 				JtagException::EXCEPTION_TYPE_ADAPTER);
 		}
-		
+
 		//No data? Wait one USB packet time and try again
 		if(rxsize == 0)
 		{
@@ -621,7 +621,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 			}
 			continue;
 		}
-		
+
 		//If we get to this point data is ready to read
 		if(FT_OK != (status = FT_Read(m_context, p, bytesToRead, &bytesRead)))
 		{
@@ -630,7 +630,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 				"",
 				JtagException::EXCEPTION_TYPE_ADAPTER);
 		}
-		
+
 		//Note how many bytes actually got read
 		bytesToRead -= bytesRead;
 		p += bytesRead;
@@ -640,7 +640,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 				printf("    Read completed OK\n");
 			break;
 		}
-			
+
 		//If not fully read, keep trying
 		printf("[FTDIJtagInterface] More data to read (iteration %d, %zu read this call, %zu left, %zu total)\n",
 			++i, (size_t)bytesRead, bytesToRead, bytesTotal);
@@ -674,7 +674,7 @@ std::string FTDIJtagInterface::GetUserID()
 	return m_userid;
 }
 
-/** 
+/**
 	@brief Gets the clock frequency, in Hz, of the JTAG interface
  */
 int FTDIJtagInterface::GetFrequency()
@@ -686,16 +686,16 @@ int FTDIJtagInterface::GetFrequency()
 // Low-level JTAG interface
 
 void FTDIJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
-{	
+{
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfDataBits += count;
-	
+
 	bool want_read = true;
 	if(rcv_data == NULL)
 		want_read = false;
-		
+
 	//Purge the output data with zeros (in case we arent receving an integer number of bytes)
 	if(want_read)
 	{
@@ -723,29 +723,29 @@ void FTDIJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data,
 		WriteData(header, 3);
 		WriteData(send_data, BLOCK_SIZE_KBYTE);
 		WriteData(MPSSE_FLUSH);
-				
+
 		//Read data back
 		if(want_read)
 			ReadData(rcv_data, BLOCK_SIZE_KBYTE);
-		
+
 		//Bump pointers and mark space as used
 		send_data += BLOCK_SIZE_KBYTE;
 		if(want_read)
 			rcv_data += BLOCK_SIZE_KBYTE;
 		count -= BLOCK_SIZE_KBIT;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Generate and send the command packet for the rest of the data
 	std::vector<unsigned char> cmd;
 	GenerateShiftPacket(send_data, count, want_read, last_tms, cmd);
 	WriteData(&cmd[0], cmd.size());
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Read the data
 	if(want_read)
 		DoReadback(rcv_data, count);
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
@@ -764,7 +764,7 @@ bool FTDIJtagInterface::ShiftDataWriteOnly(	bool last_tms,
 		ShiftData(last_tms, send_data, rcv_data, count);
 		return false;
 	}
-		
+
 	//Otherwise, send the write
 	std::vector<unsigned char> cmd;
 	GenerateShiftPacket(send_data, count, (rcv_data != NULL), last_tms, cmd);
@@ -776,7 +776,7 @@ bool FTDIJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int count)
 {
 	if(count >= (8 * 4096))
 		return false;
-	
+
 	if(rcv_data != NULL)
 		DoReadback(rcv_data, count);
 	return true;
@@ -787,29 +787,29 @@ void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, int count)
 	int bytes_left = count / 8;
 	if( (count & 7) == 0)
 		bytes_left --;
-	if(bytes_left > 0)	
+	if(bytes_left > 0)
 		count -= bytes_left * 8;
 	int bl = count - 2;
 	int nbit = count-1;
-	
+
 	WriteData(MPSSE_FLUSH);
-	
+
 	//Byte-oriented data
 	if(bytes_left > 0)
 	{
 		ReadData(rcv_data, bytes_left);
 		rcv_data += bytes_left;
 	}
-	
+
 	//Bit-oriented data
 	if(bl >= 0)
 	{
 		ReadData(rcv_data, 1);
-		
+
 		//Shift so we're right-aligned
 		rcv_data[0] >>= (8 - count + 1);
 	}
-	
+
 	//Last bit
 	unsigned char tmp = 0;
 	ReadData(&tmp, 1);
@@ -829,7 +829,7 @@ void FTDIJtagInterface::GenerateShiftPacket(
 	int bytes_left = count / 8;
 	if( (count & 7) == 0)
 		bytes_left --;
-	
+
 	//Send the byte-oriented data (subtract 1 from count)
 	int bl = bytes_left - 1;
 	if(bytes_left > 0)
@@ -839,16 +839,16 @@ void FTDIJtagInterface::GenerateShiftPacket(
 		cmd_out.push_back(bl >> 8);
 		for(int i=0; i<bytes_left; i++)
 			cmd_out.push_back(send_data[i]);
-				
+
 		//Bump pointers
-		send_data += bytes_left;			
+		send_data += bytes_left;
 		count -= bytes_left * 8;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Byte sending is done. We now have <=8 bits left. May or may not be an even number of bytes.
 	//Send all but the last bit at this time.
-	
+
 	//Write header and data
 	bl = count - 2;								//Header count is offset by 1, then subtract again to skip the last bit
 	if(bl >= 0)
@@ -856,8 +856,8 @@ void FTDIJtagInterface::GenerateShiftPacket(
 		cmd_out.push_back(static_cast<unsigned char>(want_read ? MPSSE_TXRX_BITS : MPSSE_TX_BITS));
 		cmd_out.push_back(static_cast<unsigned char>(bl));
 		cmd_out.push_back(send_data[0]);
-	}	
-	
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Bit sending is done. We now have one bit left.
 	//Send the last bit as TMS
@@ -874,10 +874,10 @@ void FTDIJtagInterface::GenerateShiftPacket(
 void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int count)
 {
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfModeBits += count;
-	
+
 	if(count > 7)
 	{
 		throw JtagExceptionWrapper(
@@ -885,7 +885,7 @@ void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int c
 			"",
 			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 	}
-	
+
 	//Clock data to TMS, LSB first
 	unsigned char command[3] =
 	{
@@ -894,30 +894,30 @@ void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int c
 		static_cast<unsigned char>((send_data[0] & 0x7F) | (tdi ? 0x80 : 0))
 	};
 	WriteData(command, 3);
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
 void FTDIJtagInterface::SendDummyClocks(int n)
 {
 	SendDummyClocksDeferred(n);
-	
+
 	double start = GetTime();
-	
+
 	//Dummy clocks are often used as a delay cycle
 	//so force the write to complete now
 	Commit();
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
 void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 {
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfDummyClocks += n;
-	
+
 	int nbytes = n / 8;
 	if(nbytes >= 0xFFFF)
 	{
@@ -926,7 +926,7 @@ void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 			"",
 			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 	}
-	
+
 	//Bulk dummy clocks (in groups of 8)
 	if(nbytes != 0)
 	{
@@ -939,7 +939,7 @@ void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 			static_cast<unsigned char>(nbytes & 0xFF),
 			static_cast<unsigned char>((nbytes >> 8) & 0xFF)
 		};
-		
+
 		WriteData(command, 3);
 	}
 
@@ -947,15 +947,15 @@ void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 	//"This will pulse the clock for 1 to 8 times given by length. A length of 0x00 will do 1 clock and a length of
 	//0x07 will do 8 clocks."
 	int nbits = n & 7;
-	nbits --;	
+	nbits --;
 	unsigned char command[2]=
 	{
 		MPSSE_DUMMY_CLOCK_BITS,
 		static_cast<unsigned char>(nbits),
 	};
-	
+
 	WriteData(command, 2);
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
@@ -964,13 +964,13 @@ void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 
 /**
 	@brief Verifies that we're still in sync with the MPSSE
-	
+
 	@throw JtagException if an FTDI API call fails
  */
 void FTDIJtagInterface::SyncCheck()
 {
 	printf("    Sync check\n");
-	
+
 	//Send bogus command 0xAA to synchronize the MPSSE (as per FTDI AN129)
 	WriteData(MPSSE_INVALID_COMMAND);
 
@@ -982,7 +982,7 @@ void FTDIJtagInterface::SyncCheck()
 	{
 		dummy_response[0] = dummy_response[1];
 		ReadData(dummy_response+1, 1);
-		
+
 		if( (n == 0) && (dummy_response[1] != MPSSE_INVALID_COMMAND_RESPONSE) )
 			printf("    SYNC ERROR at position 0 - expected MPSSE_INVALID_COMMAND_RESPONSE (0xFA), got %02x\n",
 				dummy_response[1] & 0xFF);
@@ -1005,7 +1005,7 @@ void FTDIJtagInterface::ReadGpioState()
 	unsigned char buf[2];
 	WriteData(cmd, sizeof(cmd));
 	ReadData(buf, 2);
-	
+
 	//Unpack
 	m_gpioValue[0]  = (buf[0] & 0x10) ? true : false;
 	m_gpioValue[1]  = (buf[0] & 0x20) ? true : false;
@@ -1052,7 +1052,7 @@ void FTDIJtagInterface::WriteGpioState()
 		(m_gpioDirection[9] << 5) |
 		(m_gpioDirection[10] << 6) |
 		(m_gpioDirection[11] << 7);
-	
+
 	//Force low bits for JTAG pins
 	//	Bit0 = TCK = output (1)
 	//	Bit1 = TDI = output (1)
@@ -1061,7 +1061,7 @@ void FTDIJtagInterface::WriteGpioState()
 	//  TMS idles high, rest idle low
 	value_low = (value_low & 0xF0) | 0x08;
 	dir_low = (dir_low & 0xF0) | 0x0B;
-	
+
 	unsigned char cmd[] =
 	{
 		MPSSE_SET_DATA_LOW,

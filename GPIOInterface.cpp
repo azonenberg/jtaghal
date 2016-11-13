@@ -37,5 +37,5 @@
 
 GPIOInterface::~GPIOInterface()
 {
-	
+
 }

@@ -72,15 +72,15 @@ public:
 	static std::string GetDescription(int index);
 	static std::string GetAPIVersion();
 	static int GetInterfaceCount();
-	
+
 	//Setup stuff
 	virtual std::string GetName();
 	virtual std::string GetSerial();
 	virtual std::string GetUserID();
 	virtual int GetFrequency();
-	
+
 	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);	
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
 	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count);
 	virtual void SendDummyClocks(int n);
 	virtual void SendDummyClocksDeferred(int n);
@@ -88,11 +88,11 @@ public:
 	virtual bool IsSplitScanSupported();
 	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
 	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, int count);
-	
+
 	//GPIO stuff
 	virtual void ReadGpioState();
 	virtual void WriteGpioState();
-	
+
 protected:
 	//Helpers for small scan operations
 	void GenerateShiftPacket(
@@ -101,30 +101,30 @@ protected:
 		bool last_tms,
 		std::vector<unsigned char>& cmd_out);
 	void DoReadback(unsigned char* rcv_data, int count);
-	
+
 	std::vector<unsigned char> m_writeBuffer;
-	
+
 protected:
 	void SharedCtorInit(uint32_t type);
-	
+
 protected:
 	///@brief Cached name of this adapter
 	std::string m_name;
-	
+
 	///@brief Cached serial number of this adapter
 	std::string m_serial;
-	
+
 	///@brief Cached user ID of this adapter
 	std::string m_userid;
 
 	///@brief Cached clock frequency of this adapter
 	int m_freq;
-	
+
 	///@brief Libftdi interface handle
 	void* m_context;
-	
+
 	void SyncCheck();
-	
+
 	void ReadData(void* data, size_t bytesToRead);
 	void WriteDataRaw(const void* data, size_t bytesToWrite);
 	void WriteData(const void* data, size_t bytesToWrite);
