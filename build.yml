@@ -40,11 +40,15 @@ jtaghal:
         # Devices
         - JtagDevice.cpp
 
-        # Interfaces
+        # Adapter base classes
+        - GPIOInterface.cpp
         - JtagInterface.cpp
+
+        # Adapters
         - FTDIJtagInterface.cpp
 
     flags:
+        - global
         - output/reloc
         - library/required/crypto++
         - library/optional/pthread

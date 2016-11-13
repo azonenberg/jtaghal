@@ -36,8 +36,6 @@
 #ifndef GPIOInterface_h
 #define GPIOInterface_h
 
-#include <vector>
-
 class GPIOInterface
 {
 public:

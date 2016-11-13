@@ -94,7 +94,7 @@
 //#include "Socket.h"
 
 //Base interfaces
-//#include "GPIOInterface.h"
+#include "GPIOInterface.h"
 #include "JtagDevice.h"
 #include "JtagInterface.h"
 
