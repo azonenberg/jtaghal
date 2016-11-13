@@ -89,8 +89,7 @@ string FTDIJtagInterface::GetAPIVersion()
 	{
 		throw JtagExceptionWrapper(
 			"FT_GetLibraryVersion() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	unsigned int build = lver & 0xff;
@@ -117,8 +116,7 @@ int FTDIJtagInterface::GetInterfaceCount()
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetVIDPID() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	DWORD ndev_raw;
@@ -126,8 +124,7 @@ int FTDIJtagInterface::GetInterfaceCount()
 	{
 		throw JtagExceptionWrapper(
 			"FT_CreateDeviceInfoList() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	return ndev_raw;
@@ -147,8 +144,7 @@ bool FTDIJtagInterface::IsJtagCapable(int index)
 	{
 		throw JtagExceptionWrapper(
 			"FT_GetDeviceInfoDetail() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//printf("device %d type %d desc %s serial %s flags %d\n", index, type, desc, serial, flags);
@@ -175,8 +171,7 @@ std::string FTDIJtagInterface::GetSerialNumber(int index)
 	{
 		throw JtagExceptionWrapper(
 			"FT_ListDevices() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	return serial;
 }
@@ -196,8 +191,7 @@ std::string FTDIJtagInterface::GetDescription(int index)
 	{
 		throw JtagExceptionWrapper(
 			"FT_ListDevices() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	return desc;
 }
@@ -232,8 +226,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetVIDPID() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Open the device
@@ -244,8 +237,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 	{
 		throw JtagExceptionWrapper(
 			"FT_OpenEx() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Get some info
@@ -257,8 +249,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 	{
 		throw JtagExceptionWrapper(
 			"FT_GetDeviceInfo() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	m_serial = serial;
 	m_userid = serial;
@@ -301,15 +292,13 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_ResetDevice() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	if(FT_OK != (err = FT_Purge(m_context, FT_PURGE_RX | FT_PURGE_TX)))
 	{
 		throw JtagExceptionWrapper(
 			"FT_Purge() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//No need to set interface as with libftdi, we're opening the port directly rather than the device
@@ -319,8 +308,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetChars() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Set latency timer
@@ -329,8 +317,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetLatencyTimer() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Set timeouts
@@ -338,8 +325,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetTimeouts() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Set USB transfer sizes
@@ -347,8 +333,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetUSBParameters() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Reset MPSSE
@@ -356,8 +341,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetBitMode() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 
 	//Enter bitbang mode
@@ -366,8 +350,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetBitMode() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	Commit();
 
@@ -455,8 +438,7 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	{
 		throw JtagExceptionWrapper(
 			"FT_SetTimeouts() failed",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 }
 
@@ -542,16 +524,14 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 		{
 			throw JtagExceptionWrapper(
 				"FT_Write() failed",
-				"",
-				JtagException::EXCEPTION_TYPE_ADAPTER);
+				"");
 		}
 
 		if(bytesWritten > bytes_left)
 		{
 			throw JtagExceptionWrapper(
 				"FT_Write() wrote too much data",
-				"",
-				JtagException::EXCEPTION_TYPE_ADAPTER);
+				"");
 		}
 
 		bytes_left -= bytesWritten;
@@ -604,8 +584,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 		{
 			throw JtagExceptionWrapper(
 				"FT_GetStatus() failed",
-				"",
-				JtagException::EXCEPTION_TYPE_ADAPTER);
+				"");
 		}
 
 		//No data? Wait one USB packet time and try again
@@ -627,8 +606,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 		{
 			throw JtagExceptionWrapper(
 				"FT_Read() failed",
-				"",
-				JtagException::EXCEPTION_TYPE_ADAPTER);
+				"");
 		}
 
 		//Note how many bytes actually got read
@@ -882,8 +860,7 @@ void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int c
 	{
 		throw JtagExceptionWrapper(
 			"ShiftTMS() not implemented for count > 7",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Clock data to TMS, LSB first
@@ -923,8 +900,7 @@ void FTDIJtagInterface::SendDummyClocksDeferred(int n)
 	{
 		throw JtagExceptionWrapper(
 			"SendDummyClocks() does not implement values > (0xFFFF * 8)",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Bulk dummy clocks (in groups of 8)
