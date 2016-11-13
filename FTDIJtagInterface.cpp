@@ -39,12 +39,6 @@
 
 #include <ftd2xx/ftd2xx.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
-#include <signal.h>
-
 using namespace std;
 
 #define FTDI_VID						0x0403	/* FTDI's USB vendor ID */

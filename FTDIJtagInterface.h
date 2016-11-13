@@ -42,9 +42,7 @@
 
 /**
 	@brief A JTAG adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
-	
-	Before r628, libftdi was used instead. Due to stability issues the implementation was moved to libftd2xx.
-	
+
 	GPIO pin mapping:
 		0	GPIOL0 (ADBUS4)
 		1	GPIOL1 (ADBUS5)

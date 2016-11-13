@@ -32,11 +32,17 @@ jtaghal:
     type:           shlib
 
     sources:
-        - jtaghal.cpp
 
-        - JtagDevice.cpp
+        # Core infrastructure
+        - jtaghal.cpp
         - JtagException.cpp
+
+        # Devices
+        - JtagDevice.cpp
+
+        # Interfaces
         - JtagInterface.cpp
+        - FTDIJtagInterface.cpp
 
     flags:
         - output/reloc
