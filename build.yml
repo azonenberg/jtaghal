@@ -50,7 +50,7 @@ jtaghal:
     flags:
         - global
         - output/reloc
-        - library/required/crypto++
+        #- library/required/crypto++
         - library/optional/pthread
         - library/optional/ws2_32
         - library/optional/ftd2xx
