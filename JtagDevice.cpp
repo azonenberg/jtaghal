@@ -35,14 +35,11 @@
 
 #include "jtaghal.h"
 
-/*
-#include "JtagDevice.h"
-#include "JtagInterface.h"
-#include "XilinxDevice.h"
-#include "MicrochipDevice.h"
-#include "ARMDevice.h"
-#include "DebuggerInterface.h"
-*/
+//#include "JtagDevice.h"
+//#include "JtagInterface.h"
+//#include "XilinxDevice.h"
+//#include "MicrochipDevice.h"
+//#include "ARMDevice.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction

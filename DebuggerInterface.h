@@ -41,7 +41,7 @@
 class DebuggableDevice;
 
 /**
-	@brief Generic base class for all debugger interfaces (may connect to multiple DebuggableDevice's)
+	@brief Generic base class for all debugger interfaces (may connect to multiple DebuggableDevice's in a SoC)
 	
 	\ingroup libjtaghal
  */

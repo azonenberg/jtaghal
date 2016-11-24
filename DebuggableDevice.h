@@ -36,8 +36,6 @@
 #ifndef DebuggableDevice_h
 #define DebuggableDevice_h
 
-#include <stdlib.h>
-
 /**
 	@brief Generic base class for all debuggable devices (MCUs etc)
 	

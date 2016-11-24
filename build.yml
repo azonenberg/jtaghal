@@ -37,10 +37,12 @@ jtaghal:
         - jtaghal.cpp
         - JtagException.cpp
 
-        # Devices
+        # Device base classes
+        - DebuggableDevice.cpp
         - JtagDevice.cpp
 
-        # Adapter base classes
+        # Interface base classes
+        - DebuggerInterface.cpp
         - GPIOInterface.cpp
         - JtagInterface.cpp
 

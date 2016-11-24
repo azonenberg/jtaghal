@@ -108,11 +108,11 @@
 //Device classes
 #include "FPGA.h"
 #include "CPLD.h"
-
+*/
 //Debugging stuff
 #include "DebuggableDevice.h"
 #include "DebuggerInterface.h"
-
+/*
 //NoC classes
 #include "RPCMessage.h"
 #include "NameServer.h"
