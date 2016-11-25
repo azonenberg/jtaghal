@@ -36,8 +36,6 @@
 #ifndef DigilentJtagInterface_h
 #define DigilentJtagInterface_h
 
-#include "JtagInterface.h"
-
 #ifdef HAVE_DJTG
 
 /**

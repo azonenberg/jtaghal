@@ -47,6 +47,7 @@ jtaghal:
         - JtagInterface.cpp
 
         # Adapters
+        - DigilentJtagInterface.cpp
         - FTDIJtagInterface.cpp
 
     flags:

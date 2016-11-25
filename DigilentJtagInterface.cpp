@@ -35,11 +35,6 @@
 
 #include "jtaghal.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
-
 #ifdef HAVE_DJTG
 
 #include <digilent/adept/dpcdecl.h>
@@ -63,8 +58,7 @@ string DigilentJtagInterface::GetAPIVersion()
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get Digilent API version",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 	}
 	return string(buf);
 }
@@ -97,8 +91,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get Digilent device properties",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	m_name = dvc.szName;
 	
@@ -107,8 +100,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get device serial number",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	m_serial = serial;
 	
@@ -118,8 +110,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get device serial number",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	m_userid = userid;
 	
@@ -128,8 +119,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 	{
 		throw JtagExceptionWrapper(
 			"Failed to connect to device",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	//Enable the port
@@ -138,8 +128,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Failed to enable port",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	//Verify we only have one port - >1 not supported now (TODO expose ports as separate interfaces?)
@@ -150,8 +139,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Failed to get device port count",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	if(pcount != 1)
@@ -160,8 +148,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Devices with >1 port not supported",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	
 	//Check required features
@@ -172,8 +159,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Failed to get device port properties",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	/*
@@ -203,8 +189,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Required properties missing",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	//Get the operating frequency
@@ -215,8 +200,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Failed to get clock rate",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	m_freq = freq;
 	
@@ -228,8 +212,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 		DmgrClose(m_hif);	//fixes #116, open handles cannot be allowed to survive to program quit or we segfault
 		throw JtagExceptionWrapper(
 			"Failed to set timeout",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 }
 
@@ -307,8 +290,7 @@ void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_d
 	{
 		throw JtagExceptionWrapper(
 			"Failed to shift data",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	/*
@@ -346,8 +328,7 @@ void DigilentJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, i
 	{
 		throw JtagExceptionWrapper(
 			"Failed to shift TMS",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	delete[] send_data_copy;
@@ -366,8 +347,7 @@ void DigilentJtagInterface::SendDummyClocks(int n)
 	{
 		throw JtagExceptionWrapper(
 			"Failed to send dummy clocks",
-			GetLibraryError(),
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			GetLibraryError());
 	}
 	
 	m_perfShiftTime += GetTime() - start;
