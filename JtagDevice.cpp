@@ -78,16 +78,15 @@ JtagDevice::~JtagDevice()
 
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
-JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
+JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* /*iface*/, size_t /*pos*/)
 {
-	/*
 	//Rightmost bit is always a zero, ignore it
 	unsigned int idcode_s = idcode >> 1;
 
 	//Switch on the ID code and create the appropriate device
 	switch(idcode_s & 0x7FF)
 	{
-
+	/*
 	case IDCODE_ARM:
 		return ARMDevice::CreateDevice(idcode, iface, pos);
 		break;
@@ -99,13 +98,13 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 	case IDCODE_MICROCHIP:
 		return MicrochipDevice::CreateDevice(idcode, iface, pos);
 		break;
-
+	*/
 	default:
 		//TODO: Throw exception instead?
-		printf("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s & 0x7FF, idcode);
+		LogError("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s & 0x7FF, idcode);
 		return NULL;
 	}
-	*/
+
 	return NULL;
 
 }
