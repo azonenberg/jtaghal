@@ -35,6 +35,8 @@
 
 #include "jtaghal.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -103,6 +105,7 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 			return iface;
 		}
 	}
+	*/
 
 	#ifdef HAVE_DJTG
 		//Create a DigilentJtagInterface on adapter 0 if we can find it
@@ -111,8 +114,16 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 			return new DigilentJtagInterface(0);
 	#endif	//#ifdef HAVE_DJTG
 
-	//TODO: Create FTDIJtagInterface
-	*/
+	#ifdef HAVE_FTD2XX
+		//Create an FTDIJtagInterface on the first port we can find
+		int nftdi = FTDIJtagInterface::GetInterfaceCount();
+		if(nftdi == 0)
+			return NULL;
+		string serial = FTDIJtagInterface::GetSerialNumber(nftdi);
+		if(serial != "")
+			return new FTDIJtagInterface(serial);
+	#endif
+
 	//No interfaces found
 	return NULL;
 }
