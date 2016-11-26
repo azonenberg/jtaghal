@@ -31,6 +31,10 @@ jtaghal:
     toolchain:      c++/generic
     type:           shlib
 
+    constants:
+        jtagd_opcodes.yml:
+            - c/enum
+
     sources:
 
         # Core infrastructure
@@ -49,10 +53,13 @@ jtaghal:
         # Adapters
         - DigilentJtagInterface.cpp
         - FTDIJtagInterface.cpp
+        - NetworkedJtagInterface.cpp
 
     flags:
         - global
         - output/reloc
+        - library/target/log
+        - library/target/xptools
         #- library/required/crypto++
         - library/optional/pthread
         - library/optional/ws2_32

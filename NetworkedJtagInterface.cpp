@@ -33,18 +33,7 @@
 	@brief Implementation of NetworkedJtagInterface
  */
 #include "jtaghal.h"
-#include <jtagd_opcodes_constants.h>
-
-#ifndef _WINDOWS
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#endif
-
-#include <memory.h>
-#include <stdlib.h>
+#include "jtagd_opcodes_enum.h"
 
 using namespace std;
 
@@ -67,16 +56,19 @@ NetworkedJtagInterface::NetworkedJtagInterface()
 void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
 {
 	//Connect to the port
-	m_socket.Connect(server, port);
+	if(!m_socket.Connect(server, port))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to connect to server",
+			"");
+	}
 
 	//Set no-delay flag
-	int flag = 1;
-	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ))
+	if(!m_socket.DisableNagle())
 	{
 		throw JtagExceptionWrapper(
 			"Failed to set TCP_NODELAY",
-			"",
-			JtagException::EXCEPTION_TYPE_NETWORK);
+			"");
 	}
 
 	//All good, query the GPIO stats
@@ -245,8 +237,7 @@ bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned ch
 	default:
 		throw JtagExceptionWrapper(
 			"ShiftDataWriteOnly() failed server-side",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 		break;
 	}
 }
@@ -286,8 +277,7 @@ bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int coun
 	default:
 		throw JtagExceptionWrapper(
 			"ShiftDataWriteOnly() failed server-side",
-			"",
-			JtagException::EXCEPTION_TYPE_ADAPTER);
+			"");
 		break;
 	}
 }
@@ -295,9 +285,8 @@ bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int coun
 void NetworkedJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, int /*count*/)
 {
 	throw JtagExceptionWrapper(
-		"NetworkedJtagInterface::ShiftTMS() is not allowed (use state-level interface)",
-		"",
-		JtagException::EXCEPTION_TYPE_ADAPTER);
+		"NetworkedJtagInterface::ShiftTMS() is not supported (use state-level interface only)",
+		"");
 }
 
 void NetworkedJtagInterface::SendDummyClocks(int n)
@@ -377,132 +366,6 @@ void NetworkedJtagInterface::SendFlush()
 	//Send and clear the buffer
 	m_socket.SendLooped(&m_sendbuf[0], m_sendbuf.size());
 	m_sendbuf.clear();
-}
-
-/**
-	@brief Sends a string to a socket
-
-	@throw JtagException if the string is >65535 bytes or the socket operation fails
-
-	@param fd		Socket handle
-	@param str		String to send
- */
-void NetworkedJtagInterface::SendString(int fd, std::string str)
-{
-	if(str.length() > 65535)
-	{
-		throw JtagExceptionWrapper(
-			"SendString() requires input <64KB",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
-	}
-
-	uint16_t len = str.length();
-	write_looped(fd, (unsigned char*)&len, 2);
-	write_looped(fd, (unsigned char*)str.c_str(), len);
-}
-
-/**
-	@brief Reads a string from a socket
-
-	@throw JtagException if the socket operation fails
-
-	@param fd		Socket handle
-	@param str		String to store the result into
- */
-void NetworkedJtagInterface::RecvString(int fd, std::string& str)
-{
-	uint16_t len;
-	read_looped(fd, (unsigned char*)&len, 2);
-	int32_t tlen = len + 1;		//use larger int to avoid risk of overflow if str len == 65535
-	char* rbuf = new char[tlen];
-	read_looped(fd, (unsigned char*)rbuf, len);
-	rbuf[len] = 0;				//recv string is not null terminated
-	str = rbuf;
-	delete[] rbuf;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Handy wrappers
-
-/**
-	@brief Reads exactly the requested number of bytes from a socket, issuing multiple reads if necessary
-
-	@throw JtagException if the socket operation fails
-
-	@param fd		Socket handle
-	@param buf		Buffer to store the data into
-	@param count	Number of bytes to read
- */
-int NetworkedJtagInterface::read_looped(int fd, unsigned char* buf, int count)
-{
-	unsigned char* p = buf;
-	int bytes_left = count;
-	int x = 0;
-	while( (x = read(fd, p, bytes_left)) > 0)
-	{
-		bytes_left -= x;
-		p += x;
-		if(bytes_left == 0)
-			break;
-	}
-
-	if(x < 0)
-	{
-		throw JtagExceptionWrapper(
-			"Read failed",
-			"",
-			JtagException::EXCEPTION_TYPE_NETWORK);
-	}
-	else if(x == 0)
-	{
-		throw JtagExceptionWrapper(
-			"Socket closed",
-			"",
-			JtagException::EXCEPTION_TYPE_NETWORK);
-	}
-	else
-		return count;
-}
-
-/**
-	@brief Writes exactly the requested number of bytes to a socket, issuing multiple writes if necessary
-
-	@throw JtagException if the socket operation fails
-
-	@param fd		Socket handle
-	@param buf		Buffer to send
-	@param count	Number of bytes to send
- */
-int NetworkedJtagInterface::write_looped(int fd, const unsigned char* buf, int count)
-{
-	const unsigned char* p = buf;
-	int bytes_left = count;
-	int x = 0;
-	while( (x = write(fd, p, bytes_left)) > 0)
-	{
-		bytes_left -= x;
-		p += x;
-		if(bytes_left == 0)
-			break;
-	}
-
-	if(x < 0)
-	{
-		throw JtagExceptionWrapper(
-			"Write failed",
-			"",
-			JtagException::EXCEPTION_TYPE_NETWORK);
-	}
-	else if(x == 0)
-	{
-		throw JtagExceptionWrapper(
-			"Socket closed",
-			"",
-			JtagException::EXCEPTION_TYPE_NETWORK);
-	}
-	else
-		return count;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

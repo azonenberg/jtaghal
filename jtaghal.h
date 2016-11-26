@@ -76,9 +76,10 @@
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Utility/helper stuff
+// Miscellaneous utilities from other libraries we use
 
 #include "../log/log.h"
+#include "../xptools/Socket.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File handle stuff
@@ -95,9 +96,6 @@
 //Error handling
 #include "JtagException.h"
 
-//General helpers
-//#include "Socket.h"
-
 //Base interfaces
 #include "GPIOInterface.h"
 #include "JtagDevice.h"
@@ -106,26 +104,24 @@
 //JTAG adapter drivers
 #include "DigilentJtagInterface.h"
 #include "FTDIJtagInterface.h"
-/*
 #include "NetworkedJtagInterface.h"
-#include "NocJtagInterface.h"
+//#include "NocJtagInterface.h"
 
 //Device classes
-#include "FPGA.h"
-#include "CPLD.h"
-*/
+//#include "FPGA.h"
+//#include "CPLD.h"
+
 //Debugging stuff
 #include "DebuggableDevice.h"
 #include "DebuggerInterface.h"
-/*
-//NoC classes
-#include "RPCMessage.h"
-#include "NameServer.h"
-#include "NOCSwitchInterface.h"
+
+//NoC classes (TODO move to antikernel repo or something?)
+//#include "RPCMessage.h"
+//#include "NameServer.h"
+//#include "NOCSwitchInterface.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global functions
-*/
 
 //Byte manipulation
 extern "C" bool PeekBit(const unsigned char* data, int nbit);

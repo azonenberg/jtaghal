@@ -36,9 +36,6 @@
 #ifndef NetworkedJtagInterface_h
 #define NetworkedJtagInterface_h
 
-#include "JtagInterface.h"
-#include <math.h>
-
 /**
 	@brief Thin wrapper around TCP sockets for talking to a jtagd instance
 
@@ -79,12 +76,6 @@ public:
 	virtual void EnterShiftDR();
 	virtual void LeaveExit1DR();
 	virtual void ResetToIdle();
-
-	//Socket wrappers (used server-side too)
-	static int read_looped(int fd, unsigned char* buf, int count);
-	static int write_looped(int fd, const unsigned char* buf, int count);
-	static void SendString(int fd, std::string str);
-	static void RecvString(int fd, std::string& str);
 
 	//GPIO stuff
 	virtual void ReadGpioState();
