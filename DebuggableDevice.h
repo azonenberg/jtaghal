@@ -38,19 +38,19 @@
 
 /**
 	@brief Generic base class for all debuggable devices (MCUs etc)
-	
+
 	\ingroup libjtaghal
  */
 class DebuggableDevice
 {
 public:
 	virtual ~DebuggableDevice();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 
 	virtual std::string GetDescription() =0;
-	
+
 };
 
 #endif

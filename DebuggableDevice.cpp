@@ -40,5 +40,5 @@ using namespace std;
 
 DebuggableDevice::~DebuggableDevice()
 {
-	
+
 }

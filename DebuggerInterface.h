@@ -42,31 +42,31 @@ class DebuggableDevice;
 
 /**
 	@brief Generic base class for all debugger interfaces (may connect to multiple DebuggableDevice's in a SoC)
-	
+
 	\ingroup libjtaghal
  */
 class DebuggerInterface
 {
 public:
 	virtual ~DebuggerInterface();
-	
+
 	///Returns the number of DebuggableDevice's attached to this debugger
 	virtual size_t GetNumTargets();
-	
+
 	///Returns a specific DebuggableDevice
-	virtual DebuggableDevice* GetTarget(size_t i); 
-	
+	virtual DebuggableDevice* GetTarget(size_t i);
+
 	///Adds a new debuggable device to this interface (called during topology discovery)
 	void AddTarget(DebuggableDevice* target);
-	
+
 	///Read a single 32-bit word of memory (TODO support smaller sizes)
 	virtual uint32_t ReadMemory(uint32_t address) =0;
-	
+
 	///Writes a single 32-bit word of memory (TODO support smaller sizes)
 	virtual void WriteMemory(uint32_t address, uint32_t value) =0;
-	
+
 protected:
-	
+
 	///The devices (NOT automatically deleted at destruction time)
 	std::vector<DebuggableDevice*> m_targets;
 };

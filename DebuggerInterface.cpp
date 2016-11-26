@@ -43,7 +43,7 @@ using namespace std;
 
 DebuggerInterface::~DebuggerInterface()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ DebuggableDevice* DebuggerInterface::GetTarget(size_t i)
 {
 	if(i >= m_targets.size())
 		return NULL;
-		
+
 	return m_targets[i];
 }
 
