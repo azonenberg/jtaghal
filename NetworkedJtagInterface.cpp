@@ -58,9 +58,9 @@ NetworkedJtagInterface::NetworkedJtagInterface()
 
 /**
 	@brief Connects to a jtagd server.
-	
+
 	@throw JtagException if the connection could not be established
-	
+
 	@param server	Hostname of the server to connect to
 	@param port		Port number (in host byte ordering) the server is running on
  */
@@ -68,7 +68,7 @@ void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
 {
 	//Connect to the port
 	m_socket.Connect(server, port);
-		
+
 	//Set no-delay flag
 	int flag = 1;
 	if(0 != setsockopt((int)m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ))
@@ -78,7 +78,7 @@ void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
 			"",
 			JtagException::EXCEPTION_TYPE_NETWORK);
 	}
-	
+
 	//All good, query the GPIO stats
 	if(IsGPIOCapable())
 	{
@@ -86,13 +86,13 @@ void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
 		m_socket.SendLooped((unsigned char*)&op, 1);
 		uint8_t pincount;
 		m_socket.RecvLooped(&pincount, 1);
-		
+
 		for(int i=0; i<pincount; i++)
 		{
 			m_gpioValue.push_back(false);
 			m_gpioDirection.push_back(false);
 		}
-		
+
 		//Load the GPIO pin state from the server
 		ReadGpioState();
 	}
@@ -172,9 +172,9 @@ int NetworkedJtagInterface::GetFrequency()
 void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
 {
 	double start = GetTime();
-	
+
 	int bytesize =  ceil(count / 8.0f);
-	
+
 	//Send the opcode and data
 	uint8_t op = JTAGD_OP_SHIFT_DATA;
 	if(rcv_data == NULL)
@@ -186,11 +186,11 @@ void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_
 	BufferedSend((unsigned char*)&c, 4);
 	BufferedSend(send_data, bytesize);
 	SendFlush();
-	
+
 	//Read response data
 	if(rcv_data != NULL)
 		m_socket.RecvLooped(rcv_data, bytesize);
-		
+
 	m_perfShiftTime += GetTime() - start;
 }
 
@@ -206,9 +206,9 @@ bool NetworkedJtagInterface::IsSplitScanSupported()
 bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
 {
 	double start = GetTime();
-	
+
 	int bytesize =  ceil(count / 8.0f);
-	
+
 	//Send the opcode and data
 	uint8_t op = JTAGD_OP_SHIFT_DATA_WRITE_ONLY;
 	BufferedSend((unsigned char*)&op, 1);
@@ -222,11 +222,11 @@ bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned ch
 	BufferedSend((unsigned char*)&want_response, 1);
 	BufferedSend(send_data, bytesize);
 	SendFlush();
-	
+
 	//Read status byte
 	uint8_t status;
 	m_socket.RecvLooped(&status, 1);
-	
+
 	//0 = OK, 1 = deferred, negative = failure
 	switch(status)
 	{
@@ -236,12 +236,12 @@ bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned ch
 			m_socket.RecvLooped(rcv_data, bytesize);
 		m_perfShiftTime += GetTime() - start;
 		return false;
-		
+
 	case 1:
 		//Read was deferred
 		m_perfShiftTime += GetTime() - start;
 		return true;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"ShiftDataWriteOnly() failed server-side",
@@ -255,34 +255,34 @@ bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int coun
 {
 	if(rcv_data == NULL)
 		return true;
-	
+
 	double start = GetTime();
 	int bytesize =  ceil(count / 8.0f);
-	
+
 	//Send the opcode and length
 	uint8_t op = JTAGD_OP_SHIFT_DATA_READ_ONLY;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 	uint32_t c = count;
 	m_socket.SendLooped((unsigned char*)&c, 4);
-	
+
 	//Read back
 	uint8_t status;
 	m_socket.RecvLooped(&status, 1);
-	
+
 	//0 = already done, 1 = deferred, negative = failure
 	switch(status)
 	{
 	case 0:
 		//read is done already
 		return true;
-		
+
 	case 1:
 		//Read was deferred so read it now
 		if(rcv_data != NULL)
 			m_socket.RecvLooped(rcv_data, bytesize);
 		m_perfShiftTime += GetTime() - start;
 		return false;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"ShiftDataWriteOnly() failed server-side",
@@ -303,25 +303,25 @@ void NetworkedJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_
 void NetworkedJtagInterface::SendDummyClocks(int n)
 {
 	double start = GetTime();
-	
+
 	uint8_t op = JTAGD_OP_DUMMY_CLOCK;
 	BufferedSend((unsigned char*)&op, 1);
 	uint32_t c = n;
 	BufferedSend((unsigned char*)&c, 4);
 	Commit();
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
 void NetworkedJtagInterface::SendDummyClocksDeferred(int n)
 {
 	double start = GetTime();
-	
+
 	uint8_t op = JTAGD_OP_DUMMY_CLOCK_DEFERRED;
 	BufferedSend((unsigned char*)&op, 1);
 	uint32_t c = n;
 	BufferedSend((unsigned char*)&c, 4);
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
@@ -366,7 +366,7 @@ void NetworkedJtagInterface::Commit()
 	uint8_t op = JTAGD_OP_COMMIT;
 	BufferedSend((unsigned char*)&op, 1);
 	SendFlush();
-	
+
 	//Wait for an ACK packet (single 0x00) to come back
 	uint8_t dummy;
 	m_socket.RecvLooped(&dummy, 1);
@@ -381,9 +381,9 @@ void NetworkedJtagInterface::SendFlush()
 
 /**
 	@brief Sends a string to a socket
-	
+
 	@throw JtagException if the string is >65535 bytes or the socket operation fails
-	
+
 	@param fd		Socket handle
 	@param str		String to send
  */
@@ -396,7 +396,7 @@ void NetworkedJtagInterface::SendString(int fd, std::string str)
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-		
+
 	uint16_t len = str.length();
 	write_looped(fd, (unsigned char*)&len, 2);
 	write_looped(fd, (unsigned char*)str.c_str(), len);
@@ -404,9 +404,9 @@ void NetworkedJtagInterface::SendString(int fd, std::string str)
 
 /**
 	@brief Reads a string from a socket
-	
+
 	@throw JtagException if the socket operation fails
-	
+
 	@param fd		Socket handle
 	@param str		String to store the result into
  */
@@ -427,9 +427,9 @@ void NetworkedJtagInterface::RecvString(int fd, std::string& str)
 
 /**
 	@brief Reads exactly the requested number of bytes from a socket, issuing multiple reads if necessary
-	
+
 	@throw JtagException if the socket operation fails
-	
+
 	@param fd		Socket handle
 	@param buf		Buffer to store the data into
 	@param count	Number of bytes to read
@@ -446,7 +446,7 @@ int NetworkedJtagInterface::read_looped(int fd, unsigned char* buf, int count)
 		if(bytes_left == 0)
 			break;
 	}
-	
+
 	if(x < 0)
 	{
 		throw JtagExceptionWrapper(
@@ -467,9 +467,9 @@ int NetworkedJtagInterface::read_looped(int fd, unsigned char* buf, int count)
 
 /**
 	@brief Writes exactly the requested number of bytes to a socket, issuing multiple writes if necessary
-	
+
 	@throw JtagException if the socket operation fails
-	
+
 	@param fd		Socket handle
 	@param buf		Buffer to send
 	@param count	Number of bytes to send
@@ -486,7 +486,7 @@ int NetworkedJtagInterface::write_looped(int fd, const unsigned char* buf, int c
 		if(bytes_left == 0)
 			break;
 	}
-	
+
 	if(x < 0)
 	{
 		throw JtagExceptionWrapper(
@@ -571,7 +571,7 @@ void NetworkedJtagInterface::ReadGpioState()
 {
 	uint8_t op = JTAGD_OP_READ_GPIO_STATE;
 	m_socket.SendLooped((unsigned char*)&op, 1);
-	
+
 	int count = m_gpioDirection.size();
 	uint8_t* buf = new uint8_t[count];
 	m_socket.RecvLooped(buf, count);
@@ -588,7 +588,7 @@ void NetworkedJtagInterface::WriteGpioState()
 {
 	uint8_t op = JTAGD_OP_WRITE_GPIO_STATE;
 	m_socket.SendLooped((unsigned char*)&op, 1);
-	
+
 	int count = m_gpioDirection.size();
 	vector<uint8_t> pinstates;
 	for(int i=0; i<count; i++)

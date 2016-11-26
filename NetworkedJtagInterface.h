@@ -32,7 +32,7 @@
 	@author Andrew D. Zonenberg
 	@brief Declaration of NetworkedJtagInterface
  */
- 
+
 #ifndef NetworkedJtagInterface_h
 #define NetworkedJtagInterface_h
 
@@ -41,7 +41,7 @@
 
 /**
 	@brief Thin wrapper around TCP sockets for talking to a jtagd instance
-	
+
 	\ingroup libjtaghal
  */
 class NetworkedJtagInterface
@@ -51,61 +51,61 @@ class NetworkedJtagInterface
 public:
 	NetworkedJtagInterface();
 	virtual ~NetworkedJtagInterface();
-	
+
 	void Connect(const std::string& server, uint16_t port);
 
 	static std::string GetAPIVersion();
 	static int GetInterfaceCount();
-	
+
 	//Setup stuff
 	virtual std::string GetName();
 	virtual std::string GetSerial();
 	virtual std::string GetUserID();
 	virtual int GetFrequency();
-	
+
 	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);	
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
 	virtual void SendDummyClocks(int n);
 	virtual void SendDummyClocksDeferred(int n);
 	virtual void Commit();
 	virtual bool IsSplitScanSupported();
 	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
 	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, int count);
-	
+
 	//Mid level JTAG interface
 	virtual void TestLogicReset();
 	virtual void EnterShiftIR();
 	virtual void LeaveExit1IR();
 	virtual void EnterShiftDR();
 	virtual void LeaveExit1DR();
-	virtual void ResetToIdle();	
-	
+	virtual void ResetToIdle();
+
 	//Socket wrappers (used server-side too)
 	static int read_looped(int fd, unsigned char* buf, int count);
 	static int write_looped(int fd, const unsigned char* buf, int count);
 	static void SendString(int fd, std::string str);
 	static void RecvString(int fd, std::string& str);
-	
+
 	//GPIO stuff
 	virtual void ReadGpioState();
 	virtual void WriteGpioState();
 	bool IsGPIOCapable();
-	
+
 	//Explicit TMS shifting is no longer allowed, only state-level interface
 private:
 	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count);
-	
+
 protected:
-	
+
 	/// Our socket
 	Socket m_socket;
-	
+
 	virtual size_t GetShiftOpCount();
 	virtual size_t GetRecoverableErrorCount();
 	virtual size_t GetDataBitCount();
 	virtual size_t GetModeBitCount();
 	virtual size_t GetDummyClockCount();
-	
+
 	void BufferedSend(const unsigned char* buf, int count);
 	void SendFlush();
 	std::vector<unsigned char> m_sendbuf;
