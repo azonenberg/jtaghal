@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "FPGA.h"
 
 /**
 	@brief Empty virtual destructor
