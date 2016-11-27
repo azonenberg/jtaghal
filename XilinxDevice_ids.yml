@@ -27,54 +27,22 @@
 #                                                                                                                      #
 ########################################################################################################################
 
-jtaghal:
-    toolchain:      c++/generic
-    type:           shlib
+# Table of JEDEC vendor IDs
+XilinxDeviceID:
+    base: hex
+    width: 8
 
-    constants:
+    values:
 
-        # NetworkedJtagInterface/jtagd protocol
-        jtagd_opcodes.yml:
-            - c/enum
+        # CoolRunner-II devices (two IDs for one family, weird)
+        XILINX_FAMILY_CR2_A:        36
+        XILINX_FAMILY_CR2_B:        37
 
-        # JEDEC-standardized vendor IDs
-        JedecVendorIDs.yml:
-            - c/enum
+        # 3rd generation devices
+        XILINX_FAMILY_SPARTAN3A:    11
 
-        # Vendor-specific part IDs
-        XilinxDevice_ids.yml:
-            - c/enum
+        # 6th generation devices
+        XILINX_FAMILY_SPARTAN6:     20
 
-    sources:
-
-        # Core infrastructure
-        - jtaghal.cpp
-        - JtagException.cpp
-
-        # Device base classes
-        - DebuggableDevice.cpp
-        - JtagDevice.cpp
-
-        # Interface base classes
-        - DebuggerInterface.cpp
-        - GPIOInterface.cpp
-        - JtagInterface.cpp
-
-        # Vendor base classes
-        - XilinxDevice.cpp
-
-        # Adapters
-        - DigilentJtagInterface.cpp
-        - FTDIJtagInterface.cpp
-        - NetworkedJtagInterface.cpp
-
-    flags:
-        - global
-        - output/reloc
-        - library/target/log
-        - library/target/xptools
-        #- library/required/crypto++
-        - library/optional/pthread
-        - library/optional/ws2_32
-        - library/optional/ftd2xx
-        - library/optional/djtg
+        # 7th generation devices
+        XILINX_FAMILY_7SERIES:      1b

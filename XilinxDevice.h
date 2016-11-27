@@ -36,22 +36,6 @@
 #ifndef XilinxDevice_h
 #define XilinxDevice_h
 
-///JTAG family code for Spartan-3A
-#define XILINX_FAMILY_SPARTAN3A  	0x11
-
-///JTAG family code for Spartan-6
-#define XILINX_FAMILY_SPARTAN6  	0x20
-
-///JTAG family code for CoolRunner-II devices
-///(both values are possible)
-#define XILINX_FAMILY_CR2_A			0x36
-#define XILINX_FAMILY_CR2_B			0x37
-
-///JTAG family code for 7-series devices
-#define XILINX_FAMILY_7SERIES		0x1b
-
-#include "JtagDevice.h"
-
 /**
 	@brief Abstract base class for all Xilinx devices (FPGA, CPLD, flash, etc)
 

@@ -34,7 +34,7 @@
  */
 
 #include "jtaghal.h"
-#include "jedec_vendor_id_enum.h"
+#include "JEDECVendorID_enum.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -73,7 +73,7 @@ JtagDevice::~JtagDevice()
 
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
-JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* /*iface*/, size_t /*pos*/)
+JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//Rightmost bit is always a zero, ignore it
 	unsigned int idcode_s = idcode >> 1;

@@ -111,6 +111,11 @@
 //#include "FPGA.h"
 //#include "CPLD.h"
 
+//Vendor classes
+#include "XilinxDevice.h"
+
+//Vendor device classes
+
 //Debugging stuff
 #include "DebuggableDevice.h"
 #include "DebuggerInterface.h"

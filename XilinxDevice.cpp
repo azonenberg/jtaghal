@@ -34,6 +34,8 @@
  */
 
 #include "jtaghal.h"
+#include "JEDECVendorID_enum.h"
+#include "XilinxDeviceID_enum.h"
 
 using namespace std;
 
@@ -73,7 +75,6 @@ XilinxDevice::~XilinxDevice()
  */
 JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
-	/*
 	//Save the original ID code to give to the derived class
 	unsigned int idcode_raw = idcode;
 
@@ -103,7 +104,7 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 	//Create the device
 	switch(family)
 	{
-	case XILINX_FAMILY_SPARTAN3A:
+	/*case XILINX_FAMILY_SPARTAN3A:
 		return XilinxSpartan3ADevice::CreateDevice(arraysize, rev, idcode_raw, iface, pos);
 
 	case XILINX_FAMILY_SPARTAN6:
@@ -115,14 +116,12 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 
 	case XILINX_FAMILY_7SERIES:
 		return Xilinx7SeriesDevice::CreateDevice(arraysize, rev, idcode_raw, iface, pos);
-
+	*/
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown family ID - probably not yet supported",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
-	*/
 	return NULL;
 }
 
