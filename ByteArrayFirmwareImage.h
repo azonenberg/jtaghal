@@ -41,7 +41,7 @@
 
 /**
 	@brief Generic base class for all firmware images consisting of an array of bytes
-	
+
 	\ingroup libjtaghal
  */
 class ByteArrayFirmwareImage : public FirmwareImage
@@ -49,10 +49,10 @@ class ByteArrayFirmwareImage : public FirmwareImage
 public:
 	ByteArrayFirmwareImage();
 	virtual ~ByteArrayFirmwareImage();
-	
+
 	///Raw (header-less) bitstream data ready for sending to the device
 	unsigned char* raw_bitstream;
-	
+
 	///Length of the raw bitstream, in bytes
 	size_t raw_bitstream_len;
 };
