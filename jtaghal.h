@@ -143,6 +143,9 @@ extern "C" void FlipBitAndEndian32Array(unsigned char* data, int len);
 
 extern "C" void MirrorBitArray(unsigned char* data, int bitlen);
 
+extern "C" uint16_t GetBigEndianUint16FromByteArray(const unsigned char* data, size_t offset);
+extern "C" uint32_t GetBigEndianUint32FromByteArray(const unsigned char* data, size_t offset);
+
 //Performance measurement
 extern "C" double GetTime();
 

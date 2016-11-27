@@ -234,6 +234,35 @@ void FlipBitAndEndian32Array(unsigned char* data, int len)
 	FlipBitArray(data, len);
 }
 
+
+/**
+	@brief Casts (data+offset) to a uint16_t and dereferences it with big-endian ordering.
+
+	Byte-level accesses are used to ensure safety for machines requiring aligned access to words.
+ */
+uint16_t GetBigEndianUint16FromByteArray(const unsigned char* data, size_t offset)
+{
+	return
+		(static_cast<uint16_t>(data[offset]) << 8) |
+		static_cast<uint16_t>(data[offset+1]);
+}
+
+/**
+	@brief Casts (data+offset) to a uint32_t and dereferences it with big-endian ordering.
+
+	Byte-level accesses are used to ensure safety for machines requiring aligned access to words.
+ */
+uint32_t GetBigEndianUint32FromByteArray(const unsigned char* data, size_t offset)
+{
+	return
+		(static_cast<uint16_t>(data[offset]) << 24) |
+		(static_cast<uint16_t>(data[offset+1]) << 16) |
+		(static_cast<uint16_t>(data[offset+2]) << 8) |
+		static_cast<uint16_t>(data[offset+3]);
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Performance measurement
 
