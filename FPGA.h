@@ -36,11 +36,6 @@
 #ifndef FPGA_h
 #define FPGA_h
 
-#include "ProgrammableLogicDevice.h"
-#include "RPCNetworkInterface.h"
-#include "DMANetworkInterface.h"
-#include "FPGABitstream.h"
-
 /**
 	@brief Generic base class for all field-programmable gate array devices
 
