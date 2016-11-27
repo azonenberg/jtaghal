@@ -41,7 +41,7 @@
 
 /**
 	@brief Abstract base class for FPGA configuration bitstreams
-	
+
 	\ingroup libjtaghal
  */
 class FPGABitstream : public ByteArrayFirmwareImage

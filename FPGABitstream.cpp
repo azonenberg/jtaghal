@@ -42,7 +42,7 @@
  */
 FPGABitstream::FPGABitstream()
 {
-	
+
 }
 
 /**
