@@ -41,10 +41,9 @@
 
 	\ingroup libjtaghal
  */
-class XilinxDevice : public JtagDevice
+class XilinxDevice
 {
 public:
-	XilinxDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
 	virtual ~XilinxDevice();
 
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);

@@ -43,18 +43,6 @@ using namespace std;
 // Construction / destruction
 
 /**
-	@brief Initializes this device
-
-	@param idcode	The ID code of this device
-	@param iface	The JTAG adapter this device was discovered on
-	@param pos		Position in the chain that this device was discovered
- */
-XilinxDevice::XilinxDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
-: JtagDevice(idcode, iface, pos)
-{
-}
-
-/**
 	@brief Default virtual destructor
  */
 XilinxDevice::~XilinxDevice()
