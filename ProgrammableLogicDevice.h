@@ -42,7 +42,7 @@
 
 /**
 	@brief Generic base class for all programmable logic devices (FPGA and CPLD)
-	
+
 	\ingroup libjtaghal
  */
 class ProgrammableLogicDevice : public ProgrammableDevice

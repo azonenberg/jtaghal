@@ -38,5 +38,5 @@
 
 ProgrammableLogicDevice::~ProgrammableLogicDevice()
 {
-	
+
 }
