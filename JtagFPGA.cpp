@@ -30,130 +30,32 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Main library include file
+	@brief Implementation of JtagFPGA
  */
 
-#ifndef jtaghal_h
-#define jtaghal_h
+#include "jtaghal.h"
+
+using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System headers
+// Construction / destruction
 
-#define __STDC_FORMAT_MACROS
+/**
+	@brief Initializes this device
 
-//Shared
-#include <inttypes.h>
+	@param idcode	The ID code of this device
+	@param iface	The JTAG adapter this device was discovered on
+	@param pos		Position in the chain that this device was discovered
+ */
+JtagFPGA::JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos)
+: JtagDevice(idcode, iface, pos)
+{
+}
 
-#ifdef _WIN32
+/**
+	@brief Default virtual destructor
+ */
+JtagFPGA::~JtagFPGA()
+{
 
-//Windows
-#include <ws2tcpip.h>
-#include <windows.h>
-
-#else
-
-//POSIX
-#include <unistd.h>
-#include <stdint.h>
-#include <errno.h>
-
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// libc headers
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <memory.h>
-#include <time.h>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// libstdc++ headers
-
-#include <map>
-#include <string>
-#include <vector>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Miscellaneous utilities from other libraries we use
-
-#include "../log/log.h"
-#include "../xptools/Socket.h"
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// File handle stuff
-
-#ifdef _WIN32
-	#define ZFILE_DESCRIPTOR HANDLE
-#else
-	#define ZFILE_DESCRIPTOR int
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Class includes
-
-//Error handling
-#include "JtagException.h"
-
-//Base interfaces
-#include "GPIOInterface.h"
-#include "JtagDevice.h"
-#include "JtagInterface.h"
-
-//JTAG adapter drivers
-#include "DigilentJtagInterface.h"
-#include "FTDIJtagInterface.h"
-#include "NetworkedJtagInterface.h"
-//#include "NocJtagInterface.h"
-
-//Programmable device helpers
-#include "FirmwareImage.h"
-#include "ByteArrayFirmwareImage.h"
-
-//Device classes
-#include "ProgrammableDevice.h"
-#include "ProgrammableLogicDevice.h"
-#include "FPGA.h"
-#include "JtagFPGA.h"
-//#include "CPLD.h"
-
-//Vendor classes
-#include "XilinxDevice.h"
-
-//Vendor device classes
-
-//Debugging stuff
-#include "DebuggableDevice.h"
-#include "DebuggerInterface.h"
-
-//NoC classes (TODO move to antikernel repo or something?)
-//#include "RPCMessage.h"
-//#include "NameServer.h"
-//#include "NOCSwitchInterface.h"
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Global functions
-
-//Byte manipulation
-extern "C" bool PeekBit(const unsigned char* data, int nbit);
-extern "C" void PokeBit(unsigned char* data, int nbit, bool val);
-extern "C" unsigned char FlipByte(unsigned char c);
-
-//Array manipulation
-extern "C" void FlipByteArray(unsigned char* data, int len);
-extern "C" void FlipBitArray(unsigned char* data, int len);
-extern "C" void FlipEndianArray(unsigned char* data, int len);
-extern "C" void FlipEndian32Array(unsigned char* data, int len);
-extern "C" void FlipBitAndEndianArray(unsigned char* data, int len);
-extern "C" void FlipBitAndEndian32Array(unsigned char* data, int len);
-
-extern "C" void MirrorBitArray(unsigned char* data, int bitlen);
-
-extern "C" uint16_t GetBigEndianUint16FromByteArray(const unsigned char* data, size_t offset);
-extern "C" uint32_t GetBigEndianUint32FromByteArray(const unsigned char* data, size_t offset);
-
-//Performance measurement
-extern "C" double GetTime();
-
-#endif
+}

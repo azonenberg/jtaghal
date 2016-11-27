@@ -61,6 +61,7 @@ jtaghal:
         - ProgrammableLogicDevice.cpp
         - JtagDevice.cpp
         - FPGA.cpp
+        - JtagFPGA.cpp
 
         # Interfaces
         - DebuggerInterface.cpp
