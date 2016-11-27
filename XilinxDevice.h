@@ -57,7 +57,7 @@
 
 /**
 	@brief Abstract base class for all Xilinx devices (FPGA, CPLD, flash, etc)
-	
+
 	\ingroup libjtaghal
  */
 class XilinxDevice : public JtagDevice
@@ -67,7 +67,7 @@ public:
 	virtual ~XilinxDevice();
 
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-	
+
 	//TODO: Move this to other class? Need to find a good spot for it
 	static uint16_t GetBigEndianUint16FromByteArray(const unsigned char* data, size_t offset);
 	static uint32_t GetBigEndianUint32FromByteArray(const unsigned char* data, size_t offset);
