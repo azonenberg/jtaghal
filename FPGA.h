@@ -92,61 +92,6 @@ public:
 		GetSerialNumberLength().
 	 */
 	virtual void GetSerialNumber(unsigned char* data) =0;
-
-	/**
-		@brief Determines if this FPGA is currently loaded with a bitstream that exposes an RPC network interface.
-
-		ProbeVirtualTAPs() must be called before this function is called or the behavior is undefined. If the FPGA is
-		reconfigured, ProbeVirtualTAPs() must be called again to determine if the new bitstream exposes any NoC
-		interfaces.
-
-		@return true if RPC interface is available, false if not
-	 */
-	virtual bool HasRPCInterface() =0;
-
-	/**
-		@brief Determines if this FPGA is currently loaded with a bitstream that exposes a DMA network interface.
-
-		ProbeVirtualTAPs() must be called before this function is called or the behavior is undefined. If the FPGA is
-		reconfigured, ProbeVirtualTAPs() must be called again to determine if the new bitstream exposes any NoC
-		interfaces.
-
-		@return true if DMAinterface is available, false if not
-	 */
-	virtual bool HasDMAInterface() =0;
-
-	/**
-		@brief Gets the FPGA's RPC network interface.
-
-		The behavior of this function if HasRPCInterface() returns false is undefined.
-
-		@return Pointer to an RPCNetworkInterface object
-	 */
-	virtual RPCNetworkInterface* GetRPCNetworkInterface();
-
-	/**
-		@brief Gets the FPGA's DMA network interface.
-
-		The behavior of this function if HasDMAInterface() returns false is undefined.
-
-		@return Pointer to an DMANetworkInterface object
-	 */
-	virtual DMANetworkInterface* GetDMANetworkInterface();
-
-	/**
-		@brief Probes the FPGA for NoC interfaces.
-
-		WARNING: The exact implementation of this function is implementation-defined but normally involves scanning
-		a user-defined data register. If the FPGA is currently loaded with a bitstream that uses the custom JTAG
-		registers for something other than a NoC interface (such as firmware updates) this may result in the design
-		receiving invalid input and malfunctioning with potentially catastrophic results.
-
-		When connecting to a completely unknown board, if it is not known whether the user-defined instructions are
-		in use, it may be advisable to avoid using this function.
-
-		@throw JtagException if the scan operation fails
-	 */
-	virtual void ProbeVirtualTAPs() =0;
 };
 
 #endif
