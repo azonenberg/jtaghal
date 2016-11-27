@@ -55,7 +55,7 @@ using namespace std;
 
 /**
 	@brief Initializes this device
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
@@ -84,33 +84,33 @@ XilinxFPGA::~XilinxFPGA()
 
 /**
 	@brief Parse a bitstream image (common to all Xilinx devices)
-		
+
 	@throw JtagException if the bitstream is malformed or for the wrong device family
-		
+
 	@param data			Pointer to the bitstream data
 	@param len			Length of the bitstream
 	@param bVerbose		Set to true for verbose debug output on bitstream internals
-	
+
 	@return A bitstream suitable for loading into this device
  */
 FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t len, bool bVerbose)
 {
 	XilinxFPGABitstream* bitstream = new XilinxFPGABitstream;
-	
+
 	//TODO: Some kind of ID code in FPGABitstream object so we can tell what type it is?
-	
+
 	/**
 		Bitstream format
-		
+
 		13 unknown bytes (magic number?)			00 09 0f f0 0f f0 0f f0 0f f0 00 00 01
 		Records
 			Record type (1 byte, lowercase letter)
 			Null byte
 			Record length (1 byte)
 	 */
-	 
+
 	//Sanity check the first few bytes
-	unsigned char magic[13] = 
+	unsigned char magic[13] =
 	{
 		0x00, 0x09, 0x0f, 0xf0, 0x0f, 0xf0, 0x0f, 0xf0, 0x0f, 0xf0, 0x00, 0x00, 0x01
 	};
@@ -121,7 +121,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Make sure it's larger than 4KB (no valid bitstream is that small, and it means we don't need to length-check
 	//the headers as much
 	if(len < 4096)
@@ -131,16 +131,16 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	size_t fpos = sizeof(magic);
-	
+
 	//Read records
 	while(true)
 	{
 		unsigned char record_type = data[fpos++];
 		fpos++;	//throw away the null
 		unsigned char record_length = data[fpos++];
-		
+
 		switch(record_type)
 		{
 			//Human-readable bitstream description
@@ -158,7 +158,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 					}
 				}
 				break;
-				
+
 			//Device name (minus the "XC")
 			case 'b':
 				{
@@ -174,7 +174,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 					}
 				}
 				break;
-				
+
 			//Compilation date
 			case 'c':
 				{
@@ -190,7 +190,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 					}
 				}
 				break;
-				
+
 			//Compilation time:
 			case 'd':
 				{
@@ -206,7 +206,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 					}
 				}
 				break;
-			
+
 			//Unknown
 			case 'e':
 				{
@@ -222,29 +222,29 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 					}
 				}
 				break;
-		
+
 			default:
 				//no idea
 				return NULL;
 		}
-		
+
 		if(record_type == 'e')
 			break;
 	}
-	
+
 	//It appears that Spartan-3A bitstreams have some junk here, skip it.
 	if(bitstream->devname.find("3s") != string::npos)
 		fpos += 2;
-	
+
 	//Search for the sync word
 	//Should be all FF's, then an AA
 	if(data[fpos] != 0xff)
 	{
 		delete bitstream;
-		
+
 		printf("[XilinxFPGA] Expected 0xFF filler at end of bitstream headers (position 0x%x), found 0x%02x instead\n",
 			(int)fpos, data[fpos]);
-		
+
 		throw JtagExceptionWrapper(
 			"Expected 0xFF filler at end of bitstream headers, found something else instead",
 			"",
@@ -258,13 +258,13 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 	if(fpos == len)
 	{
 		delete bitstream;
-		
+
 		throw JtagExceptionWrapper(
 			"Unexpected end of bitstream found",
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Call the derived class function to read the bulk bitstream data
 	return ParseBitstreamInternals(data, len, bitstream, fpos, bVerbose);
 }
@@ -292,7 +292,7 @@ void XilinxFPGA::ProgramIndirect(
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Get the flash size
 	RPCMessage rxm;
 	RPCAndDMANetworkInterface* iface = dynamic_cast<RPCAndDMANetworkInterface*>(this);
@@ -302,16 +302,16 @@ void XilinxFPGA::ProgramIndirect(
 	printf("    Flash size is %u KB (%u sectors)\n", size_KB, sector_count);
 
 	//Get the bitstream size
-	printf("    Programming flash with %s\n", bitstream->GetDescription().c_str());	
+	printf("    Programming flash with %s\n", bitstream->GetDescription().c_str());
 	unsigned int sectorlen = ceil(static_cast<float>(bitstream->raw_bitstream_len)/4096.0f);
 	unsigned int wordmax = ceil(static_cast<float>(bitstream->raw_bitstream_len)/4.0f);
 	printf("    Bitstream size is %.2f KB (%u words, %u 4KB sectors)\n",
 		bitstream->raw_bitstream_len / 1024.0f,
 		wordmax,
 		sectorlen);
-		
+
 	vector<unsigned int> promdata;
-	
+
 	//If it's a FPGA bitstream, add some filler before the start.
 	//Don't do this for software images etc
 	if(dynamic_cast<XilinxFPGABitstream*>(bitstream) != NULL)
@@ -319,24 +319,24 @@ void XilinxFPGA::ProgramIndirect(
 		for(unsigned int i=0; i<4; i++)
 			promdata.push_back(0xFFFFFFFF);
 	}
-	
+
 	//Add the data itself
 	for(unsigned int i=0; i<bitstream->raw_bitstream_len; i+=4)
 		promdata.push_back(GetBigEndianUint32FromByteArray(bitstream->raw_bitstream, i));
 	unsigned int nmax = promdata.size();
-		
+
 	//Add some filler at the end of the bitstream so we can safely read up to one flash page beyond (for sector writes)
 	for(unsigned int i=0; i<512; i++)
 		promdata.push_back(0xFFFFFFFF);
-		
+
 	//Flip word ordering
 	FlipEndian32Array((unsigned char*)&promdata[0], promdata.size()*4);
-		
+
 	//Actually write to the flash
 	printf("    Erasing (using design specific sector erase)...\n");
 	for(unsigned int sec=0; sec<sectorlen; sec++)
 		iface->RPCFunctionCallWithTimeout(faddr, NOR_PAGE_ERASE, 0, base_address + sec*4096, 0, rxm, 5);
-		
+
 	/*
 	//Debug code: erase the whole chip and stop
 	//TODO: Make a function for doing this
@@ -344,7 +344,7 @@ void XilinxFPGA::ProgramIndirect(
 		iface->RPCFunctionCallWithTimeout(faddr, NOR_PAGE_ERASE, 0, sec*4096, 0, rxm, 5);
 	return;
 	*/
-		
+
 	printf("    Programming...\n");
 	for(unsigned int i=0; i<nmax; i+=64)
 		iface->DMAWrite(faddr, base_address + i*4, 64, &promdata[i], NOR_WRITE_DONE, NOR_OP_FAILED);
@@ -355,7 +355,7 @@ void XilinxFPGA::ProgramIndirect(
 	for(unsigned int block=0; block<(sectorlen*2); block++)
 	{
 		iface->DMARead(faddr, base_address + (block*512)*4, 512, rdata, NOR_OP_FAILED);
-		
+
 		for(unsigned int i=0; i<512; i++)
 		{
 			unsigned int n = block*512 + i;
@@ -372,13 +372,13 @@ void XilinxFPGA::ProgramIndirect(
 			}
 		}
 	}
-	
+
 	//Reset the FPGA and load the new bitstream
 	if(reboot)
 	{
 		printf("    Resetting FPGA...\n");
 		Reboot();
-		
+
 		//Wait for it to boot
 		for(int i=0; i<5; i++)
 		{
@@ -386,7 +386,7 @@ void XilinxFPGA::ProgramIndirect(
 			if(IsProgrammed())
 				return;
 		}
-		
+
 		PrintStatusRegister();
 		throw JtagExceptionWrapper(
 			"Timed out after 25 sec waiting for FPGA to boot from flash",
@@ -408,10 +408,10 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Find the correct indirect-programming image (TODO: don't hard code path - how do we get this?)
 	std::string basepath = "/nfs4/home/azonenberg/code/antikernel/trunk/splashbuild/xilinx-fpga-";
-	
+
 	if(image_fname.empty())
 	{
 		static struct
@@ -427,7 +427,7 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 			{ "Xilinx XC7A200T", "artix7-xc7a200t-1fbg676/IndirectFlash-xc7a200t-1fbg676.bit"},
 			{ "Xilinx XC7K70T",  "kintex7-xc7k70t-1fbg484/IndirectFlash-xc7k70t-1fbg484.bit"}
 		};
-		
+
 		bool found = false;
 		for(auto x : images)
 		{
@@ -438,7 +438,7 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 				break;
 			}
 		}
-		
+
 		if(!found)
 		{
 			throw JtagExceptionWrapper(
@@ -449,13 +449,13 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 	}
 	else
 		basepath = image_fname;
-	
+
 	//Load the SPI image
 	FirmwareImage* spi_image = LoadFirmwareImage(basepath);
 	printf("    Loading indirect programming image...\n");
 	Program(spi_image);
 	delete spi_image;
-	
+
 	//Verify we got something
 	ProbeVirtualTAPs();
 	if(!HasRPCInterface())
@@ -465,7 +465,7 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 			"",
 			JtagException::EXCEPTION_TYPE_FIRMWARE);
 	}
-	
+
 	RPCAndDMANetworkInterface* iface = dynamic_cast<RPCAndDMANetworkInterface*>(this);
 	if(iface == NULL)
 	{
@@ -474,7 +474,7 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, std::string imag
 			"",
 			JtagException::EXCEPTION_TYPE_FIRMWARE);
 	}
-	
+
 	//Address lookup
 	printf("    Looking up flash info\n");
 	NameServer nameserver(iface);
@@ -487,7 +487,7 @@ void XilinxFPGA::DumpIndirect(int buswidth, std::string fname)
 {
 	//Program the FPGA with the indirect bitstream
 	uint16_t faddr = LoadIndirectProgrammingImage(buswidth);
-	
+
 	//Get the flash size
 	RPCMessage rxm;
 	RPCAndDMANetworkInterface* iface = dynamic_cast<RPCAndDMANetworkInterface*>(this);
@@ -496,7 +496,7 @@ void XilinxFPGA::DumpIndirect(int buswidth, std::string fname)
 	unsigned int read_count = sector_count * 2;
 	unsigned int size_KB = rxm.data[1] / 8192;
 	printf("    Flash size is %u KB (%u sectors, %u read blocks)\n", size_KB, sector_count, read_count);
-	
+
 	//Open output file
 	FILE* fp = fopen(fname.c_str(), "wb");
 	if(fp == NULL)
@@ -506,7 +506,7 @@ void XilinxFPGA::DumpIndirect(int buswidth, std::string fname)
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Dump it
 	uint32_t rdata[512];
 	printf("    Dumping...\n");
@@ -515,7 +515,7 @@ void XilinxFPGA::DumpIndirect(int buswidth, std::string fname)
 		iface->DMARead(faddr, block*2048, 512, rdata, NOR_OP_FAILED);
 		fwrite(rdata, 512, 4,  fp);
 	}
-	
+
 	fclose(fp);
 }
 
@@ -542,7 +542,7 @@ void XilinxFPGA::OCDPush()
 	size_t base = m_ocdrxbuf.size();
 	for(size_t i=0; i<wcount; i++)
 		m_ocdrxbuf.push_back(0);
-	
+
 	//Push all pending data to the device and get stuff back
 	m_iface->ShiftData(0, (unsigned char*)m_ocdtxbuf.data(), (unsigned char*)(m_ocdrxbuf.data() + base), wcount*32);
 	m_ocdtxbuf.clear();
@@ -557,15 +557,15 @@ void XilinxFPGA::OCDPush()
 			size_t i = 0;
 			for(; (i<m_ocdrxbuf.size()) && (m_ocdrxbuf[i] == 0); i++)
 			{}
-			
+
 			//Remove them
 			m_ocdrxbuf.erase(m_ocdrxbuf.begin(), m_ocdrxbuf.begin() + i);
 		}
-		
+
 		//Stop if we don't have enough words to constitute a complete frame
 		if(m_ocdrxbuf.size() < 2)
 			break;
-		
+
 		//Next word should be a preamble. If not, ignore it.
 		if(m_ocdrxbuf[0] != JTAG_FRAME_PREAMBLE)
 		{
@@ -573,7 +573,7 @@ void XilinxFPGA::OCDPush()
 			m_ocdrxbuf.erase(m_ocdrxbuf.begin());
 			continue;
 		}
-		
+
 		//Got the preamble OK.
 		//Read the header word and see how much data we expect. If frame isn't fully received then stop now
 		uint32_t header = m_ocdrxbuf[1];
@@ -583,33 +583,33 @@ void XilinxFPGA::OCDPush()
 		unsigned int credits = header & 0x7ff;
 		if(m_ocdrxbuf.size() < (2 + len))
 			break;
-			
+
 		//Update credit count
 		if(m_credits != credits)
 			m_credits = credits;
-		
+
 		//If it's an ACK for a sent packet, process it. Allow a few packets worth of wraparound.
 		if(!m_pendingSendCounts.empty())
-		{	
+		{
 			while(!m_pendingSendCounts.empty())
 			{
 				unsigned int pseq = m_pendingSendCounts[0].first;
-				
+
 				//Packet with seq >250 should not ack packet with seq <5 due to wraparound
 				//(this limits us to ~240 packets in the pipeline)
 				if( (seq > 250) && (pseq < 5) )
 					break;
-					
+
 				//If acknowledged sequence number is >= sequence of first packet in buffer, clear it out.
 				//ACKs with small sequence numbers should cover packets with huge seq
 				if( (seq >= m_pendingSendCounts[0].first) || ((seq < 5) && (pseq > 250)) )
 					m_pendingSendCounts.erase(m_pendingSendCounts.begin());
-					
+
 				//Nothing matched, give up
 				break;
 			}
-		}		 
-			
+		}
+
 		//If it's a keepalive, don't waste buffer space... just update credits etc
 		if(type == JTAG_FRAME_TYPE_KEEPALIVE)
 		{
@@ -623,7 +623,7 @@ void XilinxFPGA::OCDPush()
 			}
 			*/
 		}
-		
+
 		//No, normal packet but we got the whole frame. Store it.
 		else
 		{
@@ -632,10 +632,10 @@ void XilinxFPGA::OCDPush()
 			frame->m_seq = seq;
 			frame->m_credits = credits;
 			for(size_t i=0; i<len; i++)
-				frame->m_data.push_back(m_ocdrxbuf[2 + i]);		
+				frame->m_data.push_back(m_ocdrxbuf[2 + i]);
 			m_ocdrxframes.push_back(frame);
 		}
-		
+
 		//Clear the fully processed frame out of the fifo no matter what it is
 		m_ocdrxbuf.erase(m_ocdrxbuf.begin(), m_ocdrxbuf.begin() + 2 + len);
 	}
@@ -651,7 +651,7 @@ void XilinxFPGA::ProbeVirtualTAPs()
 			"",
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
-	
+
 	//Flush buffers and try to synchronize
 	printf("    Synchronizing OCD link...\n");
 	ResetToIdle();
@@ -660,12 +660,12 @@ void XilinxFPGA::ProbeVirtualTAPs()
 	for(auto x : m_ocdrxframes)
 		delete x;
 	m_ocdrxframes.clear();
-	
+
 	//Get ready to do OCD operations
 	//We want to enter SHIFT-DR and stay there
 	SetOCDInstruction();
 	m_iface->EnterShiftDR();
-	
+
 	//Ask for the ID code (flush with a bunch of null words)
 	m_ocdtxbuf.push_back(JTAG_FRAME_PREAMBLE);
 	m_ocdtxbuf.push_back(JTAG_FRAME_TYPE_IDCODE << 29);	//length zero
@@ -674,7 +674,7 @@ void XilinxFPGA::ProbeVirtualTAPs()
 	for(int i=0; i<32; i++)
 		m_ocdtxbuf.push_back(0);
 	OCDPush();
-	
+
 	//Make sure we got the frame
 	if(m_ocdrxframes.empty())
 	{
@@ -682,7 +682,7 @@ void XilinxFPGA::ProbeVirtualTAPs()
 		ResetToIdle();	//don't leave bad jtag instruction if no virtual TAPs are present
 		return;
 	}
-	
+
 	//Verify it's well-formed
 	AntikernelOCDFrame* frame = m_ocdrxframes[0];
 	if(frame->m_type != JTAG_FRAME_TYPE_IDCODE)
@@ -697,7 +697,7 @@ void XilinxFPGA::ProbeVirtualTAPs()
 		m_bHasRPCInterface = true;
 		m_bHasDMAInterface = true;
 	}
-	
+
 	//Done
 	m_ocdrxframes.erase(m_ocdrxframes.begin());
 	delete frame;
@@ -718,9 +718,9 @@ unsigned int XilinxFPGA::GetActualCreditCount()
 		since that sequence number. One credit is required for the header, then N for N layer-2 data words. The preamble
 		does not use buffer space.
 	 */
-	
+
 	unsigned int credits = m_credits;
-	
+
 	for(auto x : m_pendingSendCounts)
 	{
 		//If a packet is half processed, it may double-count.
@@ -733,7 +733,7 @@ unsigned int XilinxFPGA::GetActualCreditCount()
 		else
 			credits -= x.second;
 	}
-	
+
 	return credits;
 }
 
@@ -754,29 +754,29 @@ bool XilinxFPGA::SendRPCMessageNonblocking(const RPCMessage& tx_msg)
 	//We need at least 5 credits (4 body + 1 header) free.
 	if(GetActualCreditCount() < 5)
 		return false;
-		
+
 	//Pack the message
 	uint32_t tx_buf[4];
 	tx_msg.Pack(tx_buf);
-	
+
 	//Make a note of the fact that this message has been sent
 	m_pendingSendCounts.push_back(pair<int, int>(m_sequence, 5));
-	
+
 	//Push onto transmit buffer, but don't necessarily send immediately
 	m_ocdtxbuf.push_back(JTAG_FRAME_PREAMBLE);
 	m_ocdtxbuf.push_back((JTAG_FRAME_TYPE_RPC << 29) | (4 << 19) | ( (m_sequence++) << 11) ); //credits zero for now
 	for(size_t i=0; i<4; i++)
 		m_ocdtxbuf.push_back(tx_buf[i]);
-		
+
 	//If send buffer is big, flush immediately
 	//if(m_ocdtxbuf.size() > 300)
 	//	OCDPush();
-		
+
 	return true;
 }
 
 bool XilinxFPGA::RecvRPCMessage(RPCMessage& rx_msg)
-{	
+{
 	//If nothing to receive, send a couple of nulls and try again
 	if(m_ocdrxframes.empty())
 	{
@@ -784,22 +784,22 @@ bool XilinxFPGA::RecvRPCMessage(RPCMessage& rx_msg)
 			m_ocdtxbuf.push_back(0);
 		OCDPush();
 	}
-	
+
 	//Check the FIFO
 	for(size_t i=0; i<m_ocdrxframes.size(); i++)
 	{
 		auto frame = m_ocdrxframes[i];
 		if(frame->m_type != JTAG_FRAME_TYPE_RPC)
 			continue;
-			
+
 		rx_msg.Unpack(frame->m_data.data());
-			
+
 		//Done
 		delete frame;
 		m_ocdrxframes.erase(m_ocdrxframes.begin() + i);
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -828,25 +828,25 @@ bool XilinxFPGA::SendDMAMessageNonblocking(const DMAMessage& tx_msg)
 	//We need at least N+4 credits (JTAG header word, NoC header word, two DMA header words, then data)
 	if(GetActualCreditCount() < (tx_msg.len + 4U))
 		return false;
-		
+
 	//Pack the message
 	uint32_t tx_buf[515];
 	tx_msg.Pack(tx_buf);
-	
+
 	//Make a note of the fact that this message has been sent
 	unsigned int wlen = tx_msg.len + 3;
 	m_pendingSendCounts.push_back(pair<int, int>(m_sequence, wlen));
-	
+
 	//Push onto transmit buffer, but don't necessarily send immediately
 	m_ocdtxbuf.push_back(JTAG_FRAME_PREAMBLE);
 	m_ocdtxbuf.push_back((JTAG_FRAME_TYPE_DMA << 29) | (wlen << 19) | ( (m_sequence++) << 11) ); //credits zero for now
 	for(size_t i=0; i<wlen; i++)
 		m_ocdtxbuf.push_back(tx_buf[i]);
-		
+
 	//If send buffer is big, flush immediately
 	//if(m_ocdtxbuf.size() > 300)
 	//	OCDPush();
-	
+
 	//Return true if there are sufficient credits, since we buffer internally
 	return true;
 }
@@ -860,21 +860,21 @@ bool XilinxFPGA::RecvDMAMessage(DMAMessage& rx_msg)
 			m_ocdtxbuf.push_back(0);
 		OCDPush();
 	}
-	
+
 	//Check the FIFO
 	for(size_t i=0; i<m_ocdrxframes.size(); i++)
 	{
 		auto frame = m_ocdrxframes[i];
 		if(frame->m_type != JTAG_FRAME_TYPE_DMA)
 			continue;
-			
+
 		rx_msg.Unpack(frame->m_data.data());
-			
+
 		//Done
 		delete frame;
 		m_ocdrxframes.erase(m_ocdrxframes.begin() + i);
 		return true;
 	}
-	
+
 	return false;
 }

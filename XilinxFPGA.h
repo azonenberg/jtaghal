@@ -48,7 +48,7 @@ class XilinxFPGABitstream;
 class AntikernelOCDFrame
 {
 public:
-	
+
 	//Header word
 	unsigned int m_type;
 	unsigned int m_seq;
@@ -60,7 +60,7 @@ public:
 
 /**
 	@brief Abstract base class for all Xilinx FPGAs
-	
+
 	\ingroup libjtaghal
  */
 class XilinxFPGA	: public XilinxDevice
@@ -74,12 +74,12 @@ public:
 protected:
 	//Static function for parsing bitstream headers (common to all Xilinx devices)
 	FPGABitstream* ParseBitstreamCore(const unsigned char* data, size_t len, bool bVerbose = false);
-	
+
 	/**
 		@brief Parse a full bitstream image (specific to the derived FPGA family)
-		
+
 		@throw JtagException if the bitstream is malformed or for the wrong device family
-		
+
 		@param data			Pointer to the bitstream data
 		@param len			Length of the bitstream
 		@param bitstream	The bitstream object to load into
@@ -92,34 +92,34 @@ protected:
 		XilinxFPGABitstream* bitstream,
 		size_t fpos,
 		bool bVerbose = false) =0;
-		
-	
-	virtual void PrintStatusRegister() =0; 
-		
+
+
+	virtual void PrintStatusRegister() =0;
+
 public:
 	//RPC/DMA stuff
 	virtual void ProbeVirtualTAPs();
 	virtual void SetOCDInstruction() =0;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// RPC network interface
-	
+
 	virtual bool HasRPCInterface();
 	virtual RPCNetworkInterface* GetRPCNetworkInterface();
 	virtual void SendRPCMessage(const RPCMessage& tx_msg);
 	virtual bool SendRPCMessageNonblocking(const RPCMessage& tx_msg);
 	virtual bool RecvRPCMessage(RPCMessage& rx_msg);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DMA network interface
-	
+
 	virtual bool HasDMAInterface();
 	virtual DMANetworkInterface* GetDMANetworkInterface();
 	virtual void SendDMAMessage(const DMAMessage& tx_msg);
 	virtual bool SendDMAMessageNonblocking(const DMAMessage& tx_msg);
 	virtual bool RecvDMAMessage(DMAMessage& rx_msg);
-	
-public:	
+
+public:
 	virtual bool HasIndirectFlashSupport();
 	virtual void ProgramIndirect(
 		ByteArrayFirmwareImage* image,
@@ -128,42 +128,42 @@ public:
 		unsigned int base_address = 0,
 		std::string prog_image = "");
 	virtual void DumpIndirect(int buswidth, std::string fname);
-	
+
 	/**
 		@brief Reboots the FPGA and loads from external memory, if possible
 	 */
 	virtual void Reboot() =0;
-	
+
 	virtual uint16_t LoadIndirectProgrammingImage(int buswidth, std::string image_fname = "");
-	
+
 protected:
 	///True if we have an RPC interface in the current bitstream
 	bool m_bHasRPCInterface;
-	
+
 	///True if we have a DMA interface in the current bitstream
 	bool m_bHasDMAInterface;
-	
+
 	///Push all pending data to the device and get stuff back
 	void OCDPush();
-	
+
 	///Raw data words to be pushed to the device
 	std::vector<uint32_t> m_ocdtxbuf;
-	
+
 	///Raw data words coming off the device
 	std::vector<uint32_t> m_ocdrxbuf;
-	
+
 	///Decoded frames from the device
 	std::vector<AntikernelOCDFrame*> m_ocdrxframes;
-	
+
 	///Sequence number for next NoC packet to be sent
 	uint8_t m_sequence;
-	
+
 	///Credits free on the board
 	unsigned int m_credits;
-	
+
 	///Actual free credit count
 	unsigned int GetActualCreditCount();
-	
+
 	///List of pending packets that have been sent but may still be in m_ocdtxbuf or the fifo on the board
 	///pair(sequence, size)
 	std::vector< std::pair<unsigned int, unsigned int> > m_pendingSendCounts;
