@@ -108,6 +108,7 @@
 //#include "NocJtagInterface.h"
 
 //Device classes
+//#include "ProgrammableDevice.h"
 //#include "FPGA.h"
 //#include "CPLD.h"
 

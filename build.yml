@@ -51,16 +51,17 @@ jtaghal:
         - jtaghal.cpp
         - JtagException.cpp
 
-        # Device base classes
+        # Types of device
         - DebuggableDevice.cpp
+        #- ProgrammableDevice.cpp
         - JtagDevice.cpp
 
-        # Interface base classes
+        # Interfaces
         - DebuggerInterface.cpp
         - GPIOInterface.cpp
         - JtagInterface.cpp
 
-        # Vendor base classes
+        # Vendors
         - XilinxDevice.cpp
 
         # Adapters
