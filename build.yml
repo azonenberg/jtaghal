@@ -57,7 +57,8 @@ jtaghal:
 
         # Types of device
         - DebuggableDevice.cpp
-        #- ProgrammableDevice.cpp
+        - ProgrammableDevice.cpp
+        - ProgrammableLogicDevice.cpp
         - JtagDevice.cpp
 
         # Interfaces

@@ -36,10 +36,6 @@
 #ifndef ProgrammableDevice_h
 #define ProgrammableDevice_h
 
-#include <stdlib.h>
-
-#include "ByteArrayFirmwareImage.h"
-
 /**
 	@brief Generic base class for all programmable devices (PLD, MCU, flash, etc)
 

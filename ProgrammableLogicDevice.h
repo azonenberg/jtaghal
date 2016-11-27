@@ -36,10 +36,6 @@
 #ifndef ProgrammableLogicDevice_h
 #define ProgrammableLogicDevice_h
 
-#include <stdlib.h>
-
-#include "ProgrammableDevice.h"
-
 /**
 	@brief Generic base class for all programmable logic devices (FPGA and CPLD)
 

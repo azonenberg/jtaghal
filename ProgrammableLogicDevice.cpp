@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "ProgrammableLogicDevice.h"
 
 ProgrammableLogicDevice::~ProgrammableLogicDevice()
 {

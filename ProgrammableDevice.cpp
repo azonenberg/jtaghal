@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "ProgrammableDevice.h"
 
 using namespace std;
 
@@ -51,8 +50,7 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose
 	{
 		throw JtagExceptionWrapper(
 			string("Failed to open firmware image ") + fname,
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	fseek(fp, 0, SEEK_END);
 	size_t len = ftell(fp);
@@ -65,8 +63,7 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose
 
 		throw JtagExceptionWrapper(
 			"Failed to read firmware image",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	fclose(fp);
 

@@ -107,12 +107,13 @@
 #include "NetworkedJtagInterface.h"
 //#include "NocJtagInterface.h"
 
-//Programmable device stuff
+//Programmable device helpers
 #include "FirmwareImage.h"
 #include "ByteArrayFirmwareImage.h"
 
 //Device classes
-//#include "ProgrammableDevice.h"
+#include "ProgrammableDevice.h"
+#include "ProgrammableLogicDevice.h"
 //#include "FPGA.h"
 //#include "CPLD.h"
 
