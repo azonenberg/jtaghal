@@ -90,8 +90,7 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* /*iface
 		break;
 
 	case VENDOR_ID_XILINX:
-		//return XilinxDevice::CreateDevice(idcode, iface, pos);
-		break;
+		return XilinxDevice::CreateDevice(idcode, iface, pos);
 
 	default:
 		//TODO: Throw exception instead?

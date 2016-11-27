@@ -33,15 +33,7 @@
 	@brief Implementation of XilinxDevice
  */
 
-#include <stdio.h>
-#include <memory.h>
-#include <string>
 #include "jtaghal.h"
-#include "XilinxDevice.h"
-#include "XilinxCoolRunnerIIDevice.h"
-#include "XilinxSpartan3ADevice.h"
-#include "XilinxSpartan6Device.h"
-#include "Xilinx7SeriesDevice.h"
 
 using namespace std;
 
@@ -81,6 +73,7 @@ XilinxDevice::~XilinxDevice()
  */
 JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
+	/*
 	//Save the original ID code to give to the derived class
 	unsigned int idcode_raw = idcode;
 
@@ -88,12 +81,11 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 	idcode >>= 1;
 
 	//Sanity check manufacturer ID
-	if( (idcode & 0x7FF) != IDCODE_XILINX)
+	if( (idcode & 0x7FF) != VENDOR_ID_XILINX)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not a Xilinx device)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	idcode >>= 11;
 
@@ -130,6 +122,8 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 			"",
 			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 	}
+	*/
+	return NULL;
 }
 
 /**

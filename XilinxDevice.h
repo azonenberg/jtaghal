@@ -36,9 +36,6 @@
 #ifndef XilinxDevice_h
 #define XilinxDevice_h
 
-///JTAG ID code for Xilinx
-#define IDCODE_XILINX				0x49
-
 ///JTAG family code for Spartan-3A
 #define XILINX_FAMILY_SPARTAN3A  	0x11
 
@@ -68,7 +65,7 @@ public:
 
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
 
-	//TODO: Move this to other class? Need to find a good spot for it
+	//TODO: Move this to global? Need to find a good spot for it
 	static uint16_t GetBigEndianUint16FromByteArray(const unsigned char* data, size_t offset);
 	static uint32_t GetBigEndianUint32FromByteArray(const unsigned char* data, size_t offset);
 };
