@@ -51,6 +51,10 @@ jtaghal:
         - jtaghal.cpp
         - JtagException.cpp
 
+        # Programming stuff
+        - FirmwareImage.cpp
+        - ByteArrayFirmwareImage.cpp
+
         # Types of device
         - DebuggableDevice.cpp
         #- ProgrammableDevice.cpp

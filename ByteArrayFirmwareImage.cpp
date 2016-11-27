@@ -32,7 +32,7 @@
 	@author Andrew D. Zonenberg
 	@brief Implementation of ByteArrayFirmwareImage
  */
-#include "ByteArrayFirmwareImage.h"
+#include "jtaghal.h"
 
 /**
 	@brief Initializes this object to empty

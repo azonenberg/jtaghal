@@ -33,7 +33,7 @@
 	@brief Implementation of FirmwareImage
  */
 
-#include "FirmwareImage.h"
+#include "jtaghal.h"
 
 FirmwareImage::FirmwareImage()
 {
@@ -42,5 +42,5 @@ FirmwareImage::FirmwareImage()
 
 FirmwareImage::~FirmwareImage()
 {
-	
+
 }

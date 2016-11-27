@@ -36,11 +36,9 @@
 #ifndef FirmwareImage_h
 #define FirmwareImage_h
 
-#include <string>
-
 /**
 	@brief Generic base class for all firmware images for any kind of programmable device
-	
+
 	\ingroup libjtaghal
  */
 class FirmwareImage
@@ -48,10 +46,10 @@ class FirmwareImage
 public:
 	FirmwareImage();
 	virtual ~FirmwareImage();
-	
+
 	/**
 		@brief JTAG ID code of the device this firmware image is intended for.
-		
+
 		The special value of all zeroes is not a valid JEDEC ID code and is used for softcores, ROM images, and other
 		devices which are not directly exposed by JTAG.
 	 */
@@ -59,7 +57,7 @@ public:
 
 	///Human-readable name of the device this bitstream is intended for
 	std::string devname;
-	
+
 	virtual std::string GetDescription() =0;
 };
 

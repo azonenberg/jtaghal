@@ -36,9 +36,6 @@
 #ifndef ByteArrayFirmwareImage_h
 #define ByteArrayFirmwareImage_h
 
-#include <string>
-#include "FirmwareImage.h"
-
 /**
 	@brief Generic base class for all firmware images consisting of an array of bytes
 
