@@ -40,7 +40,7 @@ using namespace std;
 
 ProgrammableDevice::~ProgrammableDevice()
 {
-	
+
 }
 
 FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose)
@@ -62,14 +62,14 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose
 	{
 		fclose(fp);
 		delete[] image;
-		
+
 		throw JtagExceptionWrapper(
 			"Failed to read firmware image",
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
 	fclose(fp);
-	
+
 	//Parse it
 	try
 	{

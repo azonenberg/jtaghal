@@ -42,7 +42,7 @@
 
 /**
 	@brief Generic base class for all programmable devices (PLD, MCU, flash, etc)
-	
+
 	\ingroup libjtaghal
  */
 class ProgrammableDevice
@@ -52,67 +52,67 @@ public:
 
 	/**
 		@brief Determines if this device is programmed or blank.
-		
+
 		@return true if programmed, false if blank
 	 */
 	virtual bool IsProgrammed() =0;
-	
-	/** 
+
+	/**
 		@brief Wrapper for LoadFirmwareImage().
-		
+
 		Loads the file and passes it to LoadFirmwareImage()
-		
+
 		@throw JtagException if the file could not be opened or the image is invalid
-		
+
 		@param	fname		Name of the image to load
 		@param	bVerbose	Do very verbose parsing
 		@return	Pointer to an FirmwareImage object suitable for passing to Program().
 	 */
 	FirmwareImage* LoadFirmwareImage(std::string fname, bool bVerbose = false);
-	
+
 	/**
 		@brief Parses an in-memory image of a firmware image into a format suitable for loading into the device
-		
+
 		@throw JtagException if the image is malformed
-		
+
 		@param data	Pointer to the start of the firmware image, including headers
 		@param len	Length of the firmware image
 		@param	bVerbose	Do very verbose parsing
-		
+
 		@return	Pointer to an FirmwareImage object suitable for passing to Configure().
 	 */
 	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose) =0;
-	
+
 	/**
 		@brief Erases the device configuration and restores the device to a blank state.
-		
+
 		After this function is called, regardless of success or failure, all existing connections to on-chip code become invalid.
-		
+
 		@throw JtagException if the erase operation fails
-		
+
 		@param bVerbose		Set to true for extra-verbose debug output
 	 */
 	virtual void Erase(bool bVerbose = false) =0;
-	
+
 	/**
 		@brief Loads a new firmware image onto the device.
-		
+
 		After this function is called, regardless of success or failure, all existing connections to on-chip code become invalid.
-		
+
 		@throw JtagException if the erase operation fails
-		
+
 		@param image	The parsed image to load
 	 */
 	virtual void Program(FirmwareImage* image) =0;
-	
+
 	/**
 		@brief Checks if we support indirect flash programming.
 	 */
 	virtual bool HasIndirectFlashSupport() =0;
-	
+
 	/**
 		@brief Uses indirect flash programming to load a bitstream onto the target device
-		
+
 		Bus width indicates boot mode: 1-2-4 are SPI, 8-16 are BPI. Other values reserved.
 	 */
 	virtual void ProgramIndirect(
