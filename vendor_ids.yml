@@ -27,43 +27,12 @@
 #                                                                                                                      #
 ########################################################################################################################
 
-jtaghal:
-    toolchain:      c++/generic
-    type:           shlib
+# Table of JEDEC vendor IDs
+jedec_vendor_id:
+    base: hex
+    width: 11
 
-    constants:
-        jtagd_opcodes.yml:
-            - c/enum
-        vendor_ids.yml:
-            - c/enum
-
-    sources:
-
-        # Core infrastructure
-        - jtaghal.cpp
-        - JtagException.cpp
-
-        # Device base classes
-        - DebuggableDevice.cpp
-        - JtagDevice.cpp
-
-        # Interface base classes
-        - DebuggerInterface.cpp
-        - GPIOInterface.cpp
-        - JtagInterface.cpp
-
-        # Adapters
-        - DigilentJtagInterface.cpp
-        - FTDIJtagInterface.cpp
-        - NetworkedJtagInterface.cpp
-
-    flags:
-        - global
-        - output/reloc
-        - library/target/log
-        - library/target/xptools
-        #- library/required/crypto++
-        - library/optional/pthread
-        - library/optional/ws2_32
-        - library/optional/ftd2xx
-        - library/optional/djtg
+    values:
+        VENDOR_ID_ARM:          23B
+        VENDOR_ID_MICROCHIP:    29
+        VENDOR_ID_XILINX:       49
