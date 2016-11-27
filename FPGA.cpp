@@ -45,7 +45,7 @@ FPGA::~FPGA()
 
 /**
 	@brief Gets this device's RPC network interface.
-	
+
 	The behavior of calling this function if HasRPCInterface() returns false is undefined.
  */
 RPCNetworkInterface* FPGA::GetRPCNetworkInterface()
@@ -55,7 +55,7 @@ RPCNetworkInterface* FPGA::GetRPCNetworkInterface()
 
 /**
 	@brief Gets this device's RPC network interface.
-	
+
 	The behavior of calling this function if HasDMAInterface() returns false is undefined.
  */
 DMANetworkInterface* FPGA::GetDMANetworkInterface()
