@@ -37,10 +37,6 @@
 #define JtagDevice_h
 
 class JtagInterface;
-//class FPGA;
-//class CPLD;
-//class ProgrammableDevice;
-
 
 /**
 	@brief Represents a single device in the JTAG chain
