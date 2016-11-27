@@ -38,7 +38,7 @@ jtaghal:
             - c/enum
 
         # JEDEC-standardized vendor IDs
-        JedecVendorIDs.yml:
+        JEDECVendorIDs.yml:
             - c/enum
 
         # Vendor-specific part IDs
