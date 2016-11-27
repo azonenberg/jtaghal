@@ -121,7 +121,8 @@
 //Vendor classes
 #include "XilinxDevice.h"
 
-//Vendor device classes
+//Vendor device classes (and support stuff)
+#include "XilinxFPGABitstream.h"
 
 //Debugging stuff
 #include "DebuggableDevice.h"

@@ -61,20 +61,23 @@ jtaghal:
         - ProgrammableLogicDevice.cpp
         - JtagDevice.cpp
         - FPGA.cpp
-        - JtagFPGA.cpp
+        - Jtag1FPGA.cpp
 
         # Interfaces
         - DebuggerInterface.cpp
         - GPIOInterface.cpp
         - JtagInterface.cpp
 
-        # Vendors
-        - XilinxDevice.cpp
-
         # Adapters
         - DigilentJtagInterface.cpp
         - FTDIJtagInterface.cpp
         - NetworkedJtagInterface.cpp
+
+        # Vendors
+        - XilinxDevice.cpp
+
+        # Vendor devices
+        - XilinxFPGABitstream.cpp
 
     flags:
         - global

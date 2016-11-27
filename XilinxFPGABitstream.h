@@ -36,9 +36,6 @@
 #ifndef XilinxFPGABitstream_h
 #define XilinxFPGABitstream_h
 
-#include <string>
-#include "FPGABitstream.h"
-
 /**
 	@brief A bitstream for Xilinx FPGAs
 

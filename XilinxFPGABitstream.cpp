@@ -32,8 +32,7 @@
 	@author Andrew D. Zonenberg
 	@brief Implementation of XilinxFPGABitstream
  */
-#include "XilinxFPGABitstream.h"
-#include <stdio.h>
+#include "jtaghal.h"
 
 using namespace std;
 
