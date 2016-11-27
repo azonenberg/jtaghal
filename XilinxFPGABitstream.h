@@ -52,13 +52,13 @@ public:
 
 	///Description of the bitstream, inserted by bitgen. Format is "ncdfile.ncd;UserID=0xdeadbeef"
 	std::string desc;
-	
+
 	///Date the bitstream was created, inserted by bitgen
 	std::string date;
-	
+
 	///Time the bitstream was created, inserted by bitgen
 	std::string time;
-	
+
 	virtual std::string GetDescription();
 };
 

@@ -56,6 +56,6 @@ string XilinxFPGABitstream::GetDescription()
 {
 	char retval[1024];
 	snprintf(retval, sizeof(retval), "bitstream \"%s\" (%s %s) for device \"%s\"",
-		desc.c_str(), date.c_str(), time.c_str(), devname.c_str());	
+		desc.c_str(), date.c_str(), time.c_str(), devname.c_str());
 	return retval;
 }
