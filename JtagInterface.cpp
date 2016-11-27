@@ -91,7 +91,6 @@ JtagInterface::~JtagInterface()
  */
 JtagInterface* JtagInterface::CreateDefaultInterface()
 {
-	/*
 	//Check environment variable first
 	char* jhost = getenv("JTAGD_HOST");
 	if(jhost != NULL)
@@ -105,7 +104,6 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 			return iface;
 		}
 	}
-	*/
 
 	#ifdef HAVE_DJTG
 		//Create a DigilentJtagInterface on adapter 0 if we can find it
