@@ -36,9 +36,6 @@
 #ifndef FPGABitstream_h
 #define FPGABitstream_h
 
-#include <string>
-#include "ByteArrayFirmwareImage.h"
-
 /**
 	@brief Abstract base class for FPGA configuration bitstreams
 

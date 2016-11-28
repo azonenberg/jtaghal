@@ -54,6 +54,7 @@ jtaghal:
         # Programming stuff
         - FirmwareImage.cpp
         - ByteArrayFirmwareImage.cpp
+        - FPGABitstream.cpp
 
         # Types of device
         - DebuggableDevice.cpp
@@ -61,7 +62,7 @@ jtaghal:
         - ProgrammableLogicDevice.cpp
         - JtagDevice.cpp
         - FPGA.cpp
-        - Jtag1FPGA.cpp
+        - JtagFPGA.cpp
 
         # Interfaces
         - DebuggerInterface.cpp

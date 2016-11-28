@@ -110,6 +110,7 @@
 //Programmable device helpers
 #include "FirmwareImage.h"
 #include "ByteArrayFirmwareImage.h"
+#include "FPGABitstream.h"
 
 //Device classes
 #include "ProgrammableDevice.h"
