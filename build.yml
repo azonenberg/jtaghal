@@ -54,6 +54,7 @@ jtaghal:
         # Programming stuff
         - FirmwareImage.cpp
         - ByteArrayFirmwareImage.cpp
+        - RawBinaryFirmwareImage.cpp
         - FPGABitstream.cpp
 
         # Types of device

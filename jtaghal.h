@@ -111,6 +111,7 @@
 //Programmable device helpers
 #include "FirmwareImage.h"
 #include "ByteArrayFirmwareImage.h"
+#include "RawBinaryFirmwareImage.h"
 #include "FPGABitstream.h"
 
 //Device classes

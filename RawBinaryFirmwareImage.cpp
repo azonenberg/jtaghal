@@ -33,7 +33,6 @@
 	@brief Implementation of RawBinaryFirmwareImage
  */
 #include "jtaghal.h"
-#include "RawBinaryFirmwareImage.h"
 
 using namespace std;
 
@@ -49,8 +48,7 @@ RawBinaryFirmwareImage::RawBinaryFirmwareImage(string fname, string sdevname)
 	{
 		throw JtagExceptionWrapper(
 			string("Failed to open firmware image ") + fname,
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	fseek(fp, 0, SEEK_END);
 	raw_bitstream_len = ftell(fp);
