@@ -42,9 +42,9 @@
 
 /**
 	@brief Spartan-6 configuration frame (see UG380 page 91)
-	
+
 	For type 2 packets, the header is followed by a 32-bit big-endian length value
-	
+
 	\ingroup libjtaghal
  */
 union XilinxSpartan6DeviceConfigurationFrame
@@ -53,42 +53,42 @@ union XilinxSpartan6DeviceConfigurationFrame
 	{
 		/**
 			@brief Count field
-			
+
 			\li Type 1 packets: word count
 			\li Type 2 packets: don't care
 		 */
 		unsigned int count:5;
-		
+
 		///Register address
-		unsigned int reg_addr:6;	
-		
+		unsigned int reg_addr:6;
+
 		/**
 			@brief Opcode
-			
+
 			Must be one of the following:
 			\li	XilinxSpartan6Device::S6_CONFIG_OP_NOP
 			\li XilinxSpartan6Device::S6_CONFIG_OP_READ
 			\li XilinxSpartan6Device::S6_CONFIG_OP_WRITE
 		 */
-		unsigned int op:2;			
-		
+		unsigned int op:2;
+
 		/**
 			@brief Frame type
-			
+
 			Must be one of the following:
 			\li XilinxSpartan6Device::S6_CONFIG_FRAME_TYPE_1
 			\li XilinxSpartan6Device::S6_CONFIG_FRAME_TYPE_2
 		 */
 		unsigned int type:3;
 	} __attribute__ ((packed)) bits;
-	
+
 	/// The raw configuration word
 	uint16_t word;
 } __attribute__ ((packed));
 
 /**
 	@brief Spartan-6 status register (see UG380 table 5-35)
-	
+
 	Typical status register bits:
 		\li [0] CRC ERROR                                                              :         0
 		\li [1] IDCODE ERROR                                                           :         0
@@ -106,7 +106,7 @@ union XilinxSpartan6DeviceConfigurationFrame
 		\li [13] DONE PIN                                                              :         1
 		\li [14] SUSPEND STATUS                                                        :         0
 		\li [15] FALLBACK STATUS                                                       :         0
-		
+
 	\ingroup libjtaghal
  */
 union XilinxSpartan6DeviceStatusRegister
@@ -115,60 +115,60 @@ union XilinxSpartan6DeviceStatusRegister
 	{
 		///Indicates that the device failed to configure due to a CRC error
 		unsigned int crc_err:1;
-		
+
 		///Indicates that the device failed to configure due to the bitstream having the wrong ID code
 		unsigned int idcode_err:1;
-		
+
 		///Asserted once all DCM/PLL instances used in the design have locked on
 		unsigned int dcm_lock:1;
-		
+
 		///Status of global tristate net
 		unsigned int gts_cfg_b:1;
-		
+
 		///Status of global write-enable net
 		unsigned int gwe:1;
-		
+
 		///Status of GHIGH (TODO: describe what this is)
 		unsigned int ghigh:1;
-		
+
 		///Decryption error flag
 		unsigned int decrypt_err:1;
-		
+
 		///Bitstream encryption enable flag
 		unsigned int decrypt_en:1;
-		
+
 		///Status of the HSWAPEN pin
 		unsigned int hswapen:1;
-		
+
 		///Status of the M0 mode bit
 		unsigned int m0:1;
-		
+
 		///Status of the M1 mode bit
 		unsigned int m1:1;
-		
+
 		///Reserved
 		unsigned int reserved:1;
-		
+
 		///Status of the INIT_B pin
 		unsigned int init_b:1;
-		
+
 		///Status of the DONE pin
 		unsigned int done:1;
-		
+
 		///Suspend state
 		unsigned int suspend:1;
-		
+
 		///Configuration fallback state
-		unsigned int fallback:1;			
+		unsigned int fallback:1;
 	} __attribute__ ((packed)) bits;
-	
+
 	///The raw status register value
 	uint16_t word;
 } __attribute__ ((packed));
 
-/** 
+/**
 	@brief A Xilinx Spartan-6 FPGA device
-	
+
 	\ingroup libjtaghal
  */
 class XilinxSpartan6Device	: public XilinxFPGA
@@ -190,83 +190,83 @@ public:
 		unsigned int idcode,
 		JtagInterface* iface,
 		size_t pos);
-	
+
 	///JTAG device IDs
 	enum deviceids
 	{
 		///XC6SLX9
 		SPARTAN6_LX9  = 1,
-		
+
 		///XC6SLX16
 		SPARTAN6_LX16 = 2,
-		
+
 		///XC6SLX25
 		SPARTAN6_LX25 = 4,
-		
+
 		///XC6SLX45
 		SPARTAN6_LX45 = 8
 	};
-	
+
 	///6-bit-wide JTAG instructions (see UG380 table 10-2)
 	enum instructions
 	{
 		///User-defined instruction 1
 		INST_USER1				= 0x02,
-		
+
 		///User-defined instruction 2
 		INST_USER2				= 0x03,
-		
+
 		///User-defined instruction 3
 		INST_USER3				= 0x1A,
-		
+
 		///User-defined instruction 4
 		INST_USER4				= 0x1B,
-		
+
 		///Read configuration register
 		INST_CFG_OUT			= 0x04,
-		
+
 		///Write configuration register
 		INST_CFG_IN				= 0x05,
-		
+
 		///Read ID code
 		INST_IDCODE				= 0x09,
-		
+
 		///Enters programming mode (erases FPGA configuration)
 		INST_JPROGRAM			= 0x0B,
-		
+
 		///Runs the FPGA startup sequence (must supply dummy clocks after)
 		INST_JSTART				= 0x0C,
-		
+
 		///Runs the FPGA shutdown sequence (must supply dummy clocks after)
 		INST_JSHUTDOWN			= 0x0D,
-		
+
 		///Enters In-System Configuration mode (must load INST_JPROGRAM before)
 		INST_ISC_ENABLE			= 0x10,
-		
+
 		///Leaves In-System Configuration mode
 		INST_ISC_DISABLE		= 0x16,
-		
+
 		///Read device DNA (must load INST_ISC_ENABLE before and INST_ISC_DISABLE after)
 		INST_ISC_DNA			= 0x30,
-		
+
 		///Standard JTAG bypass
 		INST_BYPASS				= 0x3F
 	};
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
-	
+
 	virtual std::string GetDescription();
 	virtual void PrintStatusRegister();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General programmable device properties
-	
+
 	virtual bool IsProgrammed();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// FPGA-specific device properties
-	
+
 	virtual bool HasSerialNumber();
 	virtual int GetSerialNumberLength();
 	virtual int GetSerialNumberLengthBits();
@@ -280,26 +280,26 @@ protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Public configuration interface
-public:	
+public:
 	virtual void Erase(bool bVerbose = false);
 	virtual void InternalErase(bool bVerbose = false);
 	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose = false);
 	virtual void Program(FirmwareImage* image);
 	virtual void Reboot();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal configuration helpers
 protected:
 	uint16_t ReadWordConfigRegister(unsigned int reg);
 	void ReadWordsConfigRegister(unsigned int reg, uint16_t* dout, unsigned int count);
 	void WriteWordConfigRegister(unsigned int reg, uint16_t value);
-	
+
 	virtual XilinxFPGABitstream* ParseBitstreamInternals(const unsigned char* data, size_t len, XilinxFPGABitstream* bitstream, size_t fpos, bool bVerbose = false);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration type definitions
 protected:
-	
+
 	/**
 		@brief Spartan-6 configuration opcodes (see UG380 page 90)
 	 */
@@ -310,7 +310,7 @@ protected:
 		S6_CONFIG_OP_WRITE	= 2
 	};
 
-	/** 
+	/**
 		@brief Spartan-6 configuration frame types (see UG380 page 91)
 	 */
 	enum spartan6_config_frame_types
@@ -359,10 +359,10 @@ protected:
 		S6_CONFIG_REG_BOOTSTS	= 0x20,
 		S6_CONFIG_REG_EYE_MASK	= 0x21,
 		S6_CONFIG_REG_CBC		= 0x22,
-		
+
 		S6_CONFIG_REG_MAX		//max config reg value
 	};
-	
+
 	/**
 		@brief Spartan-6 CMD register values (see UG380 page 94-95)
 	 */
@@ -385,24 +385,24 @@ protected:
 		S6_CMD_IPROG		= 0xe,
 		//value 0xf not used
 	};
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation
-protected:	
+protected:
 	void SetIR(unsigned char irval)
 	{ JtagDevice::SetIR(&irval, m_irlength); }
-	
+
 	void SetIRDeferred(unsigned char irval)
 	{ JtagDevice::SetIRDeferred(&irval, m_irlength); }
-	
+
 public:
 	unsigned int GetArraySize()
 	{ return m_arraysize; }
-	
+
 protected:
 	///Array size (the specific Spartan-6 device we are)
 	unsigned int m_arraysize;
-	
+
 	///Stepping number
 	unsigned int m_rev;
 };

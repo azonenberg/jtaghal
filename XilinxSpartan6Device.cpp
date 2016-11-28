@@ -45,7 +45,7 @@ using namespace std;
 
 /**
 	@brief Initializes this device
-	
+
 	@param arraysize	Array size from JTAG ID code
 	@param rev			Revision number from JTAG ID code
 	@param idcode		The ID code of this device
@@ -89,7 +89,7 @@ JtagDevice* XilinxSpartan6Device::CreateDevice(
 	case SPARTAN6_LX25:
 	case SPARTAN6_LX45:
 		return new XilinxSpartan6Device(arraysize, rev, idcode, iface, pos);
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown Spartan-6 device (ID code not in database)",
@@ -105,7 +105,7 @@ JtagDevice* XilinxSpartan6Device::CreateDevice(
 string XilinxSpartan6Device::GetDescription()
 {
 	string devname = "(unknown Spartan-6)";
-	
+
 	switch(m_arraysize)
 	{
 	case SPARTAN6_LX9:
@@ -126,10 +126,10 @@ string XilinxSpartan6Device::GetDescription()
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	char srev[16];
 	snprintf(srev, 15, "%u", m_rev);
-	
+
 	return string("Xilinx ") + devname + " stepping " + srev;
 }
 
@@ -154,16 +154,16 @@ int XilinxSpartan6Device::GetSerialNumberLengthBits()
 void XilinxSpartan6Device::GetSerialNumber(unsigned char* data)
 {
 	InternalErase();
-	
+
 	//Enter ISC mode (wipes configuration)
 	ResetToIdle();
 	SetIR(INST_ISC_ENABLE);
-	
+
 	//Read the DNA value
 	SetIR(INST_ISC_DNA);
 	unsigned char zeros[8] = {0x00};
 	ScanDR(zeros, data, 57);
-	
+
 	//Done
 	SetIR(INST_ISC_DISABLE);
 }
@@ -192,7 +192,7 @@ void XilinxSpartan6Device::InternalErase(bool bVerbose)
 		printf("    Clearing configuration memory...\n");
 	SetIR(INST_JPROGRAM);
 	SendDummyClocks(32);
-	
+
 	//Poll status register until housecleaning is done
 	XilinxSpartan6DeviceStatusRegister statreg;
 	int i;
@@ -201,11 +201,11 @@ void XilinxSpartan6Device::InternalErase(bool bVerbose)
 		statreg.word = ReadWordConfigRegister(S6_CONFIG_REG_STAT);
 		if(statreg.bits.init_b)
 			break;
-			
+
 		//wait 500ms
 		usleep(500 * 1000);
 	}
-	if(i == 10) 
+	if(i == 10)
 	{
 		throw JtagExceptionWrapper(
 			"INIT_B not high after 5 seconds, possible board fault",
@@ -237,7 +237,7 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Verify the ID code matches the device we're plugged into
 	//AND out the stepping number since this is irrelevant
 	if((0x0fffffff & bitstream->idcode) != (0x0fffffff & m_idcode) )
@@ -251,14 +251,14 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 				GetDescription().c_str(), dummy->GetDescription().c_str());
 			delete dummy;
 		}
-		
+
 		throw JtagExceptionWrapper(
 			"Bitstream ID code does not match ID code of this device",
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
 	printf("    Checking ID code... OK\n");
-	
+
 	//If the ID code check passes it's a valid Xilinx bitstream so go do stuff with it
 	XilinxFPGABitstream* xbit = dynamic_cast<XilinxFPGABitstream*>(bitstream);
 	if(xbit == NULL)
@@ -276,26 +276,26 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 	FlipBitArray(flipped_bitstream, xbit->raw_bitstream_len);
 
 	//Reset the scan chain
-	ResetToIdle();	
-	
+	ResetToIdle();
+
 	//Erase the configuration
 	InternalErase();
-	
+
 	//Send the bitstream to the FPGA
 	//See UG380 table 10-4 (page 161)
 	printf("    Loading new bitstream...\n");
 	SetIR(INST_CFG_IN);
 	ScanDR(flipped_bitstream, NULL, xbit->raw_bitstream_len * 8);
-	
+
 	//Start up the FPGA
 	//Minimum of 16 clock cycles required according to UG380 page 161, do a few more to be safe
 	SetIR(INST_JSTART);
 	SendDummyClocks(64);
-	
+
 	//Clean up
 	delete[] flipped_bitstream;
 	flipped_bitstream = NULL;
-	
+
 	//Get the status register and verify that configuration was successful
 	XilinxSpartan6DeviceStatusRegister statreg;
 	statreg.word = ReadWordConfigRegister(S6_CONFIG_REG_STAT);
@@ -309,15 +309,15 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 		}
 		else
-		{			
-			PrintStatusRegister();			
+		{
+			PrintStatusRegister();
 			throw JtagExceptionWrapper(
 				"Configuration failed (unknown error)",
 				"",
 				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 		}
 	}
-	
+
 	ResetToIdle();
 }
 
@@ -366,13 +366,13 @@ void XilinxSpartan6Device::PrintStatusRegister()
 
 /**
 	@brief Reads a single 16-bit word from a config register
-	
+
 	Reference: UG380 page 115-116
 	Table 6-5
-	
+
 	Note that Spartan-6 devices expect data clocked in MSB first but the JTAG API clocks data LSB first.
 	Some swapping is required as a result.
-	
+
 	Clock data into CFG_IN register
 		Synchronization word
 		Read STAT register
@@ -382,15 +382,15 @@ void XilinxSpartan6Device::PrintStatusRegister()
 			Word count = 1	00001
 			= 0x2901
 		Two dummy words to flush packet buffer
-		
+
 	Read from CFG_OUT register
-	
+
 	@throw JtagException if the read fails
-	
+
 	@param reg The configuration register to read
  */
 uint16_t XilinxSpartan6Device::ReadWordConfigRegister(unsigned int reg)
-{	
+{
 	//Send the read request
 	SetIR(INST_CFG_IN);
 	XilinxSpartan6DeviceConfigurationFrame frames[] =
@@ -406,24 +406,24 @@ uint16_t XilinxSpartan6Device::ReadWordConfigRegister(unsigned int reg)
 	FlipBitAndEndianArray(packet, sizeof(frames));		//MSB needs to get sent first
 	ScanDR(packet, NULL, sizeof(frames) * 8);							//Table 6-5 of UG380 v2.4 says we need 160 clocks
 																		//but it seems we only need 80. See WebCase 948541
-		
-	//Read the data																	
+
+	//Read the data
 	SetIR(INST_CFG_OUT);
 	unsigned char unused[2] = {0};
 	uint16_t reg_out = {0};
 	ScanDR(unused, (unsigned char*)&reg_out, 16);
 	FlipBitAndEndianArray((unsigned char*)&reg_out, 2);
-	
+
 	return reg_out;
 }
 
 /**
 	@brief Reads several 16-bit words from a config register.
-	
+
 	The current implementation uses type 1 packets and is thus limited to reading less than 32 words.
-	
+
 	@throw JtagException if the read fails
-	
+
 	@param reg		The configuration register to read
 	@param dout 	Buffer to read into
 	@param count	Number of 16-bit words to read
@@ -447,14 +447,14 @@ void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* d
 		FlipBitAndEndianArray(packet, sizeof(frames));			//MSB needs to get sent first
 		ScanDR(packet, NULL, sizeof(frames) * 8);								//Table 6-5 of UG380 v2.4 says we need 160 clocks
 																				//but it seems we only need 80. See WebCase 948541
-			
-		//Read the data																	
+
+		//Read the data
 		SetIR(INST_CFG_OUT);
 		unsigned char unused[32];
 		ScanDR(unused, (unsigned char*)dout, count*16);
 		FlipBitAndEndianArray((unsigned char*)dout, count*2);
 	}
-	
+
 	else
 	{
 		//TODO: use type 2 read
@@ -488,7 +488,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		printf("Parsing bitstream internals...\n");
 		printf("    Using %s\n", bitstream->GetDescription().c_str());
 	}
-	
+
 	//Expect aa 99 55 66 (sync word)
 	unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
 	if(0 != memcmp(data+fpos, syncword, sizeof(syncword)))
@@ -499,19 +499,19 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Allocate space and copy the entire bitstream into raw_bitstream
 	bitstream->raw_bitstream_len = len-fpos;
 	bitstream->raw_bitstream = new unsigned char[bitstream->raw_bitstream_len];
 	memcpy(bitstream->raw_bitstream, data+fpos, bitstream->raw_bitstream_len);
-	
+
 	//Skip the sync word
 	size_t start = fpos;
 	fpos += sizeof(syncword);
-	
+
 	//Multiboot stuff
 	unsigned int multiboot_address = 0;
-	
+
 	//String names for config regs
 	static const char* config_register_names[]=
 	{
@@ -551,7 +551,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		"EYE_MASK",
 		"CBC"
 	};
-	
+
 	static const char* config_opcodes[]=
 	{
 		"NOP",
@@ -559,7 +559,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		"WRITE",
 		"INVALID"
 	};
-	
+
 	static const char* cmd_values[]=
 	{
 		"NULL",
@@ -579,15 +579,15 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		"IPROG",
 		"UNDOCUMENTED_F"
 	};
-	
+
 	//Parse frames
 	while(fpos < len)
-	{	
+	{
 		//Pull and byte-swap the frame header
 		XilinxSpartan6DeviceConfigurationFrame frame =
 			*reinterpret_cast<const XilinxSpartan6DeviceConfigurationFrame*>(data + fpos);
 		FlipEndianArray((unsigned char*)&frame, sizeof(frame));
-		
+
 		//Skip nops, dont print details
 		if(frame.bits.op == S6_CONFIG_OP_NOP)
 		{
@@ -595,19 +595,19 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 			fpos += 2;
 			continue;
 		}
-		
+
 		//Validate frame
 		if(frame.bits.reg_addr >= S6_CONFIG_REG_MAX)
 		{
 			printf("[XilinxSpartan6Device] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 				frame.bits.reg_addr, (int)fpos);
-			delete bitstream; 	
+			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid register address in bitstream",
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
 		}
-		
+
 		//Print stats
 		if(bVerbose)
 		{
@@ -619,17 +619,17 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 				config_register_names[frame.bits.reg_addr]
 				);
 		}
-	
+
 		//Go past the header
 		fpos += 2;
-		
+
 		//Look at the frame type and process it
 		if(frame.bits.type == S6_CONFIG_FRAME_TYPE_1)
 		{
 			//Type 1 frame
 			if(bVerbose)
 				printf("%u words\n", frame.bits.count);
-			
+
 			//See if it's a write, if so pull out some data
 			if(frame.bits.op == S6_CONFIG_OP_WRITE)
 			{
@@ -640,48 +640,48 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 					{
 						multiboot_address = (multiboot_address & 0xffff0000) |
 							GetBigEndianUint16FromByteArray(data, fpos);
-						
+
 						if(bVerbose)
 							printf("        Multiboot start address low: %x\n", multiboot_address);
 					}
 					break;
-					
+
 					case S6_CONFIG_REG_GENERAL2:
 					{
 						uint16_t value = GetBigEndianUint16FromByteArray(data, fpos);
-						
+
 						if(bVerbose)
 						{
 							printf("        Multiboot SPI opcode: 0x%x\n", value >> 8);
 							printf("        Multiboot start address high: 0x%x\n", value & 0xff);
 						}
-						
+
 						multiboot_address = (multiboot_address & 0x0000ffff) | ( (value & 0xFF) << 16);
-						
+
 					}
 					break;
-					
+
 					case S6_CONFIG_REG_GENERAL4:
 					{
 						uint16_t value = GetBigEndianUint16FromByteArray(data, fpos);
-						
+
 						if(bVerbose)
 							printf("        Golden SPI opcode: 0x%x\n", value >> 8);
 					}
 					break;
-					
+
 					case S6_CONFIG_REG_CMD:
 					{
 						//Expect 1 word
 						if(frame.bits.count != 1)
 						{
-							delete bitstream; 
+							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to CMD register in config frame",
 								"",
 								JtagException::EXCEPTION_TYPE_GIGO);
 						}
-						
+
 						uint16_t cmd_value = GetBigEndianUint16FromByteArray(data, fpos);
 						if(bVerbose)
 						{
@@ -690,27 +690,27 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							else
 								printf("        Command = %s\n", cmd_values[cmd_value]);
 						}
-						
+
 						//We're done, skip to the end of the bitstream
 						if(cmd_value == S6_CMD_DESYNC)
 						{
 							fpos = len;
 							continue;
 						}
-						
+
 						//Reset to multiboot start
 						if(cmd_value == S6_CMD_IPROG)
 						{
 							fpos = start + multiboot_address;
-							
+
 							if(bVerbose)
 								printf("        IPROG reset (to address %x)\n", multiboot_address);
-							
+
 							//Read the sync word
 							uint16_t syncword_hi = GetBigEndianUint16FromByteArray(data, fpos);
 							uint16_t syncword_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
 							uint32_t syncword = (syncword_hi << 16) | syncword_lo;
-							
+
 							//Sanity check it
 							if(bVerbose)
 								printf("        Sync word = %x\n", syncword);
@@ -722,15 +722,15 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 									"",
 									JtagException::EXCEPTION_TYPE_GIGO);
 							}
-							
+
 							//Skip the sync word
 							fpos += 4;
-							
+
 							continue;
 						}
 					}
 					break;
-					
+
 					case S6_CONFIG_REG_IDCODE:
 					{
 						//Expect 2 words
@@ -742,7 +742,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 								"",
 								JtagException::EXCEPTION_TYPE_GIGO);
 						}
-						
+
 						//Pull the value
 						uint16_t idcode_hi = GetBigEndianUint16FromByteArray(data, fpos);
 						uint16_t idcode_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
@@ -752,7 +752,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 						bitstream->idcode = idcode;
 					}
 					break;
-					
+
 					case S6_CONFIG_REG_CRC:
 					{
 						//Expect 2 words
@@ -764,7 +764,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 								"",
 								JtagException::EXCEPTION_TYPE_GIGO);
 						}
-						
+
 						//Pull the value
 						uint16_t crc_hi = GetBigEndianUint16FromByteArray(data, fpos);
 						uint16_t crc_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
@@ -773,12 +773,12 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							printf("        CRC = %08x\n", crc);
 					}
 					break;
-					
+
 					default:
 						if(frame.bits.count == 1)
 						{
 							if(bVerbose)
-								printf("        Value = %x\n", GetBigEndianUint16FromByteArray(data, fpos));							
+								printf("        Value = %x\n", GetBigEndianUint16FromByteArray(data, fpos));
 						}
 						else if(frame.bits.count == 2)
 						{
@@ -790,16 +790,16 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 								printf("        Value = %08x\n", value);
 						}
 					break;
-					
+
 				}
 			}
-			
+
 			//Discard the contents
 			fpos += 2*frame.bits.count;
 		}
 		else if(frame.bits.type == S6_CONFIG_FRAME_TYPE_2)
 		{
-			//Type 2 frame - not implemented		
+			//Type 2 frame - not implemented
 			//Get the size (32 bits)
 			uint16_t framesize_hi = GetBigEndianUint16FromByteArray(data, fpos);
 			uint16_t framesize_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
@@ -807,23 +807,23 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 			fpos += 4;
 			if(bVerbose)
 				printf("%d words\n", framesize);
-			
+
 			//Discard the contents
 			fpos += 2*framesize;
-			
+
 			//TODO: last 4 seem to be invalid, are these part of the same frame? Or are we skipping a frame?
 			fpos += 4;
 		}
 		else
 		{
-			delete bitstream; 
+			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid frame type",
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
 		}
 	}
-	
+
 	//All OK
 	return bitstream;
 }
