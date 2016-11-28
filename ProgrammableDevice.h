@@ -61,10 +61,9 @@ public:
 		@throw JtagException if the file could not be opened or the image is invalid
 
 		@param	fname		Name of the image to load
-		@param	bVerbose	Do very verbose parsing
 		@return	Pointer to an FirmwareImage object suitable for passing to Program().
 	 */
-	FirmwareImage* LoadFirmwareImage(std::string fname, bool bVerbose = false);
+	FirmwareImage* LoadFirmwareImage(std::string fname);
 
 	/**
 		@brief Parses an in-memory image of a firmware image into a format suitable for loading into the device
@@ -73,11 +72,10 @@ public:
 
 		@param data	Pointer to the start of the firmware image, including headers
 		@param len	Length of the firmware image
-		@param	bVerbose	Do very verbose parsing
 
 		@return	Pointer to an FirmwareImage object suitable for passing to Configure().
 	 */
-	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose) =0;
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len) =0;
 
 	/**
 		@brief Erases the device configuration and restores the device to a blank state.
@@ -85,10 +83,8 @@ public:
 		After this function is called, regardless of success or failure, all existing connections to on-chip code become invalid.
 
 		@throw JtagException if the erase operation fails
-
-		@param bVerbose		Set to true for extra-verbose debug output
 	 */
-	virtual void Erase(bool bVerbose = false) =0;
+	virtual void Erase() =0;
 
 	/**
 		@brief Loads a new firmware image onto the device.

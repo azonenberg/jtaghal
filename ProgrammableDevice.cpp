@@ -42,7 +42,7 @@ ProgrammableDevice::~ProgrammableDevice()
 
 }
 
-FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose)
+FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname)
 {
 	//Load the image
 	FILE* fp = fopen(fname.c_str(), "rb");
@@ -70,7 +70,7 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname, bool bVerbose
 	//Parse it
 	try
 	{
-		FirmwareImage* bit = LoadFirmwareImage(image, len, bVerbose);
+		FirmwareImage* bit = LoadFirmwareImage(image, len);
 		delete[] image;
 		return bit;
 	}

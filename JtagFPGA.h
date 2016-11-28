@@ -41,7 +41,8 @@
 
 	\ingroup libjtaghal
  */
-class JtagFPGA : public JtagDevice
+class JtagFPGA	: public JtagDevice
+				, public FPGA
 {
 public:
 	JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);

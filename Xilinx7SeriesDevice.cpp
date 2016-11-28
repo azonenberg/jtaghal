@@ -33,10 +33,6 @@
 	@brief Implementation of Xilinx7SeriesDevice
  */
 #include "jtaghal.h"
-#include <stdio.h>
-#include <memory.h>
-#include "Xilinx7SeriesDevice.h"
-#include "XilinxFPGABitstream.h"
 
 using namespace std;
 
@@ -89,12 +85,11 @@ JtagDevice* Xilinx7SeriesDevice::CreateDevice(
 		return new Xilinx7SeriesDevice(arraysize, rev, idcode, iface, pos);
 
 	default:
-		fprintf(stderr, "Xilinx7SeriesDevice::CreateDevice(arraysize=%x, rev=%x, idcode=%08x)\n", arraysize, rev, idcode);
+		LogError("Xilinx7SeriesDevice::CreateDevice(arraysize=%x, rev=%x, idcode=%08x)\n", arraysize, rev, idcode);
 
 		throw JtagExceptionWrapper(
 			"Unknown 7-series device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -119,8 +114,7 @@ string Xilinx7SeriesDevice::GetDescription()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown 7-series device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	char srev[16];
@@ -174,18 +168,17 @@ bool Xilinx7SeriesDevice::IsProgrammed()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Configuration
 
-void Xilinx7SeriesDevice::Erase(bool bVerbose)
+void Xilinx7SeriesDevice::Erase()
 {
 	ResetToIdle();
-	InternalErase(bVerbose);
+	InternalErase();
 	SetIR(INST_BYPASS);
 }
 
-void Xilinx7SeriesDevice::InternalErase(bool bVerbose)
+void Xilinx7SeriesDevice::InternalErase()
 {
 	//Load the JPROGRAM instruction to clear configuration memory
-	if(bVerbose)
-		printf("    Clearing configuration memory...\n");
+	LogDebug("Clearing configuration memory...\n");
 	SetIR(INST_JPROGRAM);
 	SendDummyClocks(32);
 
@@ -205,27 +198,27 @@ void Xilinx7SeriesDevice::InternalErase(bool bVerbose)
 	{
 		throw JtagExceptionWrapper(
 			"INIT_B not high after 5 seconds, possible board fault",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 }
 
 
-FirmwareImage* Xilinx7SeriesDevice::LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose)
+FirmwareImage* Xilinx7SeriesDevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len, bVerbose));
+	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
 }
 
 void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 {
+	LogIndenter li;
+
 	//Should be an FPGA bitstream
 	FPGABitstream* bitstream = static_cast<FPGABitstream*>(image);
 	if(bitstream == NULL)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid firmware image (not an FPGABitstream)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	//Verify the ID code matches the device we're plugged into
@@ -237,17 +230,16 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 		JtagDevice* dummy = JtagDevice::CreateDevice(bitstream->idcode, NULL, 0);
 		if(dummy != NULL)
 		{
-			printf("    You are attempting to program a \"%s\" with a bitstream meant for a \"%s\"\n",
+			LogError("You are attempting to program a \"%s\" with a bitstream meant for a \"%s\"\n",
 				GetDescription().c_str(), dummy->GetDescription().c_str());
 			delete dummy;
 		}
 
 		throw JtagExceptionWrapper(
 			"Bitstream ID code does not match ID code of this device",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
-	printf("    Checking ID code... OK\n");
+	LogVerbose("Checking ID code... OK\n");
 
 	//If the ID code check passes it's a valid Xilinx bitstream so go do stuff with it
 	XilinxFPGABitstream* xbit = dynamic_cast<XilinxFPGABitstream*>(bitstream);
@@ -255,10 +247,9 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 	{
 		throw JtagExceptionWrapper(
 			"Valid ID code but not a XilinxFPGABitstream",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
-	printf("    Using %s\n", xbit->GetDescription().c_str());
+	LogVerbose("Using %s\n", xbit->GetDescription().c_str());
 
 	//Make a copy of the bitstream with the proper byte ordering for the JTAG API
 	unsigned char* flipped_bitstream = new unsigned char[xbit->raw_bitstream_len];
@@ -269,10 +260,10 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 	ResetToIdle();
 
 	//Reset the FPGA to clear any existing configuration
-	InternalErase(true);
+	InternalErase();
 
 	//Send the bitstream to the FPGA
-	printf("    Loading new bitstream...\n");
+	LogVerbose("Loading new bitstream...\n");
 	SetIR(INST_CFG_IN);
 	ScanDR(flipped_bitstream, NULL, xbit->raw_bitstream_len * 8);
 
@@ -293,16 +284,14 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 		{
 			throw JtagExceptionWrapper(
 				"Configuration failed (CRC error)",
-				"",
-				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+				"");
 		}
 		else
 		{
 			PrintStatusRegister();
 			throw JtagExceptionWrapper(
 				"Configuration failed (unknown error)",
-				"",
-				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+				"");
 		}
 	}
 
@@ -313,27 +302,29 @@ void Xilinx7SeriesDevice::PrintStatusRegister()
 {
 	Xilinx7SeriesDeviceStatusRegister statreg;
 	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
-	printf(	"    Status register is 0x%04x\n"
-		"      CRC error         : %u\n"
-		"      Secured           : %u\n"
-		"      MMCM lock         : %u\n"
-		"      DCI match         : %u\n"
-		"      EOS               : %u\n"
-		"      GTS               : %u\n"
-		"      GWE               : %u\n"
-		"      GHIGH             : %u\n"
-		"      Mode pins         : %u\n"
-		"      Init complete     : %u\n"
-		"      INIT_B            : %u\n"
-		"      Done released     : %u\n"
-		"      Done pin          : %u\n"
-		"      IDCODE error      : %u\n"
-		"      Decrypt error     : %u\n"
-		"      XADC overheat     : %u\n"
-		"      Startup state     : %u\n"
-		"      Reserved          : %u\n"
-		"      Bus width         : %u\n"
-		"      Reserved          : %u\n",
+	LogIndenter li;
+	LogVerbose(
+		"Status register is 0x%04x\n"
+		"  CRC error         : %u\n"
+		"  Secured           : %u\n"
+		"  MMCM lock         : %u\n"
+		"  DCI match         : %u\n"
+		"  EOS               : %u\n"
+		"  GTS               : %u\n"
+		"  GWE               : %u\n"
+		"  GHIGH             : %u\n"
+		"  Mode pins         : %u\n"
+		"  Init complete     : %u\n"
+		"  INIT_B            : %u\n"
+		"  Done released     : %u\n"
+		"  Done pin          : %u\n"
+		"  IDCODE error      : %u\n"
+		"  Decrypt error     : %u\n"
+		"  XADC overheat     : %u\n"
+		"  Startup state     : %u\n"
+		"  Reserved          : %u\n"
+		"  Bus width         : %u\n"
+		"  Reserved          : %u\n",
 		statreg.word,
 		statreg.bits.crc_err,
 		statreg.bits.part_secured,
@@ -455,8 +446,7 @@ void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* d
 		//TODO: use type 2 read
 		throw JtagExceptionWrapper(
 			"ReadWordsConfigRegister() not implemented for count>32",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 }
 */
@@ -465,8 +455,7 @@ void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* d
 {
 	throw JtagExceptionWrapper(
 		"WriteWordConfigRegister() not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }
 */
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -476,11 +465,9 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 	const unsigned char* data,
 	size_t len,
 	XilinxFPGABitstream* bitstream,
-	size_t fpos,
-	bool bVerbose)
+	size_t fpos)
 {
-	if(bVerbose)
-		printf("Parsing bitstream internals...\n");
+	LogDebug("Parsing bitstream internals...\n");
 
 	//Expect aa 99 55 66 (sync word)
 	unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
@@ -489,8 +476,7 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 		delete bitstream;
 		throw JtagExceptionWrapper(
 			"No valid sync word found",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	//Allocate space and copy the entire bitstream into raw_bitstream
@@ -591,30 +577,28 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 			//Validate frame
 			if(frame.bits.reg_addr >= X7_CONFIG_REG_MAX)
 			{
-				printf("[Xilinx7SeriesDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
+				LogWarning("[Xilinx7SeriesDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 					frame.bits.reg_addr, (int)fpos);
 				delete bitstream;
 				throw JtagExceptionWrapper(
 					"Invalid register address in bitstream",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 			}
 
 			//Print stats
-			if(bVerbose)
-			{
-				printf("    Config frame starting at 0x%x: Type 1 %s to register 0x%02x (%s), %u words\n",
-					(int)fpos,
-					config_opcodes[frame.bits.op],
-					frame.bits.reg_addr,
-					config_register_names[frame.bits.reg_addr],
-					frame.bits.count
-					);
-			}
+			LogDebug("Config frame starting at 0x%x: Type 1 %s to register 0x%02x (%s), %u words\n",
+				(int)fpos,
+				config_opcodes[frame.bits.op],
+				frame.bits.reg_addr,
+				config_register_names[frame.bits.reg_addr],
+				frame.bits.count
+				);
 
 			//See if it's a write, if so pull out some data
 			if(frame.bits.op == X7_CONFIG_OP_WRITE)
 			{
+				LogIndenter li;
+
 				//Look at the frame data
 				switch(frame.bits.reg_addr)
 				{
@@ -626,17 +610,13 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to CMD register in config frame",
-								"",
-								JtagException::EXCEPTION_TYPE_GIGO);
+								"");
 						}
 						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
-						if(bVerbose)
-						{
-							if(cmd_value >= X7_CMD_MAX)
-								printf("        Invalid command value");
-							else
-								printf("        Command = %s\n", cmd_values[cmd_value]);
-						}
+						if(cmd_value >= X7_CMD_MAX)
+							LogError("Invalid command value");
+						else
+							LogDebug("Command = %s\n", cmd_values[cmd_value]);
 
 						//We're done, skip to the end of the bitstream
 						if(cmd_value == X7_CMD_DESYNC)
@@ -654,14 +634,12 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to IDCODE register in config frame",
-								"",
-								JtagException::EXCEPTION_TYPE_GIGO);
+								"");
 						}
 
 						//Pull the value
 						uint32_t idcode = GetBigEndianUint32FromByteArray(data, fpos);
-						if(bVerbose)
-							printf("        ID code = %08x\n", idcode);
+						LogDebug("ID code = %08x\n", idcode);
 						bitstream->idcode = idcode;
 					}
 					break;
@@ -672,8 +650,7 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 					if(frame.bits.count == 1)
 					{
 						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
-						if(bVerbose)
-							printf("        Data = 0x%08x\n", cmd_value);
+						LogDebug("Data = 0x%08x\n", cmd_value);
 					}
 
 					break;
@@ -686,15 +663,13 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 		else if(frame.bits.type == X7_CONFIG_FRAME_TYPE_2)
 		{
 			unsigned int framesize = frame.bits_type2.count;
+			LogIndenter li;
 
 			//Print stats
-			if(bVerbose)
-			{
-				printf("    Config frame starting at 0x%x: Type 2, %u words\n",
-					(int)fpos,
-					framesize
-					);
-			}
+			LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
+				(int)fpos,
+				framesize
+				);
 
 			//Discard data + header
 			//There seems to be an unused trailing word after the last data word
@@ -705,8 +680,7 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid frame type",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 	}
 
@@ -722,9 +696,33 @@ void Xilinx7SeriesDevice::Reboot()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General NoC support stuff
+// On-chip debug helpers
 
-void Xilinx7SeriesDevice::SetOCDInstruction()
+size_t Xilinx7SeriesDevice::GetNumUserInstructions()
 {
-	SetIRDeferred(INST_USER1);
+	return 4;	//generated by fair dice roll
+				//guaranteed to be random
+				//Just kidding, we have USER1...USER4
+}
+
+void Xilinx7SeriesDevice::SelectUserInstruction(size_t index)
+{
+	switch(index)
+	{
+		case 0:
+			SetIRDeferred(INST_USER1);
+			break;
+
+		case 1:
+			SetIRDeferred(INST_USER2);
+			break;
+
+		case 2:
+			SetIRDeferred(INST_USER3);
+			break;
+
+		case 3:
+			SetIRDeferred(INST_USER4);
+			break;
+	}
 }

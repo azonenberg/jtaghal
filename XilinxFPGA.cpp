@@ -69,11 +69,10 @@ XilinxFPGA::~XilinxFPGA()
 
 	@param data			Pointer to the bitstream data
 	@param len			Length of the bitstream
-	@param bVerbose		Set to true for verbose debug output on bitstream internals
 
 	@return A bitstream suitable for loading into this device
  */
-FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t len, bool bVerbose)
+FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t len)
 {
 	XilinxFPGABitstream* bitstream = new XilinxFPGABitstream;
 
@@ -244,7 +243,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 	}
 
 	//Call the derived class function to read the bulk bitstream data
-	return ParseBitstreamInternals(data, len, bitstream, fpos, bVerbose);
+	return ParseBitstreamInternals(data, len, bitstream, fpos);
 }
 
 bool XilinxFPGA::HasIndirectFlashSupport()
@@ -377,7 +376,7 @@ void XilinxFPGA::ProgramIndirect(
 /**
 	@brief Loads an indirect programming image suitable for the given bus width
  */
-uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, string image_fname)
+uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int /*buswidth*/, string /*image_fname*/)
 {
 	/*
 	//Only support QSPI for now

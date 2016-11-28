@@ -101,10 +101,10 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 	case XILINX_FAMILY_CR2_A:
 	case XILINX_FAMILY_CR2_B:
 		return XilinxCoolRunnerIIDevice::CreateDevice(idcode_raw, iface, pos);
-
+	*/
 	case XILINX_FAMILY_7SERIES:
 		return Xilinx7SeriesDevice::CreateDevice(arraysize, rev, idcode_raw, iface, pos);
-	*/
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown family ID - probably not yet supported",

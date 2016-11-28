@@ -50,7 +50,7 @@ public:
 
 protected:
 	//Static function for parsing bitstream headers (common to all Xilinx devices)
-	FPGABitstream* ParseBitstreamCore(const unsigned char* data, size_t len, bool bVerbose = false);
+	FPGABitstream* ParseBitstreamCore(const unsigned char* data, size_t len);
 
 	/**
 		@brief Parse a full bitstream image (specific to the derived FPGA family)
@@ -67,8 +67,7 @@ protected:
 		const unsigned char* data,
 		size_t len,
 		XilinxFPGABitstream* bitstream,
-		size_t fpos,
-		bool bVerbose = false) =0;
+		size_t fpos) =0;
 
 	virtual void PrintStatusRegister() =0;
 

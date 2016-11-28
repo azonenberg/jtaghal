@@ -71,6 +71,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // libstdc++ headers
 
+#include <list>
 #include <map>
 #include <string>
 #include <vector>
@@ -125,6 +126,7 @@
 //Vendor device classes (and support stuff)
 #include "XilinxFPGABitstream.h"
 #include "XilinxFPGA.h"
+#include "Xilinx7SeriesDevice.h"
 
 //Debugging stuff
 #include "DebuggableDevice.h"

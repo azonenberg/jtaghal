@@ -249,28 +249,29 @@ void JtagDevice::ResetToIdle()
 
 void JtagDevice::PrintInfo()
 {
-	/*
-	printf("%2d: %s\n", (int)m_pos, GetDescription().c_str());
+	LogNotice("%2d: %s\n", (int)m_pos, GetDescription().c_str());
+	LogIndenter li;
 
 	//Is it programmable? If so, get some more details
 	ProgrammableDevice* pprog = dynamic_cast<ProgrammableDevice*>(this);
 	if(pprog != NULL)
 	{
-		printf("    Device is programmable\n");
+		LogNotice("Device is programmable\n");
 
 		if(pprog->IsProgrammed())
-			printf("    Device is configured\n");
+			LogNotice("Device is configured\n");
 		else
-			printf("    Device is blank\n");
+			LogNotice("Device is blank\n");
 
 		//Is it an FPGA? If so, get FPGA-specific information
 		//Get the serial number only if the device is blank since some FPGAs can't get the S/N when they're configured
 		FPGA* pfpga = dynamic_cast<FPGA*>(this);
 		if(pfpga != NULL)
 		{
-			printf("    Device is an FPGA\n");
+			LogNotice("Device is an FPGA\n");
 			if(pprog->IsProgrammed())
 			{
+				/*
 				//Probe the FPGA and see if it has any virtual TAPs on board
 				pfpga->ProbeVirtualTAPs();
 				if(pfpga->HasRPCInterface())
@@ -281,6 +282,7 @@ void JtagDevice::PrintInfo()
 					int bitlen = pfpga->GetSerialNumberLengthBits();
 					printf("    Device has unique serial number (%d bits long)\n", bitlen);
 				}
+				*/
 			}
 			else
 			{
@@ -288,37 +290,40 @@ void JtagDevice::PrintInfo()
 				{
 					int len = pfpga->GetSerialNumberLength();
 					int bitlen = pfpga->GetSerialNumberLengthBits();
-					printf("    Device has unique serial number (%d bits long)\n", bitlen);
-					printf("    Device serial number is ");
 					unsigned char* serial = new unsigned char[len];
 					memset(serial, 0, len);
 					pfpga->GetSerialNumber(serial);
+
+					LogNotice("Device has unique serial number (%d bits long)\n", bitlen);
+					LogNotice("Device serial number is ");
 					for(int j=0; j<bitlen; j++)
-						printf("%d", PeekBit(serial, j));
-					printf(" = 0x");
+						LogNotice("%d", PeekBit(serial, j));
+					LogNotice(" = 0x");
 					for(int j=0; j<len; j++)
-						printf("%02x", 0xff & serial[j]);
-					printf("\n");
+						LogNotice("%02x", 0xff & serial[j]);
+					LogNotice("\n");
 					delete[] serial;
 				}
 			}
 		}
-
+		/*
 		//Is it a CPLD? If so, get CPLD-specific information
 		CPLD* pcpld = dynamic_cast<CPLD*>(this);
 		if(pcpld != NULL)
 			printf("    Device is a CPLD\n");
+		*/
 	}
 
 	//Is it debuggable? If so, get some more details
 	DebuggerInterface* pdebug = dynamic_cast<DebuggerInterface*>(this);
 	if(pdebug != NULL)
 	{
+		/*
 		size_t ntargets = pdebug->GetNumTargets();
 		printf("    Device is a debug interface\n");
 		printf("    %zu targets present\n", ntargets);
 		for(size_t i=0; i<ntargets; i++)
 			printf("        %zu: %s\n", i, pdebug->GetTarget(i)->GetDescription().c_str());
+		*/
 	}
-	*/
 }
