@@ -41,7 +41,7 @@
 
 /**
 	@brief Raw binary firmware image loaded from a file
-	
+
 	\ingroup libjtaghal
  */
 class RawBinaryFirmwareImage : public ByteArrayFirmwareImage
@@ -49,10 +49,10 @@ class RawBinaryFirmwareImage : public ByteArrayFirmwareImage
 public:
 	RawBinaryFirmwareImage(std::string fname, std::string sdevname);
 	virtual ~RawBinaryFirmwareImage();
-	
+
 	///@brief Source file name
 	std::string m_srcfname;
-	
+
 	virtual std::string GetDescription();
 };
 

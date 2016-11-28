@@ -55,13 +55,13 @@ RawBinaryFirmwareImage::RawBinaryFirmwareImage(string fname, string sdevname)
 	fseek(fp, 0, SEEK_END);
 	raw_bitstream_len = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	
+
 	//Read it
 	raw_bitstream = new unsigned char[raw_bitstream_len];
 	fread(raw_bitstream, 1, raw_bitstream_len, fp);
 	devname = sdevname;
 	idcode = 0;
-	
+
 	fclose(fp);
 }
 
@@ -76,7 +76,7 @@ string RawBinaryFirmwareImage::GetDescription()
 {
 	char retval[1024];
 	snprintf(retval, sizeof(retval), "firmware \"%s\" for device \"%s\"",
-		m_srcfname.c_str(), devname.c_str());	
+		m_srcfname.c_str(), devname.c_str());
 	return retval;
 }
 
