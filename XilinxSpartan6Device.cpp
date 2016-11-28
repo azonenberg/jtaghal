@@ -33,10 +33,6 @@
 	@brief Implementation of XilinxSpartan6Device
  */
 #include "jtaghal.h"
-#include <stdio.h>
-#include <memory.h>
-#include "XilinxSpartan6Device.h"
-#include "XilinxFPGABitstream.h"
 
 using namespace std;
 
@@ -93,8 +89,7 @@ JtagDevice* XilinxSpartan6Device::CreateDevice(
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown Spartan-6 device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 		//fprintf(stderr, "Unknown Spartan-6 device (arraysize=%x, rev=%x)!\n", arraysize, rev);
 	}
 }
@@ -123,8 +118,7 @@ string XilinxSpartan6Device::GetDescription()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown Spartan-6 device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	char srev[16];
@@ -178,18 +172,17 @@ bool XilinxSpartan6Device::IsProgrammed()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Configuration
 
-void XilinxSpartan6Device::Erase(bool bVerbose)
+void XilinxSpartan6Device::Erase()
 {
 	ResetToIdle();
-	InternalErase(bVerbose);
+	InternalErase();
 	SetIR(INST_BYPASS);
 }
 
-void XilinxSpartan6Device::InternalErase(bool bVerbose)
+void XilinxSpartan6Device::InternalErase()
 {
 	//Load the JPROGRAM instruction to clear configuration memory
-	if(bVerbose)
-		printf("    Clearing configuration memory...\n");
+	LogDebug("Clearing configuration memory...\n");
 	SetIR(INST_JPROGRAM);
 	SendDummyClocks(32);
 
@@ -209,8 +202,7 @@ void XilinxSpartan6Device::InternalErase(bool bVerbose)
 	{
 		throw JtagExceptionWrapper(
 			"INIT_B not high after 5 seconds, possible board fault",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 }
 
@@ -221,21 +213,22 @@ void XilinxSpartan6Device::Reboot()
 	SetIR(INST_BYPASS);
 }
 
-FirmwareImage* XilinxSpartan6Device::LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose)
+FirmwareImage* XilinxSpartan6Device::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len, bVerbose));
+	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
 }
 
 void XilinxSpartan6Device::Program(FirmwareImage* image)
 {
+	LogIndenter li;
+
 	//Should be an FPGA bitstream
 	FPGABitstream* bitstream = dynamic_cast<FPGABitstream*>(image);
 	if(bitstream == NULL)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid firmware image (not an FPGABitstream)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	//Verify the ID code matches the device we're plugged into
@@ -247,17 +240,16 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 		JtagDevice* dummy = JtagDevice::CreateDevice(bitstream->idcode, NULL, 0);
 		if(dummy != NULL)
 		{
-			printf("    You are attempting to program a \"%s\" with a bitstream meant for a \"%s\"\n",
+			LogError("You are attempting to program a \"%s\" with a bitstream meant for a \"%s\"\n",
 				GetDescription().c_str(), dummy->GetDescription().c_str());
 			delete dummy;
 		}
 
 		throw JtagExceptionWrapper(
 			"Bitstream ID code does not match ID code of this device",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
-	printf("    Checking ID code... OK\n");
+	LogVerbose("Checking ID code... OK\n");
 
 	//If the ID code check passes it's a valid Xilinx bitstream so go do stuff with it
 	XilinxFPGABitstream* xbit = dynamic_cast<XilinxFPGABitstream*>(bitstream);
@@ -265,10 +257,9 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 	{
 		throw JtagExceptionWrapper(
 			"Valid ID code but not a XilinxFPGABitstream",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
-	printf("    Using %s\n", xbit->GetDescription().c_str());
+	LogVerbose("Using %s\n", xbit->GetDescription().c_str());
 
 	//Make a copy of the bitstream with the proper byte ordering for the JTAG API
 	unsigned char* flipped_bitstream = new unsigned char[xbit->raw_bitstream_len];
@@ -283,7 +274,7 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 
 	//Send the bitstream to the FPGA
 	//See UG380 table 10-4 (page 161)
-	printf("    Loading new bitstream...\n");
+	LogVerbose("Loading new bitstream...\n");
 	SetIR(INST_CFG_IN);
 	ScanDR(flipped_bitstream, NULL, xbit->raw_bitstream_len * 8);
 
@@ -305,16 +296,14 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 		{
 			throw JtagExceptionWrapper(
 				"Configuration failed (CRC error)",
-				"",
-				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+				"");
 		}
 		else
 		{
 			PrintStatusRegister();
 			throw JtagExceptionWrapper(
 				"Configuration failed (unknown error)",
-				"",
-				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+				"");
 		}
 	}
 
@@ -323,25 +312,27 @@ void XilinxSpartan6Device::Program(FirmwareImage* image)
 
 void XilinxSpartan6Device::PrintStatusRegister()
 {
+	LogIndenter li;
+
 	XilinxSpartan6DeviceStatusRegister statreg;
 	statreg.word = ReadWordConfigRegister(S6_CONFIG_REG_STAT);
-	printf(	"    Status register is 0x%04x\n"
-		"      CRC error         : %u\n"
-		"      IDCODE error      : %u\n"
-		"      DCM lock status   : %u\n"
-		"      GTS_CFG_B status  : %u\n"
-		"      GWE status        : %u\n"
-		"      GHIGH status      : %u\n"
-		"      Decryption error  : %u\n"
-		"      Decryption enable : %u\n"
-		"      HSWAPEN pin       : %u\n"
-		"      M0 pin            : %u\n"
-		"      M1 pin            : %u\n"
-		"      Reserved          : %u\n"
-		"      INIT_B pin        : %u\n"
-		"      DONE pin          : %u\n"
-		"      Suspend status    : %u\n"
-		"      Fallback status   : %u\n",
+	LogNotice(	"Status register is 0x%04x\n"
+		"  CRC error         : %u\n"
+		"  IDCODE error      : %u\n"
+		"  DCM lock status   : %u\n"
+		"  GTS_CFG_B status  : %u\n"
+		"  GWE status        : %u\n"
+		"  GHIGH status      : %u\n"
+		"  Decryption error  : %u\n"
+		"  Decryption enable : %u\n"
+		"  HSWAPEN pin       : %u\n"
+		"  M0 pin            : %u\n"
+		"  M1 pin            : %u\n"
+		"  Reserved          : %u\n"
+		"  INIT_B pin        : %u\n"
+		"  DONE pin          : %u\n"
+		"  Suspend status    : %u\n"
+		"  Fallback status   : %u\n",
 		statreg.word,
 		statreg.bits.crc_err,
 		statreg.bits.idcode_err,
@@ -460,8 +451,7 @@ void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* d
 		//TODO: use type 2 read
 		throw JtagExceptionWrapper(
 			"ReadWordsConfigRegister() not implemented for count>32",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 }
 
@@ -469,8 +459,7 @@ void XilinxSpartan6Device::WriteWordConfigRegister(unsigned int /*reg*/, uint16_
 {
 	throw JtagExceptionWrapper(
 		"WriteWordConfigRegister() not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -480,14 +469,11 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 	const unsigned char* data,
 	size_t len,
 	XilinxFPGABitstream* bitstream,
-	size_t fpos,
-	bool bVerbose)
+	size_t fpos)
 {
-	if(bVerbose)
-	{
-		printf("Parsing bitstream internals...\n");
-		printf("    Using %s\n", bitstream->GetDescription().c_str());
-	}
+	LogDebug("Parsing bitstream internals...\n");
+	LogIndenter li;
+	LogDebug("Using %s\n", bitstream->GetDescription().c_str());
 
 	//Expect aa 99 55 66 (sync word)
 	unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
@@ -496,8 +482,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		delete bitstream;
 		throw JtagExceptionWrapper(
 			"No valid sync word found",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	//Allocate space and copy the entire bitstream into raw_bitstream
@@ -599,26 +584,22 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		//Validate frame
 		if(frame.bits.reg_addr >= S6_CONFIG_REG_MAX)
 		{
-			printf("[XilinxSpartan6Device] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
+			LogError("[XilinxSpartan6Device] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 				frame.bits.reg_addr, (int)fpos);
 			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid register address in bitstream",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 
 		//Print stats
-		if(bVerbose)
-		{
-			printf("    Config frame starting at 0x%x: Type %u %s to register 0x%02x (%s), ",
-				(int)fpos,
-				frame.bits.type,
-				config_opcodes[frame.bits.op],
-				frame.bits.reg_addr,
-				config_register_names[frame.bits.reg_addr]
-				);
-		}
+		LogDebug("Config frame starting at 0x%x: Type %u %s to register 0x%02x (%s), ",
+			(int)fpos,
+			frame.bits.type,
+			config_opcodes[frame.bits.op],
+			frame.bits.reg_addr,
+			config_register_names[frame.bits.reg_addr]
+			);
 
 		//Go past the header
 		fpos += 2;
@@ -627,8 +608,8 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		if(frame.bits.type == S6_CONFIG_FRAME_TYPE_1)
 		{
 			//Type 1 frame
-			if(bVerbose)
-				printf("%u words\n", frame.bits.count);
+			LogDebug("%u words\n", frame.bits.count);
+			LogIndenter li;
 
 			//See if it's a write, if so pull out some data
 			if(frame.bits.op == S6_CONFIG_OP_WRITE)
@@ -641,8 +622,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 						multiboot_address = (multiboot_address & 0xffff0000) |
 							GetBigEndianUint16FromByteArray(data, fpos);
 
-						if(bVerbose)
-							printf("        Multiboot start address low: %x\n", multiboot_address);
+						LogDebug("Multiboot start address low: %x\n", multiboot_address);
 					}
 					break;
 
@@ -650,11 +630,8 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 					{
 						uint16_t value = GetBigEndianUint16FromByteArray(data, fpos);
 
-						if(bVerbose)
-						{
-							printf("        Multiboot SPI opcode: 0x%x\n", value >> 8);
-							printf("        Multiboot start address high: 0x%x\n", value & 0xff);
-						}
+						LogDebug("Multiboot SPI opcode: 0x%x\n", value >> 8);
+						LogDebug("Multiboot start address high: 0x%x\n", value & 0xff);
 
 						multiboot_address = (multiboot_address & 0x0000ffff) | ( (value & 0xFF) << 16);
 
@@ -665,8 +642,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 					{
 						uint16_t value = GetBigEndianUint16FromByteArray(data, fpos);
 
-						if(bVerbose)
-							printf("        Golden SPI opcode: 0x%x\n", value >> 8);
+						LogDebug("Golden SPI opcode: 0x%x\n", value >> 8);
 					}
 					break;
 
@@ -678,18 +654,14 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to CMD register in config frame",
-								"",
-								JtagException::EXCEPTION_TYPE_GIGO);
+								"");
 						}
 
 						uint16_t cmd_value = GetBigEndianUint16FromByteArray(data, fpos);
-						if(bVerbose)
-						{
-							if(cmd_value > 16)
-								printf("        Invalid command value");
-							else
-								printf("        Command = %s\n", cmd_values[cmd_value]);
-						}
+						if(cmd_value > 16)
+							LogDebug("Invalid command value");
+						else
+							LogDebug("Command = %s\n", cmd_values[cmd_value]);
 
 						//We're done, skip to the end of the bitstream
 						if(cmd_value == S6_CMD_DESYNC)
@@ -703,8 +675,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 						{
 							fpos = start + multiboot_address;
 
-							if(bVerbose)
-								printf("        IPROG reset (to address %x)\n", multiboot_address);
+							LogDebug("IPROG reset (to address %x)\n", multiboot_address);
 
 							//Read the sync word
 							uint16_t syncword_hi = GetBigEndianUint16FromByteArray(data, fpos);
@@ -712,15 +683,13 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							uint32_t syncword = (syncword_hi << 16) | syncword_lo;
 
 							//Sanity check it
-							if(bVerbose)
-								printf("        Sync word = %x\n", syncword);
+							LogDebug("Sync word = %x\n", syncword);
 							if(syncword != 0xaa995566)
 							{
 								delete bitstream;
 								throw JtagExceptionWrapper(
 									"Invalid MultiBoot sync word",
-									"",
-									JtagException::EXCEPTION_TYPE_GIGO);
+									"");
 							}
 
 							//Skip the sync word
@@ -739,16 +708,14 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 2 word) to IDCODE register in config frame",
-								"",
-								JtagException::EXCEPTION_TYPE_GIGO);
+								"");
 						}
 
 						//Pull the value
 						uint16_t idcode_hi = GetBigEndianUint16FromByteArray(data, fpos);
 						uint16_t idcode_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
 						uint32_t idcode = (idcode_hi << 16) | idcode_lo;
-						if(bVerbose)
-							printf("        ID code = %08x\n", idcode);
+						LogDebug("ID code = %08x\n", idcode);
 						bitstream->idcode = idcode;
 					}
 					break;
@@ -761,33 +728,27 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 2 word) to CRC register in config frame",
-								"",
-								JtagException::EXCEPTION_TYPE_GIGO);
+								"");
 						}
 
 						//Pull the value
 						uint16_t crc_hi = GetBigEndianUint16FromByteArray(data, fpos);
 						uint16_t crc_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
 						uint32_t crc = (crc_hi << 16) | crc_lo;
-						if(bVerbose)
-							printf("        CRC = %08x\n", crc);
+						LogDebug("CRC = %08x\n", crc);
 					}
 					break;
 
 					default:
 						if(frame.bits.count == 1)
-						{
-							if(bVerbose)
-								printf("        Value = %x\n", GetBigEndianUint16FromByteArray(data, fpos));
-						}
+							LogDebug("Value = %x\n", GetBigEndianUint16FromByteArray(data, fpos));
 						else if(frame.bits.count == 2)
 						{
 							//Pull the value
 							uint16_t value_hi = GetBigEndianUint16FromByteArray(data, fpos);
 							uint16_t value_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
 							uint32_t value = (value_hi << 16) | value_lo;
-							if(bVerbose)
-								printf("        Value = %08x\n", value);
+							LogDebug("Value = %08x\n", value);
 						}
 					break;
 
@@ -799,14 +760,15 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 		}
 		else if(frame.bits.type == S6_CONFIG_FRAME_TYPE_2)
 		{
+			LogIndenter li;
+
 			//Type 2 frame - not implemented
 			//Get the size (32 bits)
 			uint16_t framesize_hi = GetBigEndianUint16FromByteArray(data, fpos);
 			uint16_t framesize_lo = GetBigEndianUint16FromByteArray(data, fpos+2);
 			uint32_t framesize = (framesize_hi << 16) | framesize_lo;
 			fpos += 4;
-			if(bVerbose)
-				printf("%d words\n", framesize);
+			LogDebug("%d words\n", framesize);
 
 			//Discard the contents
 			fpos += 2*framesize;
@@ -819,8 +781,7 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid frame type",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 	}
 
@@ -829,9 +790,32 @@ XilinxFPGABitstream* XilinxSpartan6Device::ParseBitstreamInternals(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General NoC support stuff
+// On-chip debug helpers
 
-void XilinxSpartan6Device::SetOCDInstruction()
+size_t XilinxSpartan6Device::GetNumUserInstructions()
 {
-	SetIRDeferred(INST_USER1);
+	return 4;
 }
+
+void XilinxSpartan6Device::SelectUserInstruction(size_t index)
+{
+	switch(index)
+	{
+		case 0:
+			SetIRDeferred(INST_USER1);
+			break;
+
+		case 1:
+			SetIRDeferred(INST_USER2);
+			break;
+
+		case 2:
+			SetIRDeferred(INST_USER3);
+			break;
+
+		case 3:
+			SetIRDeferred(INST_USER4);
+			break;
+	}
+}
+

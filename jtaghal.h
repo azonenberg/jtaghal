@@ -128,6 +128,7 @@
 #include "XilinxFPGABitstream.h"
 #include "XilinxFPGA.h"
 #include "Xilinx7SeriesDevice.h"
+#include "XilinxSpartan6Device.h"
 
 //Debugging stuff
 #include "DebuggableDevice.h"

@@ -36,10 +36,6 @@
 #ifndef XilinxSpartan6Device_h
 #define XilinxSpartan6Device_h
 
-#include "XilinxFPGA.h"
-
-#include <list>
-
 /**
 	@brief Spartan-6 configuration frame (see UG380 page 91)
 
@@ -273,17 +269,17 @@ public:
 	virtual void GetSerialNumber(unsigned char* data);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// NoC helpers
+	// On-chip debug helpers
 
-protected:
-	virtual void SetOCDInstruction();
+	virtual size_t GetNumUserInstructions();
+	virtual void SelectUserInstruction(size_t index);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Public configuration interface
 public:
-	virtual void Erase(bool bVerbose = false);
-	virtual void InternalErase(bool bVerbose = false);
-	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose = false);
+	virtual void Erase();
+	virtual void InternalErase();
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len);
 	virtual void Program(FirmwareImage* image);
 	virtual void Reboot();
 
@@ -294,7 +290,11 @@ protected:
 	void ReadWordsConfigRegister(unsigned int reg, uint16_t* dout, unsigned int count);
 	void WriteWordConfigRegister(unsigned int reg, uint16_t value);
 
-	virtual XilinxFPGABitstream* ParseBitstreamInternals(const unsigned char* data, size_t len, XilinxFPGABitstream* bitstream, size_t fpos, bool bVerbose = false);
+	virtual XilinxFPGABitstream* ParseBitstreamInternals(
+		const unsigned char* data,
+		size_t len,
+		XilinxFPGABitstream* bitstream,
+		size_t fpos);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration type definitions

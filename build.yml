@@ -79,6 +79,7 @@ jtaghal:
         - XilinxDevice.cpp
         - XilinxFPGA.cpp
         - Xilinx7SeriesDevice.cpp
+        - XilinxSpartan6Device.cpp
 
         # Vendor devices
         - XilinxFPGABitstream.cpp
