@@ -76,6 +76,7 @@ jtaghal:
 
         # Vendors
         - XilinxDevice.cpp
+        - XilinxFPGA.cpp
 
         # Vendor devices
         - XilinxFPGABitstream.cpp
