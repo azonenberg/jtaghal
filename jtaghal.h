@@ -120,6 +120,7 @@
 #include "FPGA.h"
 #include "JtagFPGA.h"
 //#include "CPLD.h"
+#include "Microcontroller.h"
 
 //Vendor classes
 #include "ARMDevice.h"

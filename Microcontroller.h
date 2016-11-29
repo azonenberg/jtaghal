@@ -36,10 +36,6 @@
 #ifndef Microcontroller_h
 #define Microcontroller_h
 
-#include <stdlib.h>
-
-#include "ProgrammableDevice.h"
-
 /**
 	@brief Generic base class for all microcontrollers
 

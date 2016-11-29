@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "Microcontroller.h"
 
 Microcontroller::~Microcontroller()
 {
