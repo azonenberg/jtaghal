@@ -43,7 +43,7 @@
 
 /**
 	@brief Generic base class for all Xilinx CPLD devices
-	
+
 	\ingroup libjtaghal
  */
 class XilinxCPLD		: public XilinxDevice
@@ -52,7 +52,7 @@ class XilinxCPLD		: public XilinxDevice
 public:
 	XilinxCPLD(unsigned int idcode, JtagInterface* iface, size_t pos);
 	virtual ~XilinxCPLD();
-	
+
 	virtual bool HasIndirectFlashSupport();
 	virtual void ProgramIndirect(
 		ByteArrayFirmwareImage* image,
