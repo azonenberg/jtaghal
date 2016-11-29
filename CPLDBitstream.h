@@ -36,9 +36,6 @@
 #ifndef CPLDBitstream_h
 #define CPLDBitstream_h
 
-#include <string>
-#include "FirmwareImage.h"
-
 /**
 	@brief Abstract base class for CPLD configuration bitstreams
 
