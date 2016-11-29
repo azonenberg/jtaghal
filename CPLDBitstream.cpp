@@ -43,12 +43,12 @@
 CPLDBitstream::CPLDBitstream()
 {
 	idcode = 0;
-	
+
 	file_checksum = 0;
 	fuse_checksum = 0;
 	fuse_count = 0;
 	pin_count = 0;
-	
+
 	fuse_data = NULL;
 }
 

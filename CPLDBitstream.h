@@ -41,7 +41,7 @@
 
 /**
 	@brief Abstract base class for CPLD configuration bitstreams
-	
+
 	\ingroup libjtaghal
  */
 class CPLDBitstream : public FirmwareImage
@@ -49,22 +49,22 @@ class CPLDBitstream : public FirmwareImage
 public:
 	CPLDBitstream();
 	virtual ~CPLDBitstream();
-	
+
 	///Header comment
 	std::string header_comment;
-	
+
 	///JED file checksum
 	uint16_t file_checksum;
-	
+
 	///Fuse array checksum
 	uint16_t fuse_checksum;
-	
+
 	///Number of fuses
 	unsigned int fuse_count;
-	
+
 	///Number of pins
 	unsigned int pin_count;
-	
+
 	///Fuse data
 	bool* fuse_data;
 };
