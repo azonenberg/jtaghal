@@ -101,6 +101,6 @@ JtagDevice* MicrochipDevice::CreateDevice(unsigned int idcode, JtagInterface* if
 	//Assume it's a PIC32 for now
 	//return MicrochipPIC32Device::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
 	LogError("Ignoring MicrochipPIC32Device for now (not ported): %x, %x, %x, %zx, %p\n",
-			partnum, rev, idcode_raw, pos, iface);
+			partnum, stepping, idcode_raw, pos, iface);
 	return NULL;
 }
