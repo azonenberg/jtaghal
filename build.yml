@@ -82,6 +82,7 @@ jtaghal:
         - ARMDevice.cpp
         - MicrochipDevice.cpp
         - XilinxDevice.cpp
+        - XilinxCPLD.cpp
         - XilinxFPGA.cpp
         - Xilinx7SeriesDevice.cpp
         - XilinxSpartan6Device.cpp

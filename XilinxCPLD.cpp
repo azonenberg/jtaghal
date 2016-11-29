@@ -34,13 +34,12 @@
  */
 
 #include "jtaghal.h"
-#include "XilinxCPLD.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
 XilinxCPLD::XilinxCPLD(unsigned int idcode, JtagInterface* iface, size_t pos)
-	: XilinxDevice(idcode, iface, pos)
+	: JtagDevice(idcode, iface, pos)
 {
 }
 
@@ -64,6 +63,5 @@ void XilinxCPLD::ProgramIndirect(
 {
 	throw JtagExceptionWrapper(
 		"Xilinx CPLDs cannot be indirectly programmed",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }

@@ -36,17 +36,13 @@
 #ifndef XilinxCPLD_h
 #define XilinxCPLD_h
 
-#include <stdlib.h>
-
-#include "XilinxDevice.h"
-#include "CPLD.h"
-
 /**
 	@brief Generic base class for all Xilinx CPLD devices
 
 	\ingroup libjtaghal
  */
 class XilinxCPLD		: public XilinxDevice
+						, public JtagDevice
 						, public CPLD
 {
 public:

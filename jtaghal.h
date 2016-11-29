@@ -129,6 +129,7 @@
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
+#include "XilinxCPLD.h"
 #include "XilinxFPGABitstream.h"
 #include "XilinxFPGA.h"
 #include "Xilinx7SeriesDevice.h"
