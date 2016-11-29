@@ -33,12 +33,9 @@
 	@brief Implementation of ARMDevice
  */
 
-#include <stdio.h>
-#include <memory.h>
-#include <string>
 #include "jtaghal.h"
-#include "ARMDevice.h"
-#include "ARMDebugPort.h"
+//#include "ARMDevice.h"
+//#include "ARMDebugPort.h"
 
 using namespace std;
 
@@ -89,8 +86,7 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	{
 		throw JtagExceptionWrapper(
 			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	idcode >>= 11;
 
@@ -105,12 +101,12 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	switch(partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
-		return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
+		//return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
+		return NULL;
 
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown part number - probably not yet supported",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 }

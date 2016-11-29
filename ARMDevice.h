@@ -36,13 +36,8 @@
 #ifndef ARMDevice_h
 #define ARMDevice_h
 
-///JTAG ID code for ARM Ltd
-#define IDCODE_ARM			0x23B
-
 ///JTAG part number for ARM JTAG DAP
 #define IDCODE_ARM_DAP_JTAG	0xBA00
-
-#include "JtagDevice.h"
 
 /**
 	@brief Abstract base class for all ARM Ltd devices (typically ARM DAPs)
