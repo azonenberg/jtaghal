@@ -122,6 +122,7 @@
 //#include "CPLD.h"
 
 //Vendor classes
+#include "ARMDevice.h"
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)

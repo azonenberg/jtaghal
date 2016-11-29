@@ -82,7 +82,7 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 	switch(idcode_s & 0x7FF)
 	{
 	case VENDOR_ID_ARM:
-		//return ARMDevice::CreateDevice(idcode, iface, pos);
+		return ARMDevice::CreateDevice(idcode, iface, pos);
 		break;
 
 	case VENDOR_ID_MICROCHIP:

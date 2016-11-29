@@ -76,6 +76,7 @@ jtaghal:
         - NetworkedJtagInterface.cpp
 
         # Vendors
+        - ARMDevice.cpp
         - XilinxDevice.cpp
         - XilinxFPGA.cpp
         - Xilinx7SeriesDevice.cpp

@@ -101,6 +101,8 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	switch(partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
+		LogError("Ignoring ARMDebugPort for now (not ported): %x, %x, %x, %zx, %p\n",
+			partnum, rev, idcode_raw, pos, iface);
 		//return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
 		return NULL;
 
