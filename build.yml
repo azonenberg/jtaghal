@@ -55,6 +55,7 @@ jtaghal:
         - FirmwareImage.cpp
         - ByteArrayFirmwareImage.cpp
         - RawBinaryFirmwareImage.cpp
+        - CPLDBitstream.cpp
         - FPGABitstream.cpp
 
         # Types of device

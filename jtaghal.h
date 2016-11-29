@@ -112,6 +112,7 @@
 #include "FirmwareImage.h"
 #include "ByteArrayFirmwareImage.h"
 #include "RawBinaryFirmwareImage.h"
+#include "CPLDBitstream.h"
 #include "FPGABitstream.h"
 
 //Device classes
