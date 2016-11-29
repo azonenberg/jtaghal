@@ -63,7 +63,7 @@ void MicrochipMicrocontroller::ProgramIndirect(
 	std::string /*prog_image*/)
 {
 	//TODO: Support indirect programming since the on-die flash in PIC32s requires a bootloader
-	
+
 	throw JtagExceptionWrapper(
 		"Microchip MCUs cannot be indirectly programmed",
 		"",

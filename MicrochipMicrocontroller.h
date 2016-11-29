@@ -43,7 +43,7 @@
 
 /**
 	@brief Generic base class for all Microchip MCUs
-	
+
 	\ingroup libjtaghal
  */
 class MicrochipMicrocontroller		: public MicrochipDevice
@@ -52,7 +52,7 @@ class MicrochipMicrocontroller		: public MicrochipDevice
 public:
 	MicrochipMicrocontroller(unsigned int idcode, JtagInterface* iface, size_t pos);
 	virtual ~MicrochipMicrocontroller();
-	
+
 	virtual bool HasIndirectFlashSupport();
 	virtual void ProgramIndirect(
 		ByteArrayFirmwareImage* image,
