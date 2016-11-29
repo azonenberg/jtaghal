@@ -42,7 +42,7 @@
 
 /**
 	@brief Generic base class for all microcontrollers
-	
+
 	\ingroup libjtaghal
  */
 class Microcontroller : public ProgrammableDevice
