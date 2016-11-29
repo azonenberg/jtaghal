@@ -43,7 +43,7 @@
 
 /**
 	@brief Abstract base class for all Microchip devices (typically MCUs)
-	
+
 	\ingroup libjtaghal
  */
 class MicrochipDevice : public JtagDevice

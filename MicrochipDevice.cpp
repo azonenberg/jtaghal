@@ -47,7 +47,7 @@ using namespace std;
 
 /**
 	@brief Initializes this device
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
@@ -62,25 +62,25 @@ MicrochipDevice::MicrochipDevice(unsigned int idcode, JtagInterface* iface, size
  */
 MicrochipDevice::~MicrochipDevice()
 {
-	
+
 }
 
 /**
 	@brief Creates a MicrochipDevice given an ID code
-	
+
 	@throw JtagException if the ID code supplied is not a valid Microchip device, or not a known family number
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
-	
+
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
 JtagDevice* MicrochipDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//Save the original ID code to give to the derived class
 	unsigned int idcode_raw = idcode;
-	
+
 	//Rightmost bit is always a zero, ignore it
 	idcode >>= 1;
 
@@ -93,11 +93,11 @@ JtagDevice* MicrochipDevice::CreateDevice(unsigned int idcode, JtagInterface* if
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
 	idcode >>= 11;
-	
+
 	//Next 16 bits are part number
 	unsigned int partnum = idcode & 0xffff;
 	idcode >>= 16;
-	
+
 	//then last 4 are stepping
 	unsigned int stepping = idcode;
 
