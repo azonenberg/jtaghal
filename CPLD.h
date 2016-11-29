@@ -27,7 +27,7 @@
 *                                                                                                                      *
 ***********************************************************************************************************************/
 
-/** 
+/**
 	@file
 	@author Andrew D. Zonenberg
 	@brief Declaration of CPLD
@@ -43,16 +43,16 @@ class CPLDBitstream;
 
 /**
 	@brief Generic base class for all complex programmable logic devices
-	
+
 	\ingroup libjtaghal
  */
 class CPLD : public ProgrammableLogicDevice
 {
 public:
 	virtual ~CPLD();
-	
+
 	static void ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t len);
-	
+
 protected:
 	static int ReadIntLine(const char* cdata, size_t& pos, size_t len);
 };

@@ -48,19 +48,19 @@ CPLD::~CPLD()
 
 /**
 	@brief Parses a JED file
-	
+
 	Reference: JEDEC Standard 3-C
-	
+
 	@throw JtagException if the file is malformed
-	
+
 	@param bit		Output bitstream
 	@param data		Data to load
 	@param len		Length of the file
  */
 void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t len)
-{	
+{
 	const char* cdata = reinterpret_cast<const char*>(data);
-	
+
 	//Everything before the STX character (0x02) is a header comment
 	size_t pos = 0;
 	bit->header_comment = "";
@@ -80,7 +80,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 			last_newline = false;
 		}
 	}
-	
+
 	//Validate the checksum
 	//See section 3.2
 	uint16_t file_checksum = 0;
@@ -88,7 +88,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 	for(size_t cpos = pos; cpos < len; cpos ++)
 	{
 		file_checksum += cdata[cpos];
-		
+
 		//ETX? Done with data, read expected checksum
 		if(cdata[cpos] == 0x03)
 		{
@@ -109,10 +109,10 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
 	bit->file_checksum = file_checksum;
-	
+
 	//Skip the STX
 	pos ++;
-	
+
 	//Default fuse state
 	bool default_fuse_state = false;
 
@@ -125,14 +125,14 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 			pos++;
 			continue;
 		}
-		
+
 		//ETX - we're done
 		if(cdata[pos] == 0x03)
 			break;
-		
+
 		//Figure out the opcode
 		switch(cdata[pos])
-		{		
+		{
 		case 'Q':
 			{
 				pos++;
@@ -147,18 +147,18 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 							"",
 							JtagException::EXCEPTION_TYPE_GIGO);
 					}
-				
+
 					pos++;
 					bit->fuse_count = ReadIntLine(cdata, pos, len);
 					bit->fuse_data = new bool[bit->fuse_count];
 					break;
-				
+
 				//Number of pins
 				case 'P':
 					pos++;
 					bit->pin_count = ReadIntLine(cdata, pos, len);
 					break;
-				
+
 				//Number of test vectors (must be zero)
 				case 'V':
 					pos++;
@@ -170,14 +170,14 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 							JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 					}
 					break;
-					
-				
+
+
 				default:
 					throw JtagExceptionWrapper(
 						"Unknown Q-series opcode",
 						"",
 						JtagException::EXCEPTION_TYPE_GIGO);
-				
+
 					break;
 				}
 			}
@@ -194,12 +194,12 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					"",
 					JtagException::EXCEPTION_TYPE_GIGO);
 			}
-			
+
 			//Fill fuse buffer
 			for(size_t i=0; i<bit->fuse_count; i++)
 				bit->fuse_data[i] = default_fuse_state;
 			break;
-			
+
 		//Default test condition (ignore)
 		case 'X':
 			pos++;
@@ -211,23 +211,23 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 			}
 			break;
-			
+
 		//Device identification
 		case 'J':
 			//ignore, scan until we get a *
 			pos++;
 			for(; (pos < len) && (cdata[pos] != '*'); pos++)
 			{}
-			
+
 			//skip the *
 			pos++;
 			break;
-			
+
 		//Comments
 		case 'N':
 			{
 				pos++;
-			
+
 				//Find the end of the line
 				const char* pend = strstr(cdata+pos, "*");
 				if(pend == NULL)
@@ -238,14 +238,14 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 						JtagException::EXCEPTION_TYPE_GIGO);
 				}
 				size_t end_offset = pend - cdata;
-							
+
 				//Look for "VERSION" and "DEVICE" keywords added for Xilinx devices
 				const char* nver = strstr(cdata+pos, " VERSION");
 				if(nver != NULL)
 				{
 					//TODO: process this
 				}
-				
+
 				const char* ndev = strstr(cdata+pos, " DEVICE");
 				if(ndev == (cdata+pos))
 				{
@@ -253,17 +253,17 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					sscanf(ndev, " DEVICE %127[^*]", devname);
 					bit->devname = devname;
 				}
-				
+
 				//skip the *
 				pos = end_offset + 1;
 			}
 			break;
-			
+
 		//Actual fuse data
 		case 'L':
 			{
 				pos++;
-		
+
 				if(bit->fuse_data == NULL)
 				{
 					throw JtagExceptionWrapper(
@@ -271,16 +271,16 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 						"",
 						JtagException::EXCEPTION_TYPE_GIGO);
 				}
-				
+
 				//Read fuse number
 				int fuse_num = atoi(cdata+pos);
-				
+
 				//Skip the digits and the space
 				while(isdigit(cdata[pos]))
 					pos++;
 				while(isspace(cdata[pos]))
 					pos++;
-					
+
 				//Read the digits
 				while(cdata[pos] != '*')
 				{
@@ -291,30 +291,30 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 							"",
 							JtagException::EXCEPTION_TYPE_GIGO);
 					}
-					
+
 					//Set the fuse
 					if(cdata[pos] == '1')
 						bit->fuse_data[fuse_num++] = true;
 					else
 						bit->fuse_data[fuse_num++] = false;
-					
+
 					pos++;
 				}
-				
+
 				//Skip the *
 				pos++;
 			}
-			
+
 			break;
-		
+
 		//Fuse checksum
 		case 'C':
 			{
 				pos++;
-				
+
 				unsigned int checksum;
 				sscanf(cdata+pos, "%4x", &checksum);
-				
+
 				//Calculate the fuse checksum
 				uint16_t calcsum = 0;
 				for(size_t i=0; i<bit->fuse_count; i+= 8)
@@ -336,16 +336,16 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 						"",
 						JtagException::EXCEPTION_TYPE_GIGO);
 				}
-				
+
 				//Skip checksum data
 				while(cdata[pos] != '*')
 					pos++;
 				pos++;
-				
+
 				bit->fuse_checksum = checksum;
 			}
 			break;
-			
+
 		default:
 			throw JtagExceptionWrapper(
 				string("Unknown JEDEC programming file opcode ") + cdata[pos],
@@ -357,19 +357,19 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 
 /**
 	@brief Reads a line containing an integer terminated by a *
-	
+
 	@throw JtagException if malformed input
-	
+
 	@param cdata	Buffer to read
 	@param pos		Position to read from (updated at function return)
 	@param len		Length of the entire buffer
-	
+
 	@return The value
  */
 int CPLD::ReadIntLine(const char* cdata, size_t& pos, size_t len)
 {
 	int retval = 0;
-	
+
 	while(pos < len)
 	{
 		//* is end of line character
@@ -378,20 +378,20 @@ int CPLD::ReadIntLine(const char* cdata, size_t& pos, size_t len)
 			pos++;
 			break;
 		}
-		
+
 		//Digit? Read it
 		if(isdigit(cdata[pos]))
 			retval = (retval * 10) + (cdata[pos++] - '0');
-			
+
 		//No clue, give up
 		else
-		{			
+		{
 			throw JtagExceptionWrapper(
 				"Bad character in integer line",
 				"",
 				JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 		}
 	}
-	
+
 	return retval;
 }
