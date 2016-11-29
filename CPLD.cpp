@@ -34,8 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "CPLD.h"
-#include "CPLDBitstream.h"
 
 using namespace std;
 
@@ -105,8 +103,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 	{
 		throw JtagExceptionWrapper(
 			"JED file checksum mismatch, aborting",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	bit->file_checksum = file_checksum;
 
@@ -144,8 +141,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					{
 						throw JtagExceptionWrapper(
 							"Fuse count cannot be specified more than once",
-							"",
-							JtagException::EXCEPTION_TYPE_GIGO);
+							"");
 					}
 
 					pos++;
@@ -166,8 +162,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					{
 						throw JtagExceptionWrapper(
 							"JEDEC test vectors not implemented",
-							"",
-							JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+							"");
 					}
 					break;
 
@@ -175,8 +170,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 				default:
 					throw JtagExceptionWrapper(
 						"Unknown Q-series opcode",
-						"",
-						JtagException::EXCEPTION_TYPE_GIGO);
+						"");
 
 					break;
 				}
@@ -191,8 +185,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 			{
 				throw JtagExceptionWrapper(
 					"Cannot specify default fuse state if fuse count was not yet specified",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 			}
 
 			//Fill fuse buffer
@@ -207,8 +200,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 			{
 				throw JtagExceptionWrapper(
 					"JEDEC test vectors not implemented",
-					"",
-					JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+					"");
 			}
 			break;
 
@@ -234,8 +226,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 				{
 					throw JtagExceptionWrapper(
 						"Unexpected end of file in comment",
-						"",
-						JtagException::EXCEPTION_TYPE_GIGO);
+						"");
 				}
 				size_t end_offset = pend - cdata;
 
@@ -268,8 +259,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 				{
 					throw JtagExceptionWrapper(
 						"Cannot have a fuse data line until fuse count has been specified",
-						"",
-						JtagException::EXCEPTION_TYPE_GIGO);
+						"");
 				}
 
 				//Read fuse number
@@ -288,8 +278,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 					{
 						throw JtagExceptionWrapper(
 							"Expected 1 or 0 as fuse value, found something else",
-							"",
-							JtagException::EXCEPTION_TYPE_GIGO);
+							"");
 					}
 
 					//Set the fuse
@@ -333,8 +322,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 				{
 					throw JtagExceptionWrapper(
 						"Fuse array checksum mismatch, aborting",
-						"",
-						JtagException::EXCEPTION_TYPE_GIGO);
+						"");
 				}
 
 				//Skip checksum data
@@ -349,8 +337,7 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 		default:
 			throw JtagExceptionWrapper(
 				string("Unknown JEDEC programming file opcode ") + cdata[pos],
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 	}
 }
@@ -388,8 +375,7 @@ int CPLD::ReadIntLine(const char* cdata, size_t& pos, size_t len)
 		{
 			throw JtagExceptionWrapper(
 				"Bad character in integer line",
-				"",
-				JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+				"");
 		}
 	}
 

@@ -36,11 +36,6 @@
 #ifndef CPLD_h
 #define CPLD_h
 
-#include <stdlib.h>
-#include "ProgrammableLogicDevice.h"
-
-class CPLDBitstream;
-
 /**
 	@brief Generic base class for all complex programmable logic devices
 

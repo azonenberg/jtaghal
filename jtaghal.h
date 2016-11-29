@@ -118,9 +118,9 @@
 //Device classes
 #include "ProgrammableDevice.h"
 #include "ProgrammableLogicDevice.h"
+#include "CPLD.h"
 #include "FPGA.h"
 #include "JtagFPGA.h"
-//#include "CPLD.h"
 #include "Microcontroller.h"
 
 //Vendor classes

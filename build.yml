@@ -63,6 +63,7 @@ jtaghal:
         - ProgrammableDevice.cpp
         - ProgrammableLogicDevice.cpp
         - JtagDevice.cpp
+        - CPLD.cpp
         - FPGA.cpp
         - JtagFPGA.cpp
         - Microcontroller.cpp
