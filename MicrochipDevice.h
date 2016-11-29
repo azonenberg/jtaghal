@@ -36,11 +36,6 @@
 #ifndef MicrochipDevice_h
 #define MicrochipDevice_h
 
-///JTAG ID code for Microchip
-#define IDCODE_MICROCHIP			0x29
-
-#include "JtagDevice.h"
-
 /**
 	@brief Abstract base class for all Microchip devices (typically MCUs)
 

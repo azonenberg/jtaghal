@@ -33,12 +33,9 @@
 	@brief Implementation of MicrochipDevice
  */
 
-#include <stdio.h>
-#include <memory.h>
-#include <string>
 #include "jtaghal.h"
-#include "MicrochipDevice.h"
-#include "MicrochipPIC32Device.h"
+#include "JEDECVendorID_enum.h"
+//#include "MicrochipPIC32Device.h"
 
 using namespace std;
 
@@ -85,12 +82,11 @@ JtagDevice* MicrochipDevice::CreateDevice(unsigned int idcode, JtagInterface* if
 	idcode >>= 1;
 
 	//Sanity check manufacturer ID
-	if( (idcode & 0x7FF) != IDCODE_MICROCHIP)
+	if( (idcode & 0x7FF) != VENDOR_ID_MICROCHIP)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not a Microchip device)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	idcode >>= 11;
 
@@ -103,5 +99,8 @@ JtagDevice* MicrochipDevice::CreateDevice(unsigned int idcode, JtagInterface* if
 
 	//Create the device
 	//Assume it's a PIC32 for now
-	return MicrochipPIC32Device::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
+	//return MicrochipPIC32Device::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
+	LogError("Ignoring MicrochipPIC32Device for now (not ported): %x, %x, %x, %zx, %p\n",
+			partnum, rev, idcode_raw, pos, iface);
+	return NULL;
 }

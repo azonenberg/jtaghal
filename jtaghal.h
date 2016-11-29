@@ -124,6 +124,7 @@
 
 //Vendor classes
 #include "ARMDevice.h"
+#include "MicrochipDevice.h"
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
