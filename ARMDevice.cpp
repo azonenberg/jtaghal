@@ -47,7 +47,7 @@ using namespace std;
 
 /**
 	@brief Initializes this device
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
@@ -62,25 +62,25 @@ ARMDevice::ARMDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
  */
 ARMDevice::~ARMDevice()
 {
-	
+
 }
 
 /**
 	@brief Creates a ARMDevice given an ID code
-	
+
 	@throw JtagException if the ID code supplied is not a valid Microchip device, or not a known family number
-	
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
-	
+
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
 JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//Save the original ID code to give to the derived class
 	unsigned int idcode_raw = idcode;
-	
+
 	//Rightmost bit is always a zero, ignore it
 	idcode >>= 1;
 
@@ -93,20 +93,20 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
 	idcode >>= 11;
-	
+
 	//Next 16 bits are part number
 	unsigned int partnum =  idcode & 0xFFFF;
 	idcode >>= 12;
-	
+
 	//Revision
 	unsigned int rev = idcode & 0xF;
-	
+
 	//Create the device
 	switch(partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
 		return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
-	
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown part number - probably not yet supported",

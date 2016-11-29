@@ -46,7 +46,7 @@
 
 /**
 	@brief Abstract base class for all ARM Ltd devices (typically ARM DAPs)
-	
+
 	\ingroup libjtaghal
  */
 class ARMDevice : public JtagDevice
