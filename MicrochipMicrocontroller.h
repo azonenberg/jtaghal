@@ -36,11 +36,6 @@
 #ifndef MicrochipMicrocontroller_h
 #define MicrochipMicrocontroller_h
 
-#include <stdlib.h>
-
-#include "MicrochipDevice.h"
-#include "Microcontroller.h"
-
 /**
 	@brief Generic base class for all Microchip MCUs
 

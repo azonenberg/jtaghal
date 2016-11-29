@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "MicrochipMicrocontroller.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -66,6 +65,5 @@ void MicrochipMicrocontroller::ProgramIndirect(
 
 	throw JtagExceptionWrapper(
 		"Microchip MCUs cannot be indirectly programmed",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }

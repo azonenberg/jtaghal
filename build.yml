@@ -81,6 +81,7 @@ jtaghal:
         # Vendors
         - ARMDevice.cpp
         - MicrochipDevice.cpp
+        - MicrochipMicrocontroller.cpp
         - XilinxDevice.cpp
         - XilinxCPLD.cpp
         - XilinxFPGA.cpp
