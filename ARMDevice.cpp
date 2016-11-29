@@ -34,7 +34,7 @@
  */
 
 #include "jtaghal.h"
-//#include "ARMDevice.h"
+#include "JEDECVendorID_enum.h"
 //#include "ARMDebugPort.h"
 
 using namespace std;
@@ -82,7 +82,7 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	idcode >>= 1;
 
 	//Sanity check manufacturer ID
-	if( (idcode & 0x7FF) != IDCODE_ARM)
+	if( (idcode & 0x7FF) != VENDOR_ID_ARM)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
