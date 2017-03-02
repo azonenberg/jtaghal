@@ -59,3 +59,26 @@ JtagFPGA::~JtagFPGA()
 {
 
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Device identification
+
+bool JtagFPGA::GetUserVIDPID(unsigned int& idVendor, unsigned int& idProduct)
+{
+	//If we have no user instructions that's the end of it
+	if(GetNumUserInstructions() < 1)
+		return false;
+
+	//We have user instructions... try the first one
+	SelectUserInstruction(0);
+
+	//Read 32 bits from it
+	unsigned char zeros[4] = {0};
+	unsigned char rdata[4] = {0};
+	ScanDR(zeros, rdata, 32);
+
+	//Format the output
+	idVendor = (rdata[3] << 16) | (rdata[2] << 8) | (rdata[1]);
+	idProduct = rdata[0];
+	return true;
+}

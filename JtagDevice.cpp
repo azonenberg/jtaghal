@@ -36,6 +36,8 @@
 #include "jtaghal.h"
 #include "JEDECVendorID_enum.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -278,25 +280,58 @@ void JtagDevice::PrintInfo()
 			LogNotice("Device is blank\n");
 
 		//Is it an FPGA? If so, get FPGA-specific information
-		//Get the serial number only if the device is blank since some FPGAs can't get the S/N when they're configured
+		//Get the serial number only if the device is blank since some FPGAs (most Xilinx f.ex)
+		//can't get the S/N when they're configured
 		FPGA* pfpga = dynamic_cast<FPGA*>(this);
 		if(pfpga != NULL)
 		{
 			LogNotice("Device is an FPGA\n");
 			if(pprog->IsProgrammed())
 			{
-				/*
-				//Probe the FPGA and see if it has any virtual TAPs on board
-				pfpga->ProbeVirtualTAPs();
-				if(pfpga->HasRPCInterface())
-					printf("    Device has RPC network interface\n");
-
-				if(pfpga->HasSerialNumber())
+				JtagFPGA* jf = dynamic_cast<JtagFPGA*>(pfpga);
+				if(jf)
 				{
-					int bitlen = pfpga->GetSerialNumberLengthBits();
-					printf("    Device has unique serial number (%d bits long)\n", bitlen);
+					unsigned int vid;
+					unsigned int pid;
+					if(jf->GetUserVIDPID(vid, pid))
+					{
+						LogNotice("Detected user VID/PID code\n");
+						LogIndenter li;
+
+						string vendor = "unknown";
+						string product = "unknown";
+
+						if(vid == 0x42445a)
+						{
+							vendor = "Andrew Zonenberg";
+							switch(pid)
+							{
+								case 0x00:
+									product = "Antikernel NoC Interface";
+									break;
+								case 0x01:
+									product = "SPI Indirect Programming";
+									break;
+							}
+						}
+
+						LogNotice("idVendor  = 0x%06x (%s)\n", vid, vendor.c_str());
+						LogNotice("idProduct = 0x%02x     (%s)\n", pid, product.c_str());
+					}
+
+					else
+						LogNotice("User VID/PID not specified or unreadable\n");
+
+					if(pfpga->HasSerialNumber())
+					{
+						int bitlen = pfpga->GetSerialNumberLengthBits();
+						printf("    Device has unique serial number (%d bits long)\n", bitlen);
+					}
 				}
-				*/
+				else
+				{
+					LogNotice("Not a JTAG-capable FPGA\n");
+				}
 			}
 			else
 			{

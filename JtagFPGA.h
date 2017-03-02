@@ -57,6 +57,15 @@ public:
 		@brief Sets the instruction register to the specified user instruction
 	 */
 	virtual void SelectUserInstruction(size_t index) = 0;
+
+	/**
+		@brief Gets the vendor/product code in USER1 (if implemented)
+
+		Reference: https://github.com/azonenberg/jtaghal/wiki/FPGA-debug
+
+		@return false on error, or if no USER instructions
+	 */
+	bool GetUserVIDPID(unsigned int& idVendor, unsigned int& idProduct);
 };
 
 #endif
