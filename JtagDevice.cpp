@@ -163,6 +163,13 @@ void JtagDevice::Commit()
  */
 void JtagDevice::SetIR(const unsigned char* data, unsigned char* data_out, int count)
 {
+	if(count > 32)
+	{
+		throw JtagExceptionWrapper(
+			"Invalid IR value (too long)",
+			"");
+	}
+
 	m_iface->SetIR((int)m_pos, data, data_out, count);
 	memcpy(m_cachedIR, data, ceil(count / 8.0f));
 }
