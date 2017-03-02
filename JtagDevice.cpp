@@ -134,7 +134,14 @@ void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
  */
 void JtagDevice::SetIR(const unsigned char* data, int count)
 {
-	if( (m_irlength < 32) && (0 == memcmp(data, &m_cachedIR, count)))
+	if(count > 32)
+	{
+		throw JtagExceptionWrapper(
+			"Invalid IR value (too long)",
+			"");
+	}
+
+	if( (0 == memcmp(data, &m_cachedIR, count)) )
 	{
 		//do nothing, cache hit
 		return;
