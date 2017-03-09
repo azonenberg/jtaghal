@@ -35,6 +35,8 @@
 
 #include "jtaghal.h"
 #include "JEDECVendorID_enum.h"
+#include "UserVID_enum.h"
+#include "UserPID_enum.h"
 
 using namespace std;
 
@@ -301,15 +303,16 @@ void JtagDevice::PrintInfo()
 						string vendor = "unknown";
 						string product = "unknown";
 
-						if(vid == 0x42445a)
+						if(vid == VID_AZONENBERG)
 						{
 							vendor = "Andrew Zonenberg";
 							switch(pid)
 							{
-								case 0x00:
+								case PID_AZONENBERG_ANTIKERNEL_NOC:
 									product = "Antikernel NoC Interface";
 									break;
-								case 0x01:
+
+								case PID_AZONENBERG_SPI_INDIRECT:
 									product = "SPI Indirect Programming";
 									break;
 							}
