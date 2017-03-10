@@ -79,6 +79,8 @@ JtagDevice* Xilinx7SeriesDevice::CreateDevice(
 {
 	switch(arraysize)
 	{
+	case ARTIX7_75T:
+	case ARTIX7_100T:
 	case ARTIX7_200T:
 	case KINTEX7_70T:
 	case ZYNQ_010:
@@ -102,6 +104,12 @@ string Xilinx7SeriesDevice::GetDescription()
 
 	switch(m_arraysize)
 	{
+	case ARTIX7_75T:
+		devname = "XC7A75T";
+		break;
+	case ARTIX7_100T:
+		devname = "XC7A100T";
+		break;
 	case ARTIX7_200T:
 		devname = "XC7A200T";
 		break;
