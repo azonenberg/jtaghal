@@ -79,6 +79,9 @@ public:
 	void ResetToIdle();
 	void Commit();
 
+	void EnterShiftDR();
+	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
+
 protected:
 	///Length of this device's instruction registr, in bits
 	int m_irlength;

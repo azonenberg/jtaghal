@@ -236,6 +236,26 @@ void JtagDevice::ScanDRDeferred(const unsigned char* send_data, int count)
 }
 
 /**
+	@brief Wrapper around JtagInterface::EnterShiftDR()
+
+	See JtagInterface documentation for more details.
+ */
+void JtagDevice::EnterShiftDR()
+{
+	m_iface->EnterShiftDR();
+}
+
+/**
+	@brief Wrapper around JtagInterface::ShiftData()
+
+	See JtagInterface documentation for more details.
+ */
+void JtagDevice::ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count)
+{
+	m_iface->ShiftData((int)m_pos, send_data, rcv_data, count);
+}
+
+/**
 	@brief Wrapper around JtagInterface::SendDummyClocks()
 
 	See JtagInterface documentation for more details.
