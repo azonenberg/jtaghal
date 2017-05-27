@@ -622,7 +622,7 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 						}
 						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
 						if(cmd_value >= X7_CMD_MAX)
-							LogError("Invalid command value");
+							LogWarning("Undocumented command value %d in bitstream\n", cmd_value);
 						else
 							LogDebug("Command = %s\n", cmd_values[cmd_value]);
 
