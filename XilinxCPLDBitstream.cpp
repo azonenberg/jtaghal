@@ -32,6 +32,7 @@
 	@author Andrew D. Zonenberg
 	@brief Implementation of XilinxCPLDBitstream
  */
+#include "jtaghal.h"
 #include "XilinxCPLDBitstream.h"
 #include <stdio.h>
 

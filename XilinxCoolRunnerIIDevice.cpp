@@ -75,8 +75,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 	{
 		throw JtagExceptionWrapper(
 			"Invalid ID code (constant fields do not match expected CoolRunner-II values)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	//Decode package info
@@ -100,8 +99,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C32 or 32A but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -130,8 +128,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C64 or 64A but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -156,8 +153,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C128 but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -185,8 +181,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C256 but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -211,8 +206,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C384 but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -234,8 +228,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			default:
 				throw JtagExceptionWrapper(
 					"Device is an XC2C512 but the package ID was not recognized",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 				break;
 			}
 		}
@@ -244,8 +237,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 	default:
 		throw JtagExceptionWrapper(
 			"Invalid device ID (not a known CoolRunner-II part)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 		break;
 	}
 
@@ -284,8 +276,7 @@ XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegist
 		printf("Got: %02x\n", ret.word & 0xff);
 		throw JtagExceptionWrapper(
 			"Invalid status register (padding bits don't make sense)",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	return ret;
@@ -344,8 +335,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 	{
 		throw JtagExceptionWrapper(
 			"Device reports that it is still programmed after a bulk erase cycle",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	//Blank check
@@ -392,8 +382,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 			default:
 				throw JtagExceptionWrapper(
 					"Unknown CoolRunner-II device (not implemented)",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 		}
 		vdata_out[0] &= mask;
 
@@ -412,8 +401,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 			delete[] vaddr;
 			throw JtagExceptionWrapper(
 				"Device is NOT blank after a bulk erase!",
-				"",
-				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+				"");
 		}
 		for(int x=1; x<nregbytes; x++)
 		{
@@ -424,8 +412,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 				delete[] vaddr;
 				throw JtagExceptionWrapper(
 					"Device is NOT blank after a bulk erase!",
-					"",
-					JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+					"");
 			}
 		}
 
@@ -456,8 +443,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	{
 		throw JtagExceptionWrapper(
 			"Invalid firmware image (not a XilinxCPLDBitstream)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	printf("    Using %s\n", bit->GetDescription().c_str());
@@ -487,8 +473,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			GetDeviceName().c_str(), devname);
 		throw JtagExceptionWrapper(
 			"Device name does not match provided bitfile",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	if(GetDevicePackage() != package_normalized)
 	{
@@ -496,8 +481,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			GetDevicePackage().c_str(), package_normalized.c_str());
 		throw JtagExceptionWrapper(
 			"Device package does not match provided bitfile",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 	printf("    Device name / package check OK\n");
 
@@ -556,8 +540,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			delete[] vaddr;
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 	}
 
 	//Main programming operation
@@ -706,8 +689,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	{
 		throw JtagExceptionWrapper(
 			"Verification FAILED",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 	printf("    Readback successful\n");
 
@@ -789,8 +771,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	{
 		throw JtagExceptionWrapper(
 			"Configuration failed (unknown reason)",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	ResetToIdle();
@@ -837,8 +818,7 @@ int XilinxCoolRunnerIIDevice::GetAddressSize()
 		default:
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 	}
 }
 
@@ -877,8 +857,7 @@ unsigned char* XilinxCoolRunnerIIDevice::GenerateVerificationTable()
 				delete[] bindata;
 				throw JtagExceptionWrapper(
 					"Unknown CoolRunner-II device (not implemented)",
-					"",
-					JtagException::EXCEPTION_TYPE_GIGO);
+					"");
 		}
 	}
 
@@ -1001,8 +980,7 @@ string XilinxCoolRunnerIIDevice::GetDeviceName()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	return devname;
@@ -1050,8 +1028,7 @@ std::string XilinxCoolRunnerIIDevice::GetPackageName(int pknum)
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown package",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	return package;
@@ -1143,8 +1120,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 		default:
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 			break;
 	}
 
@@ -1167,8 +1143,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 	{
 		throw JtagExceptionWrapper(
 			"Devices with more than one column of FBs not yet supported",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 	for(int yblock = 0; yblock < fh; yblock ++)
 	{
@@ -1235,8 +1210,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				default:
 					throw JtagExceptionWrapper(
 						"Unknown CoolRunner-II device (not implemented)",
-						"",
-						JtagException::EXCEPTION_TYPE_GIGO);
+						"");
 					break;
 			}
 			for(int y=0; y<fb_rows; y++)
@@ -1424,8 +1398,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 		default:
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 			break;
 	}
 
@@ -1462,8 +1435,7 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockGridWidth()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1485,8 +1457,7 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockGridHeight()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1506,8 +1477,7 @@ int XilinxCoolRunnerIIDevice::GetZIAWidth()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1541,8 +1511,7 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockCount()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1573,8 +1542,7 @@ int XilinxCoolRunnerIIDevice::GetFuseCount()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1605,8 +1573,7 @@ int XilinxCoolRunnerIIDevice::GetShiftRegisterDepth()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -1637,8 +1604,7 @@ int XilinxCoolRunnerIIDevice::GetShiftRegisterWidth()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
