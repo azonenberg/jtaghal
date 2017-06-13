@@ -71,7 +71,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 	unsigned int always_one = (idcode & 1);				//must always be 1
 
 	//Sanity check constant fields
-	if( (arch != 3) || (tech != 3) || (volt != 1) || (manuf != IDCODE_XILINX) || (always_one != 1))
+	if( (arch != 3) || (tech != 3) || (volt != 1) /*|| (manuf != IDCODE_XILINX)*/ || (always_one != 1))
 	{
 		throw JtagExceptionWrapper(
 			"Invalid ID code (constant fields do not match expected CoolRunner-II values)",
@@ -296,7 +296,7 @@ bool XilinxCoolRunnerIIDevice::IsProgrammed()
 	return reg.bits.done;
 }
 
-void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
+void XilinxCoolRunnerIIDevice::Erase()
 {
 	/*
 		XILINX PROGRAMMER QUALIFICATION SPECIFICATION table 19
@@ -429,7 +429,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 	delete[] zeros;
 }
 
-FirmwareImage* XilinxCoolRunnerIIDevice::LoadFirmwareImage(const unsigned char* data, size_t len, bool /*bVerbose*/)
+FirmwareImage* XilinxCoolRunnerIIDevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
 	XilinxCPLDBitstream* bit = new XilinxCPLDBitstream;
 	ParseJEDFile(bit, data, len);

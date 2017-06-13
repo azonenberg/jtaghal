@@ -209,9 +209,9 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CPLD stuff
 	virtual bool IsProgrammed();
-	virtual void Erase(bool bVerbose = false);
+	virtual void Erase();
 
-	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose);
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len);
 	virtual void Program(FirmwareImage* image);
 
 	XilinxCoolRunnerIIDeviceStatusRegister GetStatusRegister();
