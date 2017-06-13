@@ -93,9 +93,9 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 	switch(family)
 	{
 
-	//case XILINX_FAMILY_CR2_A:
-	//case XILINX_FAMILY_CR2_B:
-	//	return XilinxCoolRunnerIIDevice::CreateDevice(idcode_raw, iface, pos);
+	case XILINX_FAMILY_CR2_A:
+	case XILINX_FAMILY_CR2_B:
+		return XilinxCoolRunnerIIDevice::CreateDevice(idcode_raw, iface, pos);
 
 	//case XILINX_FAMILY_SPARTAN3A:
 	//	return XilinxSpartan3ADevice::CreateDevice(arraysize, rev, idcode_raw, iface, pos);
