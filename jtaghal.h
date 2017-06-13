@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2017 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -131,6 +131,8 @@
 //Vendor device classes (and support stuff)
 #include "MicrochipMicrocontroller.h"
 #include "XilinxCPLD.h"
+#include "XilinxCPLDBitstream.h"
+#include "XilinxCoolRunnerIIDevice.h"
 #include "XilinxFPGABitstream.h"
 #include "XilinxFPGA.h"
 #include "Xilinx7SeriesDevice.h"

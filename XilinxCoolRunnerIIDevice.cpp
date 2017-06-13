@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2017 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -78,7 +78,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Decode package info
 	int package_decoded = -1;
 	switch(devid)
@@ -106,7 +106,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-		
+
 	case XC2C64:
 	case XC2C64A:
 		{
@@ -136,7 +136,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-	
+
 	case XC2C128:
 		{
 			switch(package)
@@ -162,7 +162,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-	
+
 	case XC2C256:
 		{
 			switch(package)
@@ -191,7 +191,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-	
+
 	case XC2C384:
 		{
 			switch(package)
@@ -217,7 +217,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-	
+
 	case XC2C512:
 		{
 			switch(package)
@@ -240,7 +240,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			}
 		}
 		break;
-	
+
 	default:
 		throw JtagExceptionWrapper(
 			"Invalid device ID (not a known CoolRunner-II part)",
@@ -248,15 +248,15 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 			JtagException::EXCEPTION_TYPE_GIGO);
 		break;
 	}
-	
+
 	return new XilinxCoolRunnerIIDevice(devid, package_decoded, stepping, idcode, iface, pos);
 }
 
 std::string XilinxCoolRunnerIIDevice::GetDescription()
-{	
+{
 	char srev[16];
 	snprintf(srev, 15, "%u", m_stepping);
-	
+
 	return string("Xilinx ") + GetDeviceName() + " in " + GetDevicePackage() + " package, stepping " + srev;
 }
 
@@ -270,7 +270,7 @@ bool XilinxCoolRunnerIIDevice::HasDMAInterface()
 	return false;
 }
 
-/** 
+/**
 	@brief Returns the device status register
  */
 XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegister()
@@ -278,7 +278,7 @@ XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegist
 	unsigned char irval = INST_BYPASS;
 	XilinxCoolRunnerIIDeviceStatusRegister ret;
 	JtagDevice::SetIR(&irval, &ret.word, 8);
-	
+
 	if( (ret.bits.padding_one != 1) || (ret.bits.padding_zero != 0) )
 	{
 		printf("Got: %02x\n", ret.word & 0xff);
@@ -287,7 +287,7 @@ XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegist
 			"",
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
-	
+
 	return ret;
 }
 
@@ -309,7 +309,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 {
 	/*
 		XILINX PROGRAMMER QUALIFICATION SPECIFICATION table 19
-	
+
 		1.  Ensure device is in test-logic/reset state
 		2.  Shift in the ENABLE instruction
 		3.  Shift in the ERASE instruction
@@ -322,7 +322,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 		10. Execute the instruction (activate the contents of the EEPROM array)
 		11. Shift in the BYPASS instruction
 	*/
-	
+
 	ResetToIdle();
 	SetIR(INST_ISC_ENABLE);
 	usleep(800);				//wait for device to initialize
@@ -336,9 +336,9 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 								//(programming algorithm step 28 of table 20)
 	usleep(800);				//wait for device to initialize
 	SetIR(INST_ISC_DISABLE);	//Leave ISC mode
-	
+
 	SetIR(INST_BYPASS);			//Done
-	
+
 	//Quick blank check
 	if(IsProgrammed())
 	{
@@ -347,7 +347,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 			"",
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
-	
+
 	//Blank check
 	printf("    Blank checking...\n");
 	ResetToIdle();
@@ -369,11 +369,11 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 	{
 		//Wait for data to settle
 		usleep(100);
-		
+
 		//Read back the data
 		ScanDR(zeros, vdata_out, GetShiftRegisterWidth());
 		FlipByteArray(vdata_out, nregbytes);
-			
+
 		//Sanity check output
 		//Mask off the address bits per chip
 		int mask = 0;
@@ -382,13 +382,13 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 			case XC2C32:
 			case XC2C32A:
 				mask = 0x0F;
-				break;								
-				
+				break;
+
 			case XC2C64:
 			case XC2C64A:
 				mask = 0x03;
 				break;
-				
+
 			default:
 				throw JtagExceptionWrapper(
 					"Unknown CoolRunner-II device (not implemented)",
@@ -396,7 +396,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 					JtagException::EXCEPTION_TYPE_GIGO);
 		}
 		vdata_out[0] &= mask;
-		
+
 		/*
 		//Print it out
 		printf("    [BLANKCHK] %2d (%02x):   ", y, vaddr[y]);
@@ -404,11 +404,11 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 			printf("%02x", vdata_out[i] & 0xFF);
 		printf("\n");
 		*/
-		
+
 		if(vdata_out[0] != mask)
 		{
 			printf("Got 0x%02x, expected 0x%02x\n", vdata_out[0], mask);
-			
+
 			delete[] vaddr;
 			throw JtagExceptionWrapper(
 				"Device is NOT blank after a bulk erase!",
@@ -416,11 +416,11 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 				JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 		}
 		for(int x=1; x<nregbytes; x++)
-		{			
+		{
 			if(vdata_out[x] != 0xFF)
 			{
 				printf("Got 0x%02x, expected 0xff at x=%d\n", vdata_out[x], x);
-				
+
 				delete[] vaddr;
 				throw JtagExceptionWrapper(
 					"Device is NOT blank after a bulk erase!",
@@ -428,7 +428,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 					JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 			}
 		}
-		
+
 		//Send the next address
 		if((y+1) < GetShiftRegisterDepth())
 			ScanDR(vaddr+(y+1), &addr_out, GetAddressSize());
@@ -436,7 +436,7 @@ void XilinxCoolRunnerIIDevice::Erase(bool /*bVerbose*/)
 	printf("    Device is blank\n");
 	SetIR(INST_ISC_DISABLE);
 	SetIR(INST_BYPASS);
-	
+
 	delete[] vaddr;
 	delete[] vdata_out;
 	delete[] zeros;
@@ -459,16 +459,16 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	printf("    Using %s\n", bit->GetDescription().c_str());
-	
+
 	//Parse the device ID
 	char devname[32] = {0};
 	int speedgrade;
 	char package[32] = {0};
 	sscanf(bit->devname.c_str(), "%31[^-]-%1d-%31s", devname, &speedgrade, package);
 	printf("    Device %s, speed %d, package %s\n", devname, speedgrade, package);
-	
+
 	//Normalize the package name
 	string package_normalized;
 	for(size_t i=0; i<sizeof(package); i++)
@@ -479,7 +479,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			break;
 		package_normalized += toupper(package[i]);
 	}
-	
+
 	//Sanity check that the device matches
 	if(0 != strcasecmp(GetDeviceName().c_str(), devname))
 	{
@@ -500,12 +500,12 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
 	}
 	printf("    Device name / package check OK\n");
-	
+
 	//Erase even if the device doesn't report being programmed, just to make sure it's totally blank
 	printf("    Erasing device...\n");
 	Erase();
 	usleep(500 * 1000);
-		
+
 	//Generate the permuted fuse data
 	//Shift register width + 12 bits for address and padding is total JTAG register width
 	int* table = GeneratePermutationTable();
@@ -513,8 +513,8 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	int nshort = nbits - GetPaddingSize();
 	int nbytes = ceil(nshort / 8.0f);
 	int nregbytes = ceil(GetShiftRegisterWidth() / 8.0f);
-	unsigned char* permuted_data = GeneratePermutedFuseData(bit, table);	
-	
+	unsigned char* permuted_data = GeneratePermutedFuseData(bit, table);
+
 	/*
 		Table 23
 		1. Ensure device is in Test-Logic/Reset state
@@ -533,10 +533,10 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 		14. Execute the instruction (activate the contents of the EEPROM array)
 		15. Shift in the BYPASS instruction
 	 */
-	
+
 	//Generate the verification address table early so we can use it in debug print statements
 	unsigned char* vaddr = GenerateVerificationTable();
-	
+
 	//Mask off the address bits
 	unsigned int mask = 0;
 	switch(m_devid)
@@ -545,12 +545,12 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 		case XC2C32A:
 			mask = 0x0F;
 			break;
-		
+
 		case XC2C64:
 		case XC2C64A:
 			mask = 0x03;
 			break;
-			
+
 		default:
 			delete[] permuted_data;
 			delete[] vaddr;
@@ -559,7 +559,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	//Main programming operation
 	printf("    Programming main array (shift register size = %d, nbytes=%d)...\n", nshort, nbytes);
 	ResetToIdle();
@@ -567,12 +567,12 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	usleep(800);				//wait for device to initialize
 	SetIR(INST_ISC_PROGRAM);	//Enter program mode
 	for(int y=0; y<GetShiftRegisterDepth(); y++)
-	{					
+	{
 		//Get the row data and shift
 		//Flip the bytes around since the data in the permutation was assembled reversed
 		//(modeled on SVF, which sends LSB of rightmost byte first)
 		unsigned char* row = permuted_data + (nbytes * y);
-		
+
 		/*
 		//Print it out
 		printf("    [PROGRAM]  %2d (%02x): ", y, vaddr[y]);
@@ -580,15 +580,15 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			printf("%02x", row[i] & 0xFF);
 		printf("\n");
 		*/
-		
+
 		//Send
 		usleep(10*1000);
 		FlipByteArray(row, nbytes);
 		ScanDR(row, NULL, nshort);
-		
+
 		//Flip the row back so it'll verify properly
 		FlipByteArray(row, nbytes);
-		
+
 		//Wait 10ms for this EEPROM row to program as per programming spec
 		usleep(10 * 1000);
 	}
@@ -601,7 +601,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	ScanDR(&zero, NULL, 1);		//apparently we need to do something to DR to cause an ISP_INIT pulse
 								//(programming algorithm step 28 of table 20)
 	usleep(800);				//wait for device to initialize
-	
+
 	//The done bits are not yet programmed, but don't set them until we've verified the rest of the device
 	/*
 		1. Ensure device is in Test-Logic/Reset state
@@ -623,7 +623,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 		17. Execute the instruction (activate the contents of the EEPROM array)
 		18. Shift in the BYPASS instruction
 	*/
-	
+
 	//Reset the TAP and sanity check that we're programmed, then start readback process
 	ResetToIdle();
 	printf("    Verifying main array...\n");
@@ -631,13 +631,13 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	usleep(800);			//wait for device to initialize
 	SetIR(INST_ISC_READ);
 	usleep(20);				//wait for voltages to settle
-	
+
 	/*
 		Verification loop
-		
+
 		There are two possible algorithms which differ subtly. The one in the programmer spec seems to work
 		(successfully validated a urJTAG-programmed device).
-		
+
 		Algorithm in programmer spec:
 			Go to shift-DR
 			Shift in 6 address bits
@@ -648,7 +648,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			Shift in next address bits
 			Update-DR
 			repeat
-			
+
 		Algorithm in iMPACT-generated SVF file:
 			Go to shift-DR
 			Shift in 6 address bits
@@ -670,11 +670,11 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	{
 		//Wait for data to settle
 		usleep(100);
-		
+
 		//Read back the data
 		ScanDR(zeros, vdata_out, GetShiftRegisterWidth());
 		FlipByteArray(vdata_out, nregbytes);
-			
+
 		//Sanity check output against what we wrote
 		unsigned char* row = permuted_data + (nbytes * y);
 
@@ -689,7 +689,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 				break;
 			}
 		}
-		
+
 		/*
 		//Print it out
 		printf("    [READBACK] %2d (%02x):  ", y, vaddr[y]);
@@ -697,7 +697,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			printf("%02x", vdata_out[i] & 0xFF);
 		printf("\n");
 		*/
-		
+
 		//Send the next address
 		if((y+1) < GetShiftRegisterDepth())
 			ScanDR(vaddr+(y+1), &addr_out, GetAddressSize());
@@ -710,15 +710,15 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
 	printf("    Readback successful\n");
-	
+
 	//Reset
 	SetIR(INST_ISC_INIT);
 	usleep(20);					//wait for HV to discharge
 	SetIR(INST_ISC_INIT);
 	usleep(800);				//wait for boot
-	SetIR(INST_ISC_DISABLE);	//Leave ISC mode	
+	SetIR(INST_ISC_DISABLE);	//Leave ISC mode
 	SetIR(INST_BYPASS);			//Done
-	
+
 	//If all is well, keep going
 	//Prepare to program DONE / security bits
 	//TODO: move to a separate function to keep things nice and clean
@@ -743,7 +743,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 		scratch[fusebase] = false;
 		scratch[GetShiftRegisterWidth() + 11] = false;
 	}
-	
+
 	//Leave security bits as 1
 	scratch[fusebase+9] = false;	//Done1
 	scratch[fusebase+8] = true;		//Done0
@@ -767,7 +767,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	SetIR(INST_ISC_PROGRAM);	//Enter program mode
 	ScanDR(scratch_bytes, NULL,  nshort);
 	usleep(10 * 1000);			//Wait 10ms for this EEPROM row to program
-	
+
 	//Standard init process
 	SetIR(INST_ISC_INIT);		//Discharge high voltage
 	usleep(20);					//wait for charge pump to drain
@@ -776,14 +776,14 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	ScanDR(&zero, NULL, 1);		//apparently we need to do something to DR to cause an ISP_INIT pulse
 								//(programming algorithm step 28 of table 20)
 	usleep(800);				//wait for device to initialize
-	
+
 	SetIR(INST_ISC_DISABLE);	//Leave ISC mode
 	SetIR(INST_BYPASS);			//Done
-	
+
 	//Clean up
 	delete[] scratch_bytes;
 	delete[] scratch;
-	
+
 	//Sanity check that we're programmed
 	if(!IsProgrammed())
 	{
@@ -792,9 +792,9 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			"",
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
-	
+
 	ResetToIdle();
-	
+
 	//Clean up
 	delete[] zeros;
 	delete[] vdata_out;
@@ -805,7 +805,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 
 /**
 	@brief Gets the number of padding bits to add
-	
+
 	See table 10 of programmer spec
  */
 int XilinxCoolRunnerIIDevice::GetPaddingSize()
@@ -823,17 +823,17 @@ int XilinxCoolRunnerIIDevice::GetAddressSize()
 		case XC2C32:
 		case XC2C32A:
 			return 6;
-		
+
 		case XC2C64:
 		case XC2C64A:
 		case XC2C128:
 		case XC2C256:
 		case XC2C384:
 			return 7;
-			
+
 		case XC2C512:
 			return 8;
-			
+
 		default:
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
@@ -849,16 +849,16 @@ unsigned char* XilinxCoolRunnerIIDevice::GenerateVerificationTable()
 {
 	//Allocate the raw binary output buffer (data ready to send)
 	unsigned char* bindata = new unsigned char[GetShiftRegisterDepth()];
-	
+
 	//Generate each row
 	for(int y=0; y<GetShiftRegisterDepth(); y++)
 	{
 		unsigned int addr = GrayEncode(y);
-		
+
 		unsigned int bits[8];
 		for(int i=0; i<8; i++)
 			bits[i] = (addr >> i) & 1;
-		
+
 		switch(m_devid)
 		{
 			case XC2C32:
@@ -866,13 +866,13 @@ unsigned char* XilinxCoolRunnerIIDevice::GenerateVerificationTable()
 				bindata[y] = bits[5] | (bits[4] << 1) | (bits[3] << 2) |
 							(bits[2] << 3) | (bits[1] << 4) | (bits[0] << 5);
 				break;
-			
+
 			case XC2C64:
 			case XC2C64A:
 				bindata[y] = bits[6] | (bits[5] << 1) | (bits[4] << 2) | (bits[3] << 3) |
 							(bits[2] << 4) | (bits[1] << 5) | (bits[0] << 6);
 				break;
-			
+
 			default:
 				delete[] bindata;
 				throw JtagExceptionWrapper(
@@ -881,8 +881,8 @@ unsigned char* XilinxCoolRunnerIIDevice::GenerateVerificationTable()
 					JtagException::EXCEPTION_TYPE_GIGO);
 		}
 	}
-	
-	//Done, clean up and return	
+
+	//Done, clean up and return
 	return bindata;
 }
 
@@ -896,51 +896,51 @@ unsigned char* XilinxCoolRunnerIIDevice::GeneratePermutedFuseData(XilinxCPLDBits
 	int nbits = GetShiftRegisterWidth() + 12;
 	int nbytes = ceil(nbits / 8.0f);
 	int nmax = GetPaddingSize();
-	
+
 	//Allocate the raw binary output buffer (data ready to send)
 	unsigned char* bindata = new unsigned char[nbytes * GetShiftRegisterDepth()];
-	
+
 	//Scratch buffer for one row
 	bool* scratch = new bool[nbits];
-	
+
 	//Generate each row
 	for(int y=0; y<GetShiftRegisterDepth(); y++)
 	{
 		//Get the permutation table for this row
 		int* rowperm = permtable + y*GetShiftRegisterWidth();
-		
+
 		//Generate the gray-code address
 		int addr = GrayEncode(y);
-		
+
 		//Zero out the row buffer
 		for(int x=0; x<nbits; x++)
 			scratch[x] = false;
-			
+
 		//Address calculation is wrong! Doesn't match the SVF, seems to be shifted by a bit or two
-		
+
 		//Address bits are mirrored right-to-left
 		for(int i=nmax; i<12; i++)
 		{
 			scratch[i] = (addr & 1);
 			addr >>= 1;
 		}
-		
+
 		//Build the row buffer
 		for(int x=0; x<GetShiftRegisterWidth(); x++)
-		{			
+		{
 			//Transfer bits
 			if(rowperm[x] == FUSE_VALUE_TRANSFER)
 				scratch[x+12] = 0;
-				
+
 			//Don't cares
 			else if(rowperm[x] == FUSE_VALUE_DONTCARE)
 				scratch[x+12] = 1;
-				
+
 			//Data bits
 			else
 				scratch[x+12] = bit->fuse_data[rowperm[x]];
 		}
-		
+
 		//Generate packed binary
 		//BUGFIX: This needs to be *right* aligned so start conversion from the right
 		unsigned char* outrow = bindata + nbytes*y;
@@ -958,8 +958,8 @@ unsigned char* XilinxCoolRunnerIIDevice::GeneratePermutedFuseData(XilinxCPLDBits
 			outrow[base/8] = temp;
 		}
 	}
-	
-	//Done, clean up and return	
+
+	//Done, clean up and return
 	delete[] scratch;
 	return bindata;
 }
@@ -970,7 +970,7 @@ unsigned char* XilinxCoolRunnerIIDevice::GeneratePermutedFuseData(XilinxCPLDBits
 string XilinxCoolRunnerIIDevice::GetDeviceName()
 {
 	string devname;
-	
+
 	//Look up device name
 	switch(m_devid)
 	{
@@ -1004,7 +1004,7 @@ string XilinxCoolRunnerIIDevice::GetDeviceName()
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	return devname;
 }
 
@@ -1014,7 +1014,7 @@ string XilinxCoolRunnerIIDevice::GetDeviceName()
 std::string XilinxCoolRunnerIIDevice::GetPackageName(int pknum)
 {
 	//Look up package
-	string package;	
+	string package;
 	switch(pknum)
 	{
 	case QFG32:	//lead-free only so G is included
@@ -1053,7 +1053,7 @@ std::string XilinxCoolRunnerIIDevice::GetPackageName(int pknum)
 			"",
 			JtagException::EXCEPTION_TYPE_GIGO);
 	}
-	
+
 	return package;
 }
 
@@ -1067,7 +1067,7 @@ string XilinxCoolRunnerIIDevice::GetDevicePackage()
 
 /**
 	@brief Generates the permutation table.
-	
+
 	The table is generated in *row major* order to simplify the code,
 	but for typical use should probably be column major.
  */
@@ -1078,7 +1078,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 	int* permutation_table = new int[fuse_count];
 	for(int i=0; i<fuse_count; i++)
 		permutation_table[i] = 0;
-	
+
 	//Sizes of various blocks of interest
 	const int fb_andblksize	= 20;						//number of rows in a FB block
 	const int fb_androws	= fb_andblksize * 2;		//number of rows in a FB
@@ -1097,26 +1097,26 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 	const int zia_width = GetZIAWidth();
 	const int zia_size = zia_width * fb_androws;		//Depth is constant, width varies per device
 	const int fb_width		= mcell_rsize +				//Offset from one FB to the east-side partner
-								fb_pla_width + 
+								fb_pla_width +
 								zia_width*2;
-	
+
 	const int fb_config_size =							//Total number of config bits for a single FB
 		pla_and_size +									//Just add up the parts
 		pla_or_size +
 		zia_size +
 		mcell_config_size;
-	
+
 	const int global_config_base =						//Fuse index for global configuration data
 		fb_config_size * GetFunctionBlockCount();
-												
+
 	//Cache some array dimensions
 	const int w = GetShiftRegisterWidth();
 	const int d = GetShiftRegisterDepth();
-	
+
 	//Fill the entire array with garbage
 	for(int i=0; i<fuse_count; i++)
 		permutation_table[i] = FUSE_VALUE_DONTCARE;
-		
+
 	//Write transfer bits iff we have a chip that uses them
 	bool left_transfer_bit = false;
 	switch(m_devid)
@@ -1133,12 +1133,12 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				}
 			}
 			break;
-		
+
 		//no transfer bits
 		case XC2C64:
 		case XC2C64A:
 			break;
-			
+
 		//invalid
 		default:
 			throw JtagExceptionWrapper(
@@ -1154,10 +1154,10 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 		W MC	NW AND		N ZIA		NE AND		E MC
 		W MC	W OR		Unused		E OR		E MC
 		W MC	SW AND		S ZIA		SE AND		E MC
-		
+
 		The ZIA is interleaved from E/W
 		The E side is mirrored relative to W.
-		
+
 		The "unused" block may later be partially filled in with global config bits.
 		Most of these bits appear to be physically unimplemented.
 	 */
@@ -1188,17 +1188,17 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 			int e_andbase	= e_base + zia_size;
 			int e_orbase	= e_andbase + pla_and_size;
 			int e_mcbase	= e_orbase + pla_or_size;
-			
+
 			//Row to start writing to
 			int ybase = yblock*fb_rows;
-			
+
 			//Left starting points for each PLA block
 			//TODO: Support multi-column devices (middle transfer bits?)
 			int w_left = 0;
 			if(left_transfer_bit)
 				w_left += 1;
 			int e_left = w_left + fb_width;
-			
+
 			//Write the macrocell configs
 			//This seems to be super duper device dependent
 			static const int pattern[2][3][9]=
@@ -1210,7 +1210,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					{0, 1, 2, 3, 4, 5, 6, 7, 8},
 					{0, 1, 2, 3, 4, 5, 6, 7, 8}
 				},
-				
+
 				//XC2C64/A
 				//WTF is up with this layout? Need to look at M2 and M3 of the config area and find out
 				{
@@ -1226,12 +1226,12 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				case XC2C32A:
 					npattern = 0;
 					break;
-					
+
 				case XC2C64:
 				case XC2C64A:
 					npattern = 1;
 					break;
-					
+
 				default:
 					throw JtagExceptionWrapper(
 						"Unknown CoolRunner-II device (not implemented)",
@@ -1246,23 +1246,23 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				int* row = permutation_table + ((y+ybase)*w) + w_left;
 				for(int x=0; x<9; x++)
 					row[x] = xoff + pattern[npattern][y%3][x];
-					
+
 				//East side
 				xoff = e_mcbase + y*mcell_rsize;
 				row = permutation_table + ((y+ybase)*w) + e_left + fb_pla_width;
 				for(int x=0; x<9; x++)
 					row[8-x] = xoff + pattern[npattern][y%3][x];
 			}
-			
+
 			//Write the PLA AND array
 			for(int y=0; y<fb_androws; y++)
 			{
 				int yout = y;
 				if(y >= fb_andblksize)
 					yout += fb_orrows;
-				
+
 				int* row = permutation_table + ((yout+ybase)*w);
-				
+
 				//West side
 				//Grab two bits at a time for X and !X
 				int xbase = w_left + mcell_rsize;
@@ -1272,7 +1272,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					row[xbase+x] 	= nfuse + 1;
 					row[xbase+x+1]	= nfuse;
 				}
-				
+
 				//East side
 				//Grab two bits at a time for X and !X
 				//Mirrored vs left side
@@ -1284,12 +1284,12 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					row[xbase+x+1] 	= nfuse + 1;
 				}
 			}
-			
+
 			//Write the PLA OR array
 			for(int y=0; y<fb_orrows; y++)
 			{
 				int* row = permutation_table + ((y+ybase+fb_andblksize)*w);
-				
+
 				//West side
 				//Grab two bits at a time (interleaved for two OR terms)
 				int xbase = w_left + mcell_rsize;
@@ -1299,7 +1299,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					row[xbase+x] 	= nfuse;
 					row[xbase+x+1]	= nfuse+1;
 				}
-				
+
 				//East side
 				//Grab two bits at a time (interleaved for two OR terms)
 				//Mirrored vs left side
@@ -1311,7 +1311,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					row[xbase+x+1] 	= nfuse;
 				}
 			}
-			
+
 			//Write the ZIA
 			//Need to interleave this so it's a pain in the butt
 			for(int y=0; y<fb_androws; y++)
@@ -1319,10 +1319,10 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				int yout = y;
 				if(y >= fb_andblksize)
 					yout += fb_orrows;
-				
+
 				int* row = permutation_table + ((yout+ybase)*w);
 				int xbase = w_left + mcell_rsize + fb_pla_width;
-				
+
 				for(int x=0; x<zia_width; x++)
 				{
 					int offset = zia_width*y + (zia_width-1) - x;
@@ -1332,7 +1332,7 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 			}
 		}
 	}
-	
+
 	//Global config fuses
 	//VERY chip specific, doesn't seem to be any way to predict what goes where yet.
 	//* They're always in the middle of the ZIA gap.
@@ -1342,18 +1342,18 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 	{
 		case XC2C32:
 		case XC2C32A:
-			{				
+			{
 				//Offset from start of the row to global config area
 				int xoff = fb_pla_width + mcell_rsize + 5;
-				
+
 				//Global clock and set/reset mux are continuous
 				int ystart = 23;
 				for(int x=0; x<5; x++)
 					permutation_table[ystart*w + xoff + x] = global_config_base + x;
-					
-				//Then skip the OE mux and jump to global termination flag	
+
+				//Then skip the OE mux and jump to global termination flag
 				permutation_table[ystart*w + xoff + 5] = global_config_base + 13;
-				
+
 				//Global OE mux (8 bits, 4 across each of 2 columns)
 				ystart = 24;
 				for(int x=0; x<4; x++)
@@ -1361,15 +1361,15 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 					permutation_table[ystart*w + xoff + x]   = global_config_base + 5 + x;
 					permutation_table[(ystart+1)*w + xoff + x] = global_config_base + 9 + x;
 				}
-					
+
 				//Legacy I/O voltage bits span columns too
 				permutation_table[ystart*w + xoff + 4]   = global_config_base + 14;
 				permutation_table[(ystart+1)*w + xoff + 4] = global_config_base + 15;
-				
+
 				//Global input pin
 				permutation_table[ystart*w + xoff + 5] = global_config_base + 16;
 				permutation_table[ystart*w + xoff + 6] = global_config_base + 17;
-				
+
 				//32A-specific I/O banking fuses
 				ystart = 25;
 				if(m_devid == XC2C32A)
@@ -1379,56 +1379,56 @@ int* XilinxCoolRunnerIIDevice::GeneratePermutationTable()
 				}
 			}
 			break;
-			
+
 		case XC2C64:
 		case XC2C64A:
 			{
 				////////////////////////////////////////////////////////////////////////////////////////////////////////
 				// This stuff lives in the FB0/1 config hole
-				
+
 				//Offset from start of the row to global config area
 				int xoff = fb_pla_width + mcell_rsize + 12;
-				
+
 				//Global clock mux
 				int ystart = 23;
 				for(int x=0; x<3; x++)
 					permutation_table[ystart*w + xoff + x] = global_config_base + x;
-					
+
 				//Skip set/reset and OE mux, global termination comes next
 				//immediately followed by legacy I/O voltage configuration
 				//and bank voltage configuration
 				for(int x=0; x<7; x++)
 					permutation_table[ystart*w + xoff + 3 + x] = global_config_base + 13 + x;
-					
+
 				//Global OE mux (kinda split up)
 				ystart = 24;
 				for(int x=0; x<4; x++)
 					permutation_table[ystart*w + xoff + x]   = global_config_base + 5 + x;
 				for(int x=0; x<2; x++)
 					permutation_table[ystart*w + xoff + x + 4]   = global_config_base + 11 + x;
-				
+
 				////////////////////////////////////////////////////////////////////////////////////////////////////////
 				// This stuff lives in the FB2/3 config hole
-				
+
 				//Global set/reset mux
 				ystart = 73;
 				for(int x=0; x<2; x++)
 					permutation_table[ystart*w + xoff + x + 2] = global_config_base + x + 3;
-				
+
 				//More global OE mux bits
 				for(int x=0; x<2; x++)
 					permutation_table[ystart*w + xoff + x + 4]   = global_config_base + 9 + x;
 			}
 			break;
-			
+
 		default:
 			throw JtagExceptionWrapper(
 				"Unknown CoolRunner-II device (not implemented)",
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
-			break;		
+			break;
 	}
-	
+
 	//Done
 	return permutation_table;
 }
@@ -1454,11 +1454,11 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockGridWidth()
 	case XC2C32:
 	case XC2C32A:
 		return 1;
-		
+
 	case XC2C64:
 	case XC2C64A:
 		return 1;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1477,11 +1477,11 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockGridHeight()
 	case XC2C32:
 	case XC2C32A:
 		return 1;
-		
+
 	case XC2C64:
 	case XC2C64A:
 		return 2;
-	
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1499,10 +1499,10 @@ int XilinxCoolRunnerIIDevice::GetZIAWidth()
 	{
 	case XC2C32A:
 		return 8;
-		
+
 	case XC2C64A:
 		return 16;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1521,23 +1521,23 @@ int XilinxCoolRunnerIIDevice::GetFunctionBlockCount()
 	case XC2C32:
 	case XC2C32A:
 		return 2;
-		
+
 	case XC2C64:
 	case XC2C64A:
 		return 4;
-		
+
 	case XC2C128:
 		return 8;
-		
+
 	case XC2C256:
 		return 16;
-		
+
 	case XC2C384:
 		return 24;
-	
+
 	case XC2C512:
 		return 32;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1569,7 +1569,7 @@ int XilinxCoolRunnerIIDevice::GetFuseCount()
 		return 25808;
 	case XC2C64A:
 		return 25812;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1580,7 +1580,7 @@ int XilinxCoolRunnerIIDevice::GetFuseCount()
 
 /**
 	@brief Gets the depth of the shift register for this device.
-	
+
 	Does not include sec/done or UES words.
  */
 int XilinxCoolRunnerIIDevice::GetShiftRegisterDepth()
@@ -1601,7 +1601,7 @@ int XilinxCoolRunnerIIDevice::GetShiftRegisterDepth()
 		return 120;
 	case XC2C512:
 		return 160;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
@@ -1612,7 +1612,7 @@ int XilinxCoolRunnerIIDevice::GetShiftRegisterDepth()
 
 /**
 	@brief Gets the width of the shift register for this device.
-	
+
 	Includes transfer bits.
  */
 int XilinxCoolRunnerIIDevice::GetShiftRegisterWidth()
@@ -1633,7 +1633,7 @@ int XilinxCoolRunnerIIDevice::GetShiftRegisterWidth()
 		return 1868;
 	case XC2C512:
 		return 1980;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown CoolRunner-II device (not implemented)",
