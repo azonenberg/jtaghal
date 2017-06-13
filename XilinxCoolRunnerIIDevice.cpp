@@ -67,7 +67,7 @@ JtagDevice* XilinxCoolRunnerIIDevice::CreateDevice(unsigned int idcode, JtagInte
 	unsigned int devid = (idcode >> 16) & 0x3f;			//device ID
 	unsigned int volt = (idcode >> 15) & 0x1;			//must always be 1
 	unsigned int package = (idcode >> 12) & 0x7;		//device-dependent package ID
-	unsigned int manuf = (idcode >> 1) & 0x3FF;			//must always be IDCODE_XILINX
+	//unsigned int manuf = (idcode >> 1) & 0x3FF;			//must always be IDCODE_XILINX
 	unsigned int always_one = (idcode & 1);				//must always be 1
 
 	//Sanity check constant fields
@@ -273,7 +273,7 @@ XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegist
 
 	if( (ret.bits.padding_one != 1) || (ret.bits.padding_zero != 0) )
 	{
-		printf("Got: %02x\n", ret.word & 0xff);
+		LogError("Got: %02x\n", ret.word & 0xff);
 		throw JtagExceptionWrapper(
 			"Invalid status register (padding bits don't make sense)",
 			"");
@@ -339,7 +339,7 @@ void XilinxCoolRunnerIIDevice::Erase()
 	}
 
 	//Blank check
-	printf("    Blank checking...\n");
+	LogVerbose("    Blank checking...\n");
 	ResetToIdle();
 	SetIR(INST_ISC_ENABLE);
 	usleep(800);				//wait for device to initialize
@@ -396,7 +396,7 @@ void XilinxCoolRunnerIIDevice::Erase()
 
 		if(vdata_out[0] != mask)
 		{
-			printf("Got 0x%02x, expected 0x%02x\n", vdata_out[0], mask);
+			LogError("Got 0x%02x, expected 0x%02x\n", vdata_out[0], mask);
 
 			delete[] vaddr;
 			throw JtagExceptionWrapper(
@@ -407,7 +407,7 @@ void XilinxCoolRunnerIIDevice::Erase()
 		{
 			if(vdata_out[x] != 0xFF)
 			{
-				printf("Got 0x%02x, expected 0xff at x=%d\n", vdata_out[x], x);
+				LogError("Got 0x%02x, expected 0xff at x=%d\n", vdata_out[x], x);
 
 				delete[] vaddr;
 				throw JtagExceptionWrapper(
@@ -420,7 +420,7 @@ void XilinxCoolRunnerIIDevice::Erase()
 		if((y+1) < GetShiftRegisterDepth())
 			ScanDR(vaddr+(y+1), &addr_out, GetAddressSize());
 	}
-	printf("    Device is blank\n");
+	LogNotice("    Device is blank\n");
 	SetIR(INST_ISC_DISABLE);
 	SetIR(INST_BYPASS);
 
@@ -446,14 +446,14 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			"");
 	}
 
-	printf("    Using %s\n", bit->GetDescription().c_str());
+	LogNotice("    Using %s\n", bit->GetDescription().c_str());
 
 	//Parse the device ID
 	char devname[32] = {0};
 	int speedgrade;
 	char package[32] = {0};
 	sscanf(bit->devname.c_str(), "%31[^-]-%1d-%31s", devname, &speedgrade, package);
-	printf("    Device %s, speed %d, package %s\n", devname, speedgrade, package);
+	LogVerbose("    Device %s, speed %d, package %s\n", devname, speedgrade, package);
 
 	//Normalize the package name
 	string package_normalized;
@@ -469,7 +469,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	//Sanity check that the device matches
 	if(0 != strcasecmp(GetDeviceName().c_str(), devname))
 	{
-		printf("GetDeviceName() = \"%s\", devname = \"%s\"\n",
+		LogError("GetDeviceName() = \"%s\", devname = \"%s\"\n",
 			GetDeviceName().c_str(), devname);
 		throw JtagExceptionWrapper(
 			"Device name does not match provided bitfile",
@@ -477,7 +477,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	}
 	if(GetDevicePackage() != package_normalized)
 	{
-		printf("GetDeviceName() = \"%s\", package = \"%s\"\n",
+		LogError("GetDeviceName() = \"%s\", package = \"%s\"\n",
 			GetDevicePackage().c_str(), package_normalized.c_str());
 		throw JtagExceptionWrapper(
 			"Device package does not match provided bitfile",
@@ -486,7 +486,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	printf("    Device name / package check OK\n");
 
 	//Erase even if the device doesn't report being programmed, just to make sure it's totally blank
-	printf("    Erasing device...\n");
+	LogVerbose("    Erasing device...\n");
 	Erase();
 	usleep(500 * 1000);
 
@@ -544,7 +544,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	}
 
 	//Main programming operation
-	printf("    Programming main array (shift register size = %d, nbytes=%d)...\n", nshort, nbytes);
+	LogVerbose("    Programming main array (shift register size = %d, nbytes=%d)...\n", nshort, nbytes);
 	ResetToIdle();
 	SetIR(INST_ISC_ENABLE);
 	usleep(800);				//wait for device to initialize
@@ -609,7 +609,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 
 	//Reset the TAP and sanity check that we're programmed, then start readback process
 	ResetToIdle();
-	printf("    Verifying main array...\n");
+	LogVerbose("    Verifying main array...\n");
 	SetIR(INST_ISC_ENABLE);
 	usleep(800);			//wait for device to initialize
 	SetIR(INST_ISC_READ);
@@ -668,7 +668,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			if(row[x+1] != vdata_out[x])
 			{
 				ok = false;
-				printf("    Verify FAILED at row %d, byte %d (expected %02x, found %02x)\n", y, x, row[x+1], vdata_out[x]);
+				LogError("    Verify FAILED at row %d, byte %d (expected %02x, found %02x)\n", y, x, row[x+1], vdata_out[x]);
 				break;
 			}
 		}
@@ -691,7 +691,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			"Verification FAILED",
 			"");
 	}
-	printf("    Readback successful\n");
+	LogNotice("    Readback successful\n");
 
 	//Reset
 	SetIR(INST_ISC_INIT);
