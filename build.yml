@@ -2,7 +2,7 @@
 #                                                                                                                      #
 # ANTIKERNEL v0.1                                                                                                      #
 #                                                                                                                      #
-# Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          #
+# Copyright (c) 2012-2017 Andrew D. Zonenberg                                                                          #
 # All rights reserved.                                                                                                 #
 #                                                                                                                      #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     #
@@ -90,12 +90,14 @@ jtaghal:
         - MicrochipMicrocontroller.cpp
         - XilinxDevice.cpp
         - XilinxCPLD.cpp
+        - XilinxCoolRunnerIIDevice.cpp
         - XilinxFPGA.cpp
         - Xilinx7SeriesDevice.cpp
         - XilinxSpartan6Device.cpp
 
         # Vendor devices
         - XilinxFPGABitstream.cpp
+        - XilinxCPLDBitstream.cpp
 
     flags:
         - global
