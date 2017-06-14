@@ -995,8 +995,8 @@ std::string XilinxCoolRunnerIIDevice::GetPackageName(int pknum)
 	string package;
 	switch(pknum)
 	{
-	case QFG32:	//lead-free only so G is included
-		package = "QFG32";
+	case QFG32:
+		package = "QF32";
 		break;
 	case VQG44:
 		package = "VQ44";
