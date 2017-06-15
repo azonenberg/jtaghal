@@ -556,13 +556,11 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 		//(modeled on SVF, which sends LSB of rightmost byte first)
 		unsigned char* row = permuted_data + (nbytes * y);
 
-		/*
 		//Print it out
-		printf("    [PROGRAM]  %2d (%02x): ", y, vaddr[y]);
+		LogDebug("    [PROGRAM]  %2d (%02x): ", y, vaddr[y]);
 		for(int i=0; i<nbytes; i++)
-			printf("%02x", row[i] & 0xFF);
-		printf("\n");
-		*/
+			LogDebug("%02x", row[i] & 0xFF);
+		LogDebug("\n");
 
 		//Send
 		usleep(10*1000);
@@ -649,7 +647,7 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 	memset(zeros, 0, nbytes);
 	ScanDR(zeros, &addr_out, GetAddressSize());				//Bootstrap the process by shifting in the zero address
 	bool ok = true;
-	for(int y=0; y<GetShiftRegisterDepth() && ok; y++)
+	for(int y=0; y<GetShiftRegisterDepth()/* && ok*/; y++)
 	{
 		//Wait for data to settle
 		usleep(100);
@@ -673,13 +671,11 @@ void XilinxCoolRunnerIIDevice::Program(FirmwareImage* image)
 			}
 		}
 
-		/*
 		//Print it out
-		printf("    [READBACK] %2d (%02x):  ", y, vaddr[y]);
+		LogDebug("    [READBACK] %2d (%02x):   ", y, vaddr[y]);
 		for(int i=0; i<nregbytes; i++)
-			printf("%02x", vdata_out[i] & 0xFF);
-		printf("\n");
-		*/
+			LogDebug("%02x", vdata_out[i] & 0xFF);
+		LogDebug("\n");
 
 		//Send the next address
 		if((y+1) < GetShiftRegisterDepth())
