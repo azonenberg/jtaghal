@@ -83,6 +83,7 @@ jtaghal:
         - DigilentJtagInterface.cpp
         - FTDIJtagInterface.cpp
         - NetworkedJtagInterface.cpp
+        - PipeJtagInterface.cpp
 
         # Vendors
         - ARMDevice.cpp

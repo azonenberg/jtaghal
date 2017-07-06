@@ -106,6 +106,7 @@
 #include "DigilentJtagInterface.h"
 #include "FTDIJtagInterface.h"
 #include "NetworkedJtagInterface.h"
+#include "PipeJtagInterface.h"
 //#include "NocJtagInterface.h"
 
 //Programmable device helpers
