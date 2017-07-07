@@ -300,13 +300,14 @@ void JtagInterface::InitializeChain()
 		ShiftData(false, lots_of_zeros, (unsigned char*)&idcode, 32);
 		m_idcodes.push_back(idcode);
 
-		//printf("IDCODE = %08x\n", idcode);
+		//LogNotice("IDCODE = %08x\n", idcode);
 
 		//ID code should always begin with a one
 		//If we get a zero it's a bypass register
 		//TODO: Support devices not implementing IDCODE
 		if(!(idcode & 0x1))
 		{
+			LogError("Bad IDCODE %08x at index %zu\n", idcode, i);
 			throw JtagExceptionWrapper(
 				"Devices without IDCODE are not supported",
 				"");

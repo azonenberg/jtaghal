@@ -43,7 +43,6 @@
  */
 class PipeJtagInterface
 	: public JtagInterface
-	, public GPIOInterface
 {
 public:
 	PipeJtagInterface();
@@ -74,11 +73,6 @@ public:
 	virtual void EnterShiftDR();
 	virtual void LeaveExit1DR();
 	virtual void ResetToIdle();
-
-	//GPIO stuff
-	virtual void ReadGpioState();
-	virtual void WriteGpioState();
-	bool IsGPIOCapable();
 
 	//Explicit TMS shifting is no longer allowed, only state-level interface
 private:

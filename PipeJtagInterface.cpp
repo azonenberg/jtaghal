@@ -54,6 +54,10 @@ PipeJtagInterface::PipeJtagInterface()
  */
 PipeJtagInterface::~PipeJtagInterface()
 {
+	uint8_t op = JTAGD_OP_QUIT;
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
+
 	if(m_readpipe)
 	{
 		fclose(m_readpipe);
@@ -116,41 +120,51 @@ string PipeJtagInterface::GetUserID()
 
 int PipeJtagInterface::GetFrequency()
 {
-	/*
 	uint8_t op = JTAGD_OP_GET_FREQ;
-	fwrite(&op, 1, 1, m_writepipe);
-	uint32_t freq;
-	m_socket.RecvLooped((unsigned char*)&freq, 4);
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
+
+	int freq;
+	fscanf(m_readpipe, "%d", &freq);
 	return freq;
-	*/
-	return 0;
 }
 
 void PipeJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
 {
-	/*
 	double start = GetTime();
 
 	int bytesize =  ceil(count / 8.0f);
 
-	//Send the opcode and data
+	//Opcode
 	uint8_t op = JTAGD_OP_SHIFT_DATA;
 	if(rcv_data == NULL)
 		op = JTAGD_OP_SHIFT_DATA_WO;
-	BufferedSend((unsigned char*)&op, 1);
-	uint8_t t = last_tms;
-	BufferedSend((unsigned char*)&t, 1);
-	uint32_t c = count;
-	BufferedSend((unsigned char*)&c, 4);
-	BufferedSend(send_data, bytesize);
-	SendFlush();
+	fprintf(m_writepipe, "%02x\n", op);
+
+	//Last TMS value
+	fprintf(m_writepipe, "%02x\n", last_tms);
+
+	//Message length (in BITS, not bytes)
+	fprintf(m_writepipe, "%08x\n", count);
+
+	//Actual message data (one byte per line)
+	for(int i=0; i<bytesize; i++)
+		fprintf(m_writepipe, "%02x\n", send_data[i] & 0xff);
+
+	fflush(m_writepipe);
 
 	//Read response data
 	if(rcv_data != NULL)
-		m_socket.RecvLooped(rcv_data, bytesize);
+	{
+		for(int i=0; i<bytesize; i++)
+		{
+			unsigned int tmp;
+			fscanf(m_readpipe, "%02x", &tmp);
+			rcv_data[i] = tmp;
+		}
+	}
 
 	m_perfShiftTime += GetTime() - start;
-	*/
 }
 
 bool PipeJtagInterface::IsSplitScanSupported()
@@ -177,6 +191,8 @@ void PipeJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*
 
 void PipeJtagInterface::SendDummyClocks(int n)
 {
+	LogError("SendDummyClocks not implemented\n");
+
 	/*
 	double start = GetTime();
 
@@ -192,64 +208,49 @@ void PipeJtagInterface::SendDummyClocks(int n)
 
 void PipeJtagInterface::SendDummyClocksDeferred(int n)
 {
-	/*
-	double start = GetTime();
-
-	uint8_t op = JTAGD_OP_DUMMY_CLOCK_DEFERRED;
-	BufferedSend((unsigned char*)&op, 1);
-	uint32_t c = n;
-	BufferedSend((unsigned char*)&c, 4);
-
-	m_perfShiftTime += GetTime() - start;
-	*/
+	SendDummyClocks(n);	//no deferral supported
 }
 
 void PipeJtagInterface::TestLogicReset()
 {
-	/*
 	uint8_t op = JTAGD_OP_TLR;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::EnterShiftIR()
 {
-	/*
 	uint8_t op = JTAGD_OP_ENTER_SIR;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::LeaveExit1IR()
 {
-	/*
 	uint8_t op = JTAGD_OP_LEAVE_E1IR;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::EnterShiftDR()
 {
-	/*
 	uint8_t op = JTAGD_OP_ENTER_SDR;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::LeaveExit1DR()
 {
-	/*
 	uint8_t op = JTAGD_OP_LEAVE_E1DR;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::ResetToIdle()
 {
-	/*
 	uint8_t op = JTAGD_OP_RESET_IDLE;
-	BufferedSend((unsigned char*)&op, 1);
-	*/
+	fprintf(m_writepipe, "%02x\n", op);
+	fflush(m_writepipe);
 }
 
 void PipeJtagInterface::Commit()
@@ -285,19 +286,3 @@ size_t PipeJtagInterface::GetDummyClockCount()
 }
 
 //GetShiftTime is measured clientside so no need to override
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// GPIO stuff
-
-bool PipeJtagInterface::IsGPIOCapable()
-{
-	return false;
-}
-
-void PipeJtagInterface::ReadGpioState()
-{
-}
-
-void PipeJtagInterface::WriteGpioState()
-{
-}
