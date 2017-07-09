@@ -172,12 +172,18 @@ bool PipeJtagInterface::IsSplitScanSupported()
 	return false;
 }
 
-bool PipeJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+bool PipeJtagInterface::ShiftDataWriteOnly(
+	bool /*last_tms*/,
+	const unsigned char* /*send_data*/,
+	unsigned char* /*rcv_data*/,
+	int /*count*/)
 {
 	return false;
 }
 
-bool PipeJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int count)
+bool PipeJtagInterface::ShiftDataReadOnly(
+	unsigned char* /*rcv_data*/,
+	int /*count*/)
 {
 	return false;
 }
@@ -189,7 +195,7 @@ void PipeJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*
 		"");
 }
 
-void PipeJtagInterface::SendDummyClocks(int n)
+void PipeJtagInterface::SendDummyClocks(int /*n*/)
 {
 	LogError("SendDummyClocks not implemented\n");
 
