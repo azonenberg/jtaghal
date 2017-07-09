@@ -115,7 +115,7 @@ string XilinxSpartan3ADevice::GetDescription()
 	}
 
 	char srev[16];
-	snLogVerbose(srev, 15, "%u", m_rev);
+	snprintf(srev, 15, "%u", m_rev);
 
 	return string("Xilinx ") + devname + " stepping " + srev;
 }
@@ -684,3 +684,28 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 	//All OK
 	return bitstream;
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// On-chip debug helpers
+
+size_t XilinxSpartan3ADevice::GetNumUserInstructions()
+{
+	return 2;
+}
+
+void XilinxSpartan3ADevice::SelectUserInstruction(size_t index)
+{
+	switch(index)
+	{
+		case 0:
+			SetIRDeferred(INST_USER1);
+			break;
+
+		case 1:
+			SetIRDeferred(INST_USER2);
+			break;
+	}
+}
+
