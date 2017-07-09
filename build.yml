@@ -94,6 +94,7 @@ jtaghal:
         - XilinxCoolRunnerIIDevice.cpp
         - XilinxFPGA.cpp
         - Xilinx7SeriesDevice.cpp
+        - XilinxSpartan3ADevice.cpp
         - XilinxSpartan6Device.cpp
 
         # Vendor devices

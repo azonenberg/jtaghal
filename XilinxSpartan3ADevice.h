@@ -235,17 +235,11 @@ public:
 	virtual void GetSerialNumber(unsigned char* data);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// NoC helpers
-
-protected:
-	virtual void SetOCDInstruction();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Public configuration interface
 public:
-	virtual void Erase(bool bVerbose = false);
-	virtual void InternalErase(bool bVerbose = false);
-	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose = false);
+	virtual void Erase();
+	virtual void InternalErase();
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len);
 	virtual void Program(FirmwareImage* image);
 	virtual void Reboot();
 
@@ -257,7 +251,7 @@ protected:
 	void ReadWordsConfigRegister(unsigned int reg, uint16_t* dout, unsigned int count);
 	void WriteWordConfigRegister(unsigned int reg, uint16_t value);
 	*/
-	virtual XilinxFPGABitstream* ParseBitstreamInternals(const unsigned char* data, size_t len, XilinxFPGABitstream* bitstream, size_t fpos, bool bVerbose = false);
+	virtual XilinxFPGABitstream* ParseBitstreamInternals(const unsigned char* data, size_t len, XilinxFPGABitstream* bitstream, size_t fpos);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration type definitions
