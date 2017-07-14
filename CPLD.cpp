@@ -98,7 +98,9 @@ void CPLD::ParseJEDFile(CPLDBitstream* bit, const unsigned char* data, size_t le
 		}
 	}
 	if(file_checksum == expected_checksum)
-	{}//	printf("    Validating file checksum... OK\n");
+	{}	// LogVerbose("    Validating file checksum... OK\n");
+	else if(file_checksum == 0)
+	{}	// LogVerbose("    File checksum is 0000, not checking\n");
 	else
 	{
 		throw JtagExceptionWrapper(
