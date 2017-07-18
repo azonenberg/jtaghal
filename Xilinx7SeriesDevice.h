@@ -205,6 +205,9 @@ public:
 	///JTAG device IDs
 	enum deviceids
 	{
+		//XC7A50T
+		ARTIX7_50T		= 0x2c,
+
 		//XC7A75T
 		ARTIX7_75T		= 0x32,
 
