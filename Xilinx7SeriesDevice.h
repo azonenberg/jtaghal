@@ -205,22 +205,29 @@ public:
 	///JTAG device IDs
 	enum deviceids
 	{
-		//XC7A50T
-		ARTIX7_50T		= 0x2c,
+		//XC7Sx
+		SPARTAN7_6		= 0x022,
+		SPARTAN7_15		= 0x020,
+		SPARTAN7_25		= 0x1c4,
+		SPARTAN7_50		= 0x02f,
+		SPARTAN7_75		= 0x1c8,
+		SPARTAN7_100	= 0x1c7,
 
-		//XC7A75T
-		ARTIX7_75T		= 0x32,
+		//XC7AxT
+		ARTIX7_12T		= 0x1c3,
+		ARTIX7_15T		= 0x02e,
+		ARTIX7_25T		= 0x1c2,
+		ARTIX7_35T		= 0x02d,
+		ARTIX7_50T		= 0x02c,
+		ARTIX7_75T		= 0x032,
+		ARTIX7_100T		= 0x031,
+		ARTIX7_200T 	= 0x036,
 
-		///XC7A100T
-		ARTIX7_100T		= 0x31,
+		//XC7Kx
+		KINTEX7_70T		= 0x047,
+		KINTEX7_160T	= 0x04c,
 
-		///XC7A200T
-		ARTIX7_200T 	= 0x36,
-
-		///XC7K160T
-		KINTEX7_70T		= 0x47,
-
-		///XC7Z010
+		//XC7Zx
 		ZYNQ_010		= 0x122
 	};
 

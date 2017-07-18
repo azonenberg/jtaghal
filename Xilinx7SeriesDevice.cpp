@@ -79,11 +79,22 @@ JtagDevice* Xilinx7SeriesDevice::CreateDevice(
 {
 	switch(arraysize)
 	{
+	case SPARTAN7_6:
+	case SPARTAN7_15:
+	case SPARTAN7_25:
+	case SPARTAN7_50:
+	case SPARTAN7_75:
+	case SPARTAN7_100:
+	case ARTIX7_12T:
+	case ARTIX7_15T:
+	case ARTIX7_25T:
+	case ARTIX7_35T:
 	case ARTIX7_50T:
 	case ARTIX7_75T:
 	case ARTIX7_100T:
 	case ARTIX7_200T:
 	case KINTEX7_70T:
+	case KINTEX7_160T:
 	case ZYNQ_010:
 		return new Xilinx7SeriesDevice(arraysize, rev, idcode, iface, pos);
 
@@ -105,6 +116,36 @@ string Xilinx7SeriesDevice::GetDescription()
 
 	switch(m_arraysize)
 	{
+	case SPARTAN7_6:
+		devname = "XC7S6";
+		break;
+	case SPARTAN7_15:
+		devname = "XC7S15";
+		break;
+	case SPARTAN7_25:
+		devname = "XC7S25";
+		break;
+	case SPARTAN7_50:
+		devname = "XC7S50";
+		break;
+	case SPARTAN7_75:
+		devname = "XC7S75";
+		break;
+	case SPARTAN7_100:
+		devname = "XC7S100";
+		break;
+	case ARTIX7_12T:
+		devname = "XC7A12T";
+		break;
+	case ARTIX7_15T:
+		devname = "XC7A15T";
+		break;
+	case ARTIX7_25T:
+		devname = "XC7A25T";
+		break;
+	case ARTIX7_35T:
+		devname = "XC7A35T";
+		break;
 	case ARTIX7_50T:
 		devname = "XC7A50T";
 		break;
@@ -119,6 +160,9 @@ string Xilinx7SeriesDevice::GetDescription()
 		break;
 	case KINTEX7_70T:
 		devname = "XC7K70T";
+		break;
+	case KINTEX7_160T:
+		devname = "XC7K160T";
 		break;
 	case ZYNQ_010:
 		devname = "XC7Z010";
