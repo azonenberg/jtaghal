@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -41,69 +41,115 @@
 #include <list>
 #include <string>
 
-/** 
+/**
 	@brief Status register for a Microchip PIC32 device
-	
+
 	\ingroup libjtaghal
  */
 union MicrochipPIC32DeviceStatusRegister
 {
 	struct
 	{
-		/*
-		
-		///Constant '01'
-		unsigned int padding_one:2;
-		
-		///True if configured
-		unsigned int done:1;
-		
-		///True if secured
-		unsigned int sec:1;
-		
-		///True if in ISC_ENABLE state
-		unsigned int isc_en:1;
-		
-		///True if in ISC_DISABLE state
-		unsigned int isc_dis:1;
-		
-		///Constant '00'
-		unsigned int padding_zero:2;
-		
-		*/
+		unsigned int reset_active		:1;	//Device is being reset
+		unsigned int flash_en			:1;	//Flash access enabled
+		unsigned int flash_busy			:1;	//Flash controller is doing stuff
+		unsigned int cfg_rdy			:1;	//Config is read, code protect status valid
+		unsigned int reserved2			:1;	//unknown bit 4
+		unsigned int nvm_error			:1;	//Error occurred
+		unsigned int reserved1			:1;	//unknown bit 6
+		unsigned int code_protect_off	:1;	//Code protect is NOT set
 	} __attribute__ ((packed)) bits;
-	
+
 	///The raw status register value
 	uint8_t word;
+} __attribute__ ((packed));
+
+/**
+	@brief MIPS EJTAG implementation register
+
+	\ingroup libjtaghal
+ */
+union EjtagImplementationCodeRegister
+{
+	struct
+	{
+		unsigned int processor_is_64	: 1;	//True if 64-bit CPU
+		unsigned int reserved1			: 13;
+		unsigned int no_ejtag_dma		: 1;	//Set means we don't do DMA over EJTAG
+		unsigned int reserved2			: 1;
+		unsigned int mips16_supported	: 1;
+		unsigned int reserved3			: 4;
+		unsigned int asid_size 			: 2;
+		unsigned int reserved4			: 1;
+		unsigned int dint_supported		: 1;
+		unsigned int reserved5			: 3;
+		unsigned int r3k_priv			: 1;	//R3000 privilege mode if set, R4000 if not set
+		unsigned int ejtag_version		: 3;
+	} __attribute__ ((packed)) bits;
+
+	///The raw status register value
+	uint32_t word;
+} __attribute__ ((packed));
+
+/**
+	@brief PIC32 EJTAG control register
+ */
+union EjtagControlRegister
+{
+	struct
+	{
+		unsigned int reserved1			: 3;
+		unsigned int debug_mode			: 1;
+		unsigned int reserved2			: 8;
+		unsigned int debug_irq			: 1;	//Set true to request a debug exception
+		unsigned int reserved3			: 1;
+		unsigned int debug_vector_pos	: 1;	//True = dmseg, false = normal memory
+		unsigned int probe_enable		: 1;	//Set true to have debug probe service dmseg requests
+		unsigned int proc_reset			: 1;
+		unsigned int reserved4			: 1;
+		unsigned int proc_access		: 1;	//true if pending CPU memory access
+		unsigned int proc_we			: 1;	//true if pending CPU access is a write
+		unsigned int periph_reset		: 1;
+		unsigned int bus_halted			: 1;
+		unsigned int low_power			: 1;
+		unsigned int vpe_disable		: 1;
+		unsigned int reserved5			: 5;
+		unsigned int access_size		: 2;	//Pending CPU access size
+												//0 = byte, 1 = half, 2 = word
+		unsigned int reset_occurred		: 1;
+	} __attribute__ ((packed)) bits;
+
+	///The raw status register value
+	uint32_t word;
 } __attribute__ ((packed));
 
 struct MicrochipPIC32DeviceInfo
 {
 	///JTAG device ID
 	uint16_t devid;
-	
+
 	///String name of device
 	const char* name;
-	
+
 	///Device family
 	unsigned int family;
-	
+
 	///CPU type
 	unsigned int cpu;
-	
+
 	///SRAM capacity (kB)
 	unsigned int sram_size;
-	
+
 	///Main program flash size (kB)
 	unsigned int program_flash_size;
-	
+
 	///Boot flash size (kB)
 	unsigned int boot_flash_size;
 };
 
-/** 
+/**
 	@brief A Xilinx CoolRunner-II device
-	
+
 	\ingroup libjtaghal
  */
 class MicrochipPIC32Device	: public MicrochipMicrocontroller
@@ -125,24 +171,26 @@ public:
 		unsigned int idcode,
 		JtagInterface* iface,
 		size_t pos);
-		
+
 	///Device families
 	enum families
 	{
 		FAMILY_MX12,		//PIC32MX 1xx/2xx
 		FAMILY_MX34,		//PIC32MX 3xx/4xx
 		FAMILY_MX567,		//PIC32MX 5xx/6xx/7xx
-		
+
+		FAMILY_MM,			//All PIC32MM devices
+
 		FAMILY_MZ			//All PIC32MZ devices
 	};
-	
+
 	///CPU types
 	enum cpus
 	{
 		CPU_M4K,
 		CPU_MAPTIV
 	};
-	
+
 	///JTAG device IDs (from BSDL files)
 	enum deviceids
 	{
@@ -196,109 +244,106 @@ public:
 		PIC32MX695F512L = 0x4341,
 		PIC32MX764F128H = 0x440b,
 		PIC32MX764F128L = 0x4417,
-		PIC32MX795F512L = 0x4307
+		PIC32MX795F512L = 0x4307,
+
+		PIC32MM0032GPL028	= 0x6b0a
 	};
-	
+
 	///5-bit-wide JTAG instructions (from BSDL file and datasheet)
-	enum instructions 
+	enum instructions
 	{
 		///Standard JTAG bypass
 		INST_BYPASS				= 0x1F,
-		
+
 		///Read ID code
 		INST_IDCODE				= 0x01,
-		
+
+		///Read implementation code
+		INST_IMPCODE			= 0x03,
+
 		///Selects Microchip scan chain
 		INST_MTAP_SW_MCHP		= 0x04,
-		
+
 		///Selects EJTAG scan chain
 		INST_MTAP_SW_EJTAG		= 0x05,
-		
+
 		///Command to Microchip virtualized JTAG
 		INST_MTAP_COMMAND		= 0x07,
-		
-		///Data to Microchip virtualized JTAG
-		INST_MCHP_SCAN			= 0x08
+
+		///Select address register for memory ops
+		INST_ADDRESS			= 0x08,
+
+		///Select data register for memory ops
+		INST_DATA				= 0x09,
+
+		///Control register of some sort?
+		INST_CONTROL			= 0x0A,
+
+		///Selects address, data, control end to end in one DR
+		INST_ALL				= 0x0B,
+
+		///Makes the CPU trap to debugger after a reset
+		INST_DEBUGBOOT			= 0x0C,
+
+		///Boot normally after a reset
+		INST_NORMALBOOT			= 0x0D,
+
+		///Register used for moving data to/from the debug bridge
+		INST_FASTDATA			= 0x0E,
+
+		//Sample the program counter (used for profiling... not implemented?)
+		INST_PCSAMPLE			= 0x14
 	};
-	
+
 	///8-bit instructions for Microchip virtual TAP (write to INST_MTAP_COMMAND data register)
 	enum mtap_instructions
 	{
 		///Get status
 		MCHP_STATUS				= 0x00,
-		
+
 		///Begin chip reset
 		MCHP_ASSERT_RST			= 0xD1,
-		
+
 		///End chip reset
 		MCHP_DE_ASSERT_RST		= 0xD0,
-		
+
 		///Bulk-erase flash
 		MCHP_ERASE				= 0xFC,
-		
+
 		///Enable connecting the CPU to flash
 		MCHP_FLASH_ENABLE		= 0xFE,
-		
+
 		///Disconnect the CPU from flash
 		MCHP_FLASH_DISABLE		= 0xFD,
-		
+
 		///Force re-read of device config
 		MCHP_READ_CONFIG		= 0xFF
 	};
-	
-	///8-bit instructions for EJTAG virtual TAP
-	enum ejtag_instructions
-	{
-		///Get CPU core ID code
-		EJTAG_IDCODE			= 0x01,
-		
-		///Select address register for memory ops
-		EJTAG_ADDRESS			= 0x08,
-		
-		///Select data register for memory ops
-		EJTAG_DATA				= 0x09,
-		
-		///Control register of some sort?
-		EJTAG_CONTROL			= 0x0A,
-		
-		///Selects address, data, control end to end in one DR
-		EJTAG_ALL				= 0x0B,
-		
-		///Resets the CPU and makes it trap to the debugger
-		EJTAG_DEBUGBOOT			= 0x0C,
-		
-		///Resets the CPU and boots normally
-		EJTAG_NORMALBOOT		= 0x0D,
-		
-		///No idea what this does
-		EJTAG_FASTDATA			= 0x0E
-	};
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
-	
+
 	virtual std::string GetDescription();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// MCU stuff
-	
-	virtual bool IsProgrammed();
-	virtual void Erase(bool bVerbose = false);
 
-	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len, bool bVerbose);
+	virtual bool IsProgrammed();
+	virtual void Erase();
+
 	virtual void Program(FirmwareImage* image);
-	
+
 	//MicrochipPIC32DeviceStatusRegister GetStatusRegister();
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// No NoC interfaces
-	
+
 	virtual bool HasRPCInterface();
 	virtual bool HasDMAInterface();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation
-public:	
+public:
 	void SetIR(unsigned char irval)
 	{ JtagDevice::SetIR(&irval, m_irlength); }
 
@@ -306,15 +351,22 @@ protected:
 	void EnterMtapMode();
 	uint8_t SendMchpCommand(uint8_t cmd);
 	void EnterEjtagMode();
+	void EnterSerialExecMode();
+	void SerialExecuteInstruction(uint32_t insn, bool first = false);
+
+	void SerialExecHelper();
+
+	MicrochipPIC32DeviceStatusRegister GetStatus();
+	EjtagImplementationCodeRegister GetImpCode();
 
 protected:
-	
+
 	///Device ID code
 	unsigned int m_devid;
-	
+
 	///Stepping number
 	unsigned int m_stepping;
-	
+
 	///Device info
 	const MicrochipPIC32DeviceInfo* m_devinfo;
 };

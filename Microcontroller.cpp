@@ -39,3 +39,9 @@ Microcontroller::~Microcontroller()
 {
 
 }
+
+FirmwareImage* Microcontroller::LoadFirmwareImage(const unsigned char* /*data*/, size_t /*len*/)
+{
+	//FIXME: implement this to load an ELF or ihex based on magic number?
+	return NULL;
+}

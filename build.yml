@@ -89,6 +89,7 @@ jtaghal:
         - ARMDevice.cpp
         - MicrochipDevice.cpp
         - MicrochipMicrocontroller.cpp
+        - MicrochipPIC32Device.cpp
         - XilinxDevice.cpp
         - XilinxCPLD.cpp
         - XilinxCoolRunnerIIDevice.cpp

@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -35,7 +35,6 @@
 
 #include "jtaghal.h"
 #include "MicrochipPIC32Device.h"
-#include "XilinxCPLDBitstream.h"
 #include "memory.h"
 
 using namespace std;
@@ -50,28 +49,28 @@ static const MicrochipPIC32DeviceInfo g_devinfo[] =
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   4,  16,  3 },
 	{ MicrochipPIC32Device::PIC32MX110F016D, "PIC32MX110F016D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   4,  16,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX120F032B, "PIC32MX120F032B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
 	{ MicrochipPIC32Device::PIC32MX120F032C, "PIC32MX120F032C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
 	{ MicrochipPIC32Device::PIC32MX120F032D, "PIC32MX120F032D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX130F064B, "PIC32MX130F064B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
 	{ MicrochipPIC32Device::PIC32MX130F064C, "PIC32MX130F064C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
 	{ MicrochipPIC32Device::PIC32MX130F064D, "PIC32MX130F064D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX150F128B, "PIC32MX150F128B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
 	{ MicrochipPIC32Device::PIC32MX150F128C, "PIC32MX150F128C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
 	{ MicrochipPIC32Device::PIC32MX150F128D, "PIC32MX150F128D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
-	
+
 	//MX2xx series
 	{ MicrochipPIC32Device::PIC32MX210F016B, "PIC32MX210F016B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   4,  16,  3 },
@@ -79,101 +78,105 @@ static const MicrochipPIC32DeviceInfo g_devinfo[] =
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   4,  16,  3 },
 	{ MicrochipPIC32Device::PIC32MX210F016D, "PIC32MX210F016D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   4,  16,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX220F032B, "PIC32MX220F032B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
 	{ MicrochipPIC32Device::PIC32MX220F032C, "PIC32MX220F032C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
 	{ MicrochipPIC32Device::PIC32MX220F032D, "PIC32MX220F032D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,   8,  32,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX230F064B, "PIC32MX230F064B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
 	{ MicrochipPIC32Device::PIC32MX230F064C, "PIC32MX230F064C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
 	{ MicrochipPIC32Device::PIC32MX230F064D, "PIC32MX230F064D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  16,  64,  3 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX250F128B, "PIC32MX250F128B",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
 	{ MicrochipPIC32Device::PIC32MX250F128C, "PIC32MX250F128C",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
 	{ MicrochipPIC32Device::PIC32MX250F128D, "PIC32MX250F128D",
 		MicrochipPIC32Device::FAMILY_MX12,  MicrochipPIC32Device::CPU_M4K,  32, 128,  3 },
-	
+
 	//MX3xx series
 	{ MicrochipPIC32Device::PIC32MX330F064H, "PIC32MX330F064H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
 	{ MicrochipPIC32Device::PIC32MX330F064L, "PIC32MX330F064L",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX340F512H, "PIC32MX340F512H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  32, 512, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX350F128H, "PIC32MX350F128H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
 	//{ MicrochipPIC32Device::PIC32MX350F128L, "PIC32MX350F128L",
 	//	MicrochipPIC32Device::FAMILY_MX34, MicrochipPIC32Device::CPU_M4K, 32, 128, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX350F256H, "PIC32MX350F256H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  64, 256, 12 },
 	{ MicrochipPIC32Device::PIC32MX350F256L, "PIC32MX350F256L",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  64, 256, 12 },
-	
+
 	//MX4xx series
 	{ MicrochipPIC32Device::PIC32MX430F064H, "PIC32MX430F064H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
 	{ MicrochipPIC32Device::PIC32MX430F064L, "PIC32MX430F064L",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX450F128H, "PIC32MX450F128H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
 	{ MicrochipPIC32Device::PIC32MX450F128L, "PIC32MX450F128L",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX450F256H, "PIC32MX450F256H",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  64, 256, 12 },
 	{ MicrochipPIC32Device::PIC32MX450F256L, "PIC32MX450F256L",
 		MicrochipPIC32Device::FAMILY_MX34,  MicrochipPIC32Device::CPU_M4K,  64, 256, 12 },
-	
+
 	//MX5xx series
 	{ MicrochipPIC32Device::PIC32MX534F064H, "PIC32MX534F064H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
 	//{ MicrochipPIC32Device::PIC32MX534F064L, "PIC32MX534F064L",
 	//	MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K, 16,  64, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX564F064H, "PIC32MX564F064H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
 	{ MicrochipPIC32Device::PIC32MX564F064L, "PIC32MX564F064L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  16,  64, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX564F128H, "PIC32MX564F128H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
 	{ MicrochipPIC32Device::PIC32MX564F128L, "PIC32MX564F128L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
-	
+
 	//MX6xx series
 	{ MicrochipPIC32Device::PIC32MX664F064H, "PIC32MX664F064H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32,  64, 12 },
 	{ MicrochipPIC32Device::PIC32MX664F064L, "PIC32MX664F064L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32,  64, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX664F128H, "PIC32MX664F128H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
 	{ MicrochipPIC32Device::PIC32MX664F128L, "PIC32MX664F128L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX695F512L, "PIC32MX695F512L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K, 128, 512, 12 },
-	
+
 	//MX7xx series
 	{ MicrochipPIC32Device::PIC32MX764F128H, "PIC32MX764F128H",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
 	{ MicrochipPIC32Device::PIC32MX764F128L, "PIC32MX764F128L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K,  32, 128, 12 },
-	
+
 	{ MicrochipPIC32Device::PIC32MX795F512L, "PIC32MX795F512L",
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K, 128, 512, 12 },
+
+	//MM series
+	{ MicrochipPIC32Device::PIC32MM0032GPL028, "PIC32MM0032GPL028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 32, 0 }
 };
 
 MicrochipPIC32Device::MicrochipPIC32Device(
@@ -184,7 +187,7 @@ MicrochipPIC32Device::MicrochipPIC32Device(
 	m_devid = devid;
 	m_stepping = stepping;
 	m_irlength = 5;
-	
+
 	//Look up device info in the table and make sure it exists
 	m_devinfo = NULL;
 	for(auto& x : g_devinfo)
@@ -196,10 +199,18 @@ MicrochipPIC32Device::MicrochipPIC32Device(
 	if(!m_devinfo)
 	{
 		throw JtagExceptionWrapper(
-			"Invalid PIC32MX JTAG IDCODE",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
-	}	
+			"Invalid PIC32 JTAG IDCODE",
+			"");
+	}
+
+	//Reset both TAPS
+	EnterMtapMode();
+	ResetToIdle();
+	EnterEjtagMode();
+	ResetToIdle();
+
+	//Get our implementation code
+	GetImpCode();
 }
 
 /**
@@ -217,7 +228,7 @@ JtagDevice* MicrochipPIC32Device::CreateDevice(
 }
 
 std::string MicrochipPIC32Device::GetDescription()
-{	
+{
 	char srev[256];
 	snprintf(srev, sizeof(srev), "Microchip %s (%u KB SRAM, %u KB code flash, %u KB boot flash, stepping %u)",
 		m_devinfo->name,
@@ -225,7 +236,7 @@ std::string MicrochipPIC32Device::GetDescription()
 		m_devinfo->program_flash_size,
 		m_devinfo->boot_flash_size,
 		m_stepping);
-		
+
 	return string(srev);
 }
 
@@ -239,49 +250,195 @@ bool MicrochipPIC32Device::HasDMAInterface()
 	return false;
 }
 
+EjtagImplementationCodeRegister MicrochipPIC32Device::GetImpCode()
+{
+	//TODO: dont do this unless in MTAP mode!
+	EnterEjtagMode();
+	SetIR(INST_IMPCODE);
+
+	//Get the data
+	EjtagImplementationCodeRegister impcode;
+	uint32_t dummy = 0;
+	ScanDR((uint8_t*)&dummy, (uint8_t*)&impcode.word, 32);
+
+	//DEBUG: print results
+	/*
+	LogDebug("Implementation code = %08x\n", impcode.word);
+	LogDebug("    64-bit CPU:          %d\n", impcode.bits.processor_is_64);
+	LogDebug("    EJTAG DMA supported: %d\n", !impcode.bits.no_ejtag_dma);
+	LogDebug("    MIPS16 supported:    %d\n", impcode.bits.mips16_supported);
+	switch(impcode.bits.asid_size)
+	{
+		case 0:
+			LogDebug("    ASID size:           None\n");
+			break;
+		case 1:
+			LogDebug("    ASID size:           6 bit\n");
+			break;
+		case 2:
+			LogDebug("    ASID size:           8 bit\n");
+			break;
+		case 3:
+			LogDebug("    ASID size:           Reserved\n");
+			break;
+	}
+	LogDebug("    DINT supported:      %d\n", impcode.bits.dint_supported);
+	LogDebug("    R3K privilege mode:  %d\n", impcode.bits.r3k_priv);
+	switch(impcode.bits.ejtag_version)
+	{
+		case 0:
+			LogDebug("    EJTAG version:       1.0 / 2.0\n");
+			break;
+
+		case 1:
+			LogDebug("    EJTAG version:       2.5\n");
+			break;
+
+		case 2:
+			LogDebug("    EJTAG version:       2.6\n");
+			break;
+
+		case 3:
+			LogDebug("    EJTAG version:       3.1\n");
+			break;
+
+		default:
+			LogDebug("    EJTAG version:       Reserved\n");
+			break;
+	}
+	*/
+	return impcode;
+}
+
+MicrochipPIC32DeviceStatusRegister MicrochipPIC32Device::GetStatus()
+{
+	//TODO: dont do this unless in EJTAG mode
+	EnterMtapMode();
+
+	//MCHP_STATUS is a nop that just returns status in the capture value
+	MicrochipPIC32DeviceStatusRegister status;
+	status.word = SendMchpCommand(MCHP_STATUS);
+
+	//DEBUG: print results
+	/*
+	LogDebug("Status = %02x\n", status.word);
+	LogDebug("    Unprotected:  %d\n", status.bits.code_protect_off);
+	LogDebug("    NVM err:      %d\n", status.bits.nvm_error);
+	LogDebug("    Config ready: %d\n", status.bits.cfg_rdy);
+	LogDebug("    Flash busy:   %d\n", status.bits.flash_busy);
+	LogDebug("    Flash enable: %d\n", status.bits.flash_en);
+	LogDebug("    Reset:        %d\n", status.bits.reset_active);
+	*/
+
+	return status;
+}
+
+void MicrochipPIC32Device::EnterSerialExecMode()
+{
+	//Reset the device and verify the reset took effect
+	EnterMtapMode();
+	SendMchpCommand(MCHP_ASSERT_RST);
+	auto stat = GetStatus();
+	if(!stat.bits.reset_active)
+	{
+		throw JtagExceptionWrapper(
+			"Device should be in reset, but isn't!",
+			"");
+	}
+
+	//Select the EJTAG TAP, then select JTAG boot mode
+	EnterEjtagMode();
+	SetIR(INST_DEBUGBOOT);
+
+	//De-assert reset and verify that happened
+	EnterMtapMode();
+	SendMchpCommand(MCHP_DE_ASSERT_RST);
+	stat = GetStatus();
+	if(stat.bits.reset_active)
+	{
+		throw JtagExceptionWrapper(
+			"Device should not be in reset, but is!",
+			"");
+	}
+
+	//Enable flash access
+	SendMchpCommand(MCHP_FLASH_ENABLE);
+}
+
+/**
+	@brief Executes a single MIPS32 instruction in serial-exec mode
+ */
+void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
+{
+	//Select control register
+	EnterEjtagMode();
+
+	//Wait for CPU to request an instruction
+	EjtagControlRegister write_reg;
+	EjtagControlRegister read_reg;
+	while(true)
+	{
+		write_reg.word = 0;						//default to zero
+		write_reg.bits.proc_access	= 1;		//don't clear processor-access bit
+		write_reg.bits.probe_enable	= 1;		//enable debug probe
+		write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
+
+		//bit 12 = request debug interrupt exception
+		//(this seems critical and isn't documented)
+		if(first)
+		{
+			write_reg.bits.debug_irq = 1;
+			first = false;
+		}
+
+		//Poll control register and wait for PrAcc to be set
+		SetIR(INST_CONTROL);
+		ScanDR((uint8_t*)&write_reg.word, (uint8_t*)&read_reg.word, 32);
+		if(read_reg.bits.proc_access)
+			break;
+	}
+
+	LogDebug("Got a JTAG memory request!\n");
+	if(read_reg.bits.access_size != 2)
+		LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
+	if(read_reg.bits.proc_we)
+		LogWarning("    Request isn't read\n");
+
+	//Read the address register so we know what address it's trying to read
+	uint32_t capture = 0;
+	uint32_t zero = 0;
+	SetIR(INST_ADDRESS);
+	ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
+	LogDebug("    Read address = %08x\n", capture);
+}
+
 bool MicrochipPIC32Device::IsProgrammed()
 {
-	EnterMtapMode();
-	
-	//MCHP_STATUS is a nop that just returns status in the capture value
-	uint8_t status = SendMchpCommand(MCHP_STATUS);
-	printf("Status = %02x\n", status);
-	
-	//Look up the MTAP status
-	/*
-	uint8_t zero = 0;
-	uint8_t mtap_status = 0;
-	//EJTAG_IDCODE
-	*/
-	
+	ResetToIdle();
+
+	//Go into debug-boot mode
+	EnterSerialExecMode();
+
+	//Send a couple of instructions to the CPU
+	SerialExecuteInstruction(0x0, true);
+
 	throw JtagExceptionWrapper(
 		"Not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }
 
-void MicrochipPIC32Device::Erase(bool /*bVerbose*/)
+void MicrochipPIC32Device::Erase()
 {
 	throw JtagExceptionWrapper(
 		"Not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
-}
-
-FirmwareImage* MicrochipPIC32Device::LoadFirmwareImage(const unsigned char* /*data*/, size_t /*len*/, bool /*bVerbose*/)
-{
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }
 
 void MicrochipPIC32Device::Program(FirmwareImage* /*image*/)
 {
 	throw JtagExceptionWrapper(
 		"Not implemented",
-		"",
-		JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+		"");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,6 +447,7 @@ void MicrochipPIC32Device::Program(FirmwareImage* /*image*/)
 void MicrochipPIC32Device::EnterMtapMode()
 {
 	SetIR(INST_MTAP_SW_MCHP);
+	ResetToIdle();
 }
 
 /**
@@ -306,4 +464,5 @@ uint8_t MicrochipPIC32Device::SendMchpCommand(uint8_t cmd)
 void MicrochipPIC32Device::EnterEjtagMode()
 {
 	SetIR(INST_MTAP_SW_EJTAG);
+	ResetToIdle();
 }

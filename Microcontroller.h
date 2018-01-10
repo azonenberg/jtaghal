@@ -45,6 +45,8 @@ class Microcontroller : public ProgrammableDevice
 {
 public:
 	virtual ~Microcontroller();
+
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len);
 };
 
 #endif
