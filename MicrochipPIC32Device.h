@@ -374,6 +374,7 @@ protected:
 	void EnterSerialExecMode();
 	void SerialExecuteInstruction(uint32_t insn, bool first = false);
 	void SerialExecuteMemoryWrite(uint32_t addr, uint32_t data);
+	uint32_t SerialExecuteMemoryRead(uint32_t addr);
 	EjtagControlRegister WaitForEjtagMemoryOperation(bool first = false);
 
 	void SerialExecHelper();

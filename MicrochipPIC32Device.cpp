@@ -460,66 +460,129 @@ void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
 	//Wait for the CPU to request an instruction
 	EjtagControlRegister read_reg = WaitForEjtagMemoryOperation(first);
 
-	//Sanity check it
-	if(read_reg.bits.access_size != 2)
-		LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
-	if(read_reg.bits.proc_we)
-		LogWarning("    Request isn't read\n");
-
 	//Read the address register so we know what address it's trying to read
 	uint32_t capture = 0;
 	uint32_t zero = 0;
 	SetIR(INST_ADDRESS);
 	ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
-	LogDebug("    Read address = %08x\n", capture);
+	//LogDebug("    Read address = %08x\n", capture);
+
+	//Sanity check it
+	if(read_reg.bits.access_size != 2)
+		LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
+	if(read_reg.bits.proc_we)
+		LogWarning("    Exec request isn't read (write 0x%08x)\n", capture);
+
+	if( (capture == 0xff200200) && !first)
+		LogWarning("Target CPU appears to have reset!\n");
 
 	//Send the data
 	SetIR(INST_DATA);
 	ScanDR((uint8_t*)&insn, (uint8_t*)&capture, 32);
+	//LogDebug("    Read capture = %08x\n", capture);
 
 	//Send the control command to execute the instruction
 	EjtagControlRegister write_reg;
 	write_reg.word = 0;						//default to zero
-	write_reg.bits.proc_access	= 1;		//don't clear processor-access bit
+	write_reg.bits.proc_access	= 0;		//clear processor-access bit
 	write_reg.bits.probe_enable	= 1;		//enable debug probe
 	write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
-	write_reg.bits.proc_access = 0;
 	SetIR(INST_CONTROL);
 	ScanDR((uint8_t*)&write_reg.word, (uint8_t*)&read_reg.word, 32);
 }
 
 void MicrochipPIC32Device::SerialExecuteMemoryWrite(uint32_t addr, uint32_t data)
 {
-	//for(int i=0; i<20; i++)
-	//	SerialExecuteInstruction(0x00000000);
+	//microMIPS? different insn encoding than I'm used to
+	SerialExecuteInstruction( (addr & 0xffff0000) | 0x41a4 );	//lui a0, addr_hi
+	SerialExecuteInstruction( (addr << 16) | 0x5084 );			//ori a0, a0, addr_lo
 
-	/*
-	LogDebug("Pushing write\n");
-	SerialExecuteInstruction(0x3c040000 | (0xff20) );	//lui a0, foo
-	SerialExecuteInstruction(0x34840000 | (0x1ac0) );	//ori a0, a0, addr_lo
-	SerialExecuteInstruction(0xac850000);				//sw a1, 0(a0)
-	SerialExecuteInstruction(0x00000000);
+	SerialExecuteInstruction( (data & 0xffff0000) | 0x41a5 );	//lui a1, data_hi
+	SerialExecuteInstruction( (data << 16) | 0x50a5 );			//ori a1, a1, data_lo
 
-	LogDebug("Expecting write\n");
-	EjtagControlRegister read_reg = WaitForEjtagMemoryOperation();
-	LogDebug(" Got a transaction (WE = %d)\n", read_reg.bits.proc_we);
+	SerialExecuteInstruction( 0x0000f8a4);						//sw a1, 0(a0)
 
-	uint32_t capture = 0;
-	uint32_t zero = 0;
-	SetIR(INST_ADDRESS);
-	ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
-	LogDebug("    Write address = %08x\n", capture);
-	*/
-
-	//Endianness seems weird here
-	SerialExecuteInstruction( (addr & 0xffff0000) | 0x41a5 );	//lui a0, addr_hi
-
-
+	//for pic32mx???
 	//SerialExecuteInstruction(0x3c040000 | (addr >> 16) );	//lui a0, addr_hi
 	//SerialExecuteInstruction(0x34840000 | (addr & 0xffff));	//ori a0, a0, addr_lo
 	//SerialExecuteInstruction(0x3c050000 | (data >> 16) );	//lui a1, data_hi
 	//SerialExecuteInstruction(0x34a50000 | (data & 0xffff));	//ori a1, a1, data_lo
 	//SerialExecuteInstruction(0xac850000);					//sw a1, 0(a0)
+}
+
+uint32_t MicrochipPIC32Device::SerialExecuteMemoryRead(uint32_t addr)
+{
+	//"verify memory without PE" has wrong instruction encoding in PIC32MM flash prog spec
+	//MIPS32 vs microMIPS?
+	SerialExecuteInstruction(0xff2041b3 );						//lui s3, 0xff20
+	SerialExecuteInstruction( (addr & 0xffff0000) | 0x41a8 );	//lui t0, addr_hi
+	SerialExecuteInstruction( (addr << 16) | 0x5108);			//ori t0, t0, addr_lo
+
+	SerialExecuteInstruction(0x0000fd28);						//lw t1, 0(t0)
+	SerialExecuteInstruction(0x0000f933);						//sw t1, 0(s3)
+	SerialExecuteInstruction(0x0c000c00);						//nop, nop
+
+	//Wait for the CPU to request something
+	uint32_t capture = 0;
+	uint32_t zero = 0;
+	while(true)
+	{
+		EjtagControlRegister read_reg = WaitForEjtagMemoryOperation();
+
+		//If it's a read, feed a NOP
+		if(!read_reg.bits.proc_we)
+		{
+			uint32_t nop = 0x0c000c00;
+
+			//Send the data
+			SetIR(INST_DATA);
+			ScanDR((uint8_t*)&nop, (uint8_t*)&capture, 32);
+			//LogDebug("    Read capture = %08x\n", capture);
+
+			//Send the control command to execute the instruction
+			EjtagControlRegister write_reg;
+			write_reg.word = 0;						//default to zero
+			write_reg.bits.proc_access	= 0;		//clear processor-access bit
+			write_reg.bits.probe_enable	= 1;		//enable debug probe
+			write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
+			SetIR(INST_CONTROL);
+			ScanDR((uint8_t*)&write_reg.word, (uint8_t*)&read_reg.word, 32);
+		}
+
+		else
+		{
+			SetIR(INST_ADDRESS);
+			ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
+
+			//Sanity check it
+			if(read_reg.bits.access_size != 2)
+				LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
+			if(!read_reg.bits.proc_we)
+			{
+				if(capture == 0xff200200)
+					LogWarning("Target CPU appears to have reset!\n");
+				else
+					LogWarning("    Request isn't write (read 0x%08x)\n", capture);
+			}
+
+			//Get the data
+			SetIR(INST_DATA);
+			ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
+
+			//Send the control command to complete the instruction
+			EjtagControlRegister write_reg;
+			write_reg.word = 0;						//default to zero
+			write_reg.bits.proc_access	= 0;		//clear processor-access bit
+			write_reg.bits.probe_enable	= 1;		//enable debug probe
+			write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
+			SetIR(INST_CONTROL);
+			ScanDR((uint8_t*)&write_reg.word, (uint8_t*)&read_reg.word, 32);
+
+			break;
+		}
+	}
+
+	return capture;
 }
 
 bool MicrochipPIC32Device::IsProgrammed()
@@ -529,16 +592,39 @@ bool MicrochipPIC32Device::IsProgrammed()
 	//Go into debug-boot mode
 	EnterSerialExecMode();
 
-	//TEMP
-	SerialExecuteMemoryWrite(0xa0000000, 0x00000000);
+	/*
+	//Try writing and reading back some RAM
+	SerialExecuteMemoryWrite(0xa0000000, 0xdeadbeef);
+	SerialExecuteMemoryWrite(0xa0000010, 0x41414141);
 
-	//Turn on LED0 on RA2(should not have to touch PPS)
+	uint32_t foo = SerialExecuteMemoryRead(0xa0000000);
+	LogDebug("0xa0000000 (should be deadbeef) = 0x%08x\n", foo);
+	foo = SerialExecuteMemoryRead(0xa0000010);
+	LogDebug("0xa0000010 (should be 41414141) = 0x%08x\n", foo);
+	*/
+
+	//Turn off secondary oscillator (requires unlock sequence)
+	//OSCCON = 0
+	SerialExecuteMemoryWrite(0xBF803B30, 0xaa996655);
+	SerialExecuteMemoryWrite(0xBF803B30, 0x556699aa);
+	SerialExecuteMemoryWrite(0xBF802000, 0x00000000);
+	SerialExecuteMemoryWrite(0xBF803B30, 0x00000000);
+
+	//Turn on LED on RA2-3-4 (should not have to touch PPS)
 	//ANSELA (0xBF80_2600) = 32'h0;
-	//TRISA (0xBF80_2610) = 32'h4;
-	//PORTA (0xBF80_2620) = 32'h4;
-	//SerialExecuteMemoryWrite(0xBF802600, 0x00000000);
-	//SerialExecuteMemoryWrite(0xBF802610, 0x00000004);
-	//SerialExecuteMemoryWrite(0xBF802620, 0x00000004);
+	//TRISA (0xBF80_2610) = 32'h03;
+	//PORTA (0xBF80_2620) = 32'h1c;
+	SerialExecuteMemoryWrite(0xBF802600, 0x00000000);
+	SerialExecuteMemoryWrite(0xBF802610, 0x00000003);
+	SerialExecuteMemoryWrite(0xBF802620, 0x0000001c);
+
+	for(int i=0; i<5; i++)
+	{
+		SerialExecuteMemoryWrite(0xBF802620, 0x0000001c);
+		usleep(500 * 1000);
+		SerialExecuteMemoryWrite(0xBF802620, 0x00000000);
+		usleep(500 * 1000);
+	}
 
 	throw JtagExceptionWrapper(
 		"Not implemented",
