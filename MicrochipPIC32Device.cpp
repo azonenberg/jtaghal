@@ -175,8 +175,54 @@ static const MicrochipPIC32DeviceInfo g_devinfo[] =
 		MicrochipPIC32Device::FAMILY_MX567, MicrochipPIC32Device::CPU_M4K, 128, 512, 12 },
 
 	//MM series
+	{ MicrochipPIC32Device::PIC32MM0016GPL020, "PIC32MM0016GPL020",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 4, 16, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0032GPL020, "PIC32MM0032GPL020",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 32, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0064GPL020, "PIC32MM0064GPL020",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 64, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0016GPL028, "PIC32MM0016GPL028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 4, 16, 5.75 },
 	{ MicrochipPIC32Device::PIC32MM0032GPL028, "PIC32MM0032GPL028",
-		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 32, 0 }
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 32, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0064GPL028, "PIC32MM0064GPL028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 64, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0016GPL036, "PIC32MM0016GPL036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 4, 16, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0032GPL036, "PIC32MM0032GPL036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 32, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0064GPL036, "PIC32MM0064GPL036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 8, 64, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0064GPM028, "PIC32MM0064GPM028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 64, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0128GPM028, "PIC32MM0128GPM028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 128, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0256GPM028, "PIC32MM0256GPM028",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 32, 256, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0064GPM036, "PIC32MM0064GPM036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 64, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0128GPM036, "PIC32MM0128GPM036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 128, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0256GPM036, "PIC32MM0256GPM036",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 32, 256, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0064GPM048, "PIC32MM0064GPM048",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 64, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0128GPM048, "PIC32MM0128GPM048",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 128, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0256GPM048, "PIC32MM0256GPM048",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 32, 256, 5.75 },
+
+	{ MicrochipPIC32Device::PIC32MM0064GPM064, "PIC32MM0064GPM064",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 64, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0128GPM064, "PIC32MM0128GPM064",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 16, 128, 5.75 },
+	{ MicrochipPIC32Device::PIC32MM0256GPM064, "PIC32MM0256GPM064",
+		MicrochipPIC32Device::FAMILY_MM, MicrochipPIC32Device::CPU_MAPTIV, 32, 256, 5.75 }
 };
 
 MicrochipPIC32Device::MicrochipPIC32Device(
@@ -230,7 +276,7 @@ JtagDevice* MicrochipPIC32Device::CreateDevice(
 std::string MicrochipPIC32Device::GetDescription()
 {
 	char srev[256];
-	snprintf(srev, sizeof(srev), "Microchip %s (%u KB SRAM, %u KB code flash, %u KB boot flash, stepping %u)",
+	snprintf(srev, sizeof(srev), "Microchip %s (%u KB SRAM, %u KB code flash, %.2f KB boot flash, stepping %u)",
 		m_devinfo->name,
 		m_devinfo->sram_size,
 		m_devinfo->program_flash_size,
@@ -363,17 +409,14 @@ void MicrochipPIC32Device::EnterSerialExecMode()
 
 	//Enable flash access
 	SendMchpCommand(MCHP_FLASH_ENABLE);
+
+	//Force a debug exception and execute a NOP
+	SerialExecuteInstruction(0x0, true);
 }
 
-/**
-	@brief Executes a single MIPS32 instruction in serial-exec mode
- */
-void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
+EjtagControlRegister MicrochipPIC32Device::WaitForEjtagMemoryOperation(bool first)
 {
-	//Select control register
-	EnterEjtagMode();
-
-	//Wait for CPU to request an instruction
+	//Wait for CPU to request a memory transaction
 	EjtagControlRegister write_reg;
 	EjtagControlRegister read_reg;
 	while(true)
@@ -384,7 +427,9 @@ void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
 		write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
 
 		//bit 12 = request debug interrupt exception
-		//(this seems critical and isn't documented)
+		//This seems critical when entering debug mode and isn't documented.
+		//Possible that MCHP_ASSERT_RST doesn't have quite the same effect as a MCLR reset,
+		//and thus we need to do this to force a debug exception?
 		if(first)
 		{
 			write_reg.bits.debug_irq = 1;
@@ -398,7 +443,24 @@ void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
 			break;
 	}
 
-	LogDebug("Got a JTAG memory request!\n");
+	if(read_reg.bits.access_size != 2)
+		LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
+
+	return read_reg;
+}
+
+/**
+	@brief Executes a single MIPS32 instruction in serial-exec mode
+ */
+void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
+{
+	//Select control register
+	EnterEjtagMode();
+
+	//Wait for the CPU to request an instruction
+	EjtagControlRegister read_reg = WaitForEjtagMemoryOperation(first);
+
+	//Sanity check it
 	if(read_reg.bits.access_size != 2)
 		LogWarning("    Request size isn't word (got %d)\n", read_reg.bits.access_size);
 	if(read_reg.bits.proc_we)
@@ -410,6 +472,54 @@ void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
 	SetIR(INST_ADDRESS);
 	ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
 	LogDebug("    Read address = %08x\n", capture);
+
+	//Send the data
+	SetIR(INST_DATA);
+	ScanDR((uint8_t*)&insn, (uint8_t*)&capture, 32);
+
+	//Send the control command to execute the instruction
+	EjtagControlRegister write_reg;
+	write_reg.word = 0;						//default to zero
+	write_reg.bits.proc_access	= 1;		//don't clear processor-access bit
+	write_reg.bits.probe_enable	= 1;		//enable debug probe
+	write_reg.bits.debug_vector_pos	= 1;	//debug exception traps to DMSEG (emulated memory)
+	write_reg.bits.proc_access = 0;
+	SetIR(INST_CONTROL);
+	ScanDR((uint8_t*)&write_reg.word, (uint8_t*)&read_reg.word, 32);
+}
+
+void MicrochipPIC32Device::SerialExecuteMemoryWrite(uint32_t addr, uint32_t data)
+{
+	//for(int i=0; i<20; i++)
+	//	SerialExecuteInstruction(0x00000000);
+
+	/*
+	LogDebug("Pushing write\n");
+	SerialExecuteInstruction(0x3c040000 | (0xff20) );	//lui a0, foo
+	SerialExecuteInstruction(0x34840000 | (0x1ac0) );	//ori a0, a0, addr_lo
+	SerialExecuteInstruction(0xac850000);				//sw a1, 0(a0)
+	SerialExecuteInstruction(0x00000000);
+
+	LogDebug("Expecting write\n");
+	EjtagControlRegister read_reg = WaitForEjtagMemoryOperation();
+	LogDebug(" Got a transaction (WE = %d)\n", read_reg.bits.proc_we);
+
+	uint32_t capture = 0;
+	uint32_t zero = 0;
+	SetIR(INST_ADDRESS);
+	ScanDR((uint8_t*)&zero, (uint8_t*)&capture, 32);
+	LogDebug("    Write address = %08x\n", capture);
+	*/
+
+	//Endianness seems weird here
+	SerialExecuteInstruction( (addr & 0xffff0000) | 0x41a5 );	//lui a0, addr_hi
+
+
+	//SerialExecuteInstruction(0x3c040000 | (addr >> 16) );	//lui a0, addr_hi
+	//SerialExecuteInstruction(0x34840000 | (addr & 0xffff));	//ori a0, a0, addr_lo
+	//SerialExecuteInstruction(0x3c050000 | (data >> 16) );	//lui a1, data_hi
+	//SerialExecuteInstruction(0x34a50000 | (data & 0xffff));	//ori a1, a1, data_lo
+	//SerialExecuteInstruction(0xac850000);					//sw a1, 0(a0)
 }
 
 bool MicrochipPIC32Device::IsProgrammed()
@@ -419,8 +529,16 @@ bool MicrochipPIC32Device::IsProgrammed()
 	//Go into debug-boot mode
 	EnterSerialExecMode();
 
-	//Send a couple of instructions to the CPU
-	SerialExecuteInstruction(0x0, true);
+	//TEMP
+	SerialExecuteMemoryWrite(0xa0000000, 0x00000000);
+
+	//Turn on LED0 on RA2(should not have to touch PPS)
+	//ANSELA (0xBF80_2600) = 32'h0;
+	//TRISA (0xBF80_2610) = 32'h4;
+	//PORTA (0xBF80_2620) = 32'h4;
+	//SerialExecuteMemoryWrite(0xBF802600, 0x00000000);
+	//SerialExecuteMemoryWrite(0xBF802610, 0x00000004);
+	//SerialExecuteMemoryWrite(0xBF802620, 0x00000004);
 
 	throw JtagExceptionWrapper(
 		"Not implemented",

@@ -144,7 +144,7 @@ struct MicrochipPIC32DeviceInfo
 	unsigned int program_flash_size;
 
 	///Boot flash size (kB)
-	unsigned int boot_flash_size;
+	float boot_flash_size;
 };
 
 /**
@@ -191,7 +191,7 @@ public:
 		CPU_MAPTIV
 	};
 
-	///JTAG device IDs (from BSDL files)
+	///JTAG device IDs (from BSDL files and/or flash programming spec)
 	enum deviceids
 	{
 		PIC32MX110F016B = 0x4a07,
@@ -246,7 +246,27 @@ public:
 		PIC32MX764F128L = 0x4417,
 		PIC32MX795F512L = 0x4307,
 
-		PIC32MM0032GPL028	= 0x6b0a
+		PIC32MM0016GPL020	= 0x6b04,
+		PIC32MM0032GPL020	= 0x6b0c,
+		PIC32MM0064GPL020	= 0x6b14,
+		PIC32MM0016GPL028	= 0x6b02,
+		PIC32MM0032GPL028	= 0x6b0a,
+		PIC32MM0064GPL028	= 0x6b12,
+		PIC32MM0016GPL036	= 0x6b06,
+		PIC32MM0032GPL036	= 0x6b0b,
+		PIC32MM0064GPL036	= 0x6b16,
+		PIC32MM0064GPM028	= 0x7708,
+		PIC32MM0128GPM028	= 0x7710,
+		PIC32MM0256GPM028	= 0x7718,
+		PIC32MM0064GPM036	= 0x770a,
+		PIC32MM0128GPM036	= 0x7712,
+		PIC32MM0256GPM036	= 0x771a,
+		PIC32MM0064GPM048	= 0x772c,
+		PIC32MM0128GPM048	= 0x7734,
+		PIC32MM0256GPM048	= 0x773c,
+		PIC32MM0064GPM064	= 0x770e,
+		PIC32MM0128GPM064	= 0x7716,
+		PIC32MM0256GPM064	= 0x771e
 	};
 
 	///5-bit-wide JTAG instructions (from BSDL file and datasheet)
@@ -353,6 +373,8 @@ protected:
 	void EnterEjtagMode();
 	void EnterSerialExecMode();
 	void SerialExecuteInstruction(uint32_t insn, bool first = false);
+	void SerialExecuteMemoryWrite(uint32_t addr, uint32_t data);
+	EjtagControlRegister WaitForEjtagMemoryOperation(bool first = false);
 
 	void SerialExecHelper();
 
