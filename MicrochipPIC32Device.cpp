@@ -454,6 +454,8 @@ EjtagControlRegister MicrochipPIC32Device::WaitForEjtagMemoryOperation(bool firs
  */
 void MicrochipPIC32Device::SerialExecuteInstruction(uint32_t insn, bool first)
 {
+	//TODO: use fastdata for this (this is slow but works)
+
 	//Select control register
 	EnterEjtagMode();
 
@@ -512,6 +514,8 @@ void MicrochipPIC32Device::SerialExecuteMemoryWrite(uint32_t addr, uint32_t data
 
 uint32_t MicrochipPIC32Device::SerialExecuteMemoryRead(uint32_t addr)
 {
+	//TODO: use fastdata for this (this is slow but works)
+
 	//"verify memory without PE" has wrong instruction encoding in PIC32MM flash prog spec
 	//MIPS32 vs microMIPS?
 	SerialExecuteInstruction(0xff2041b3 );						//lui s3, 0xff20
@@ -592,17 +596,18 @@ bool MicrochipPIC32Device::IsProgrammed()
 	//Go into debug-boot mode
 	EnterSerialExecMode();
 
+	//We don't have to read all memory!
+	//If the reset vector is blank, then the chip is "blank" as in it won't boot.
+	//This is different from a full blank-check-after-erase.
+	uint32_t vector = SerialExecuteMemoryRead(0xbfc00000);
+
+	//Blank? Device is blank
+	if(vector == 0xffffffff)
+		return false;
+
+	else
+		return true;
 	/*
-	//Try writing and reading back some RAM
-	SerialExecuteMemoryWrite(0xa0000000, 0xdeadbeef);
-	SerialExecuteMemoryWrite(0xa0000010, 0x41414141);
-
-	uint32_t foo = SerialExecuteMemoryRead(0xa0000000);
-	LogDebug("0xa0000000 (should be deadbeef) = 0x%08x\n", foo);
-	foo = SerialExecuteMemoryRead(0xa0000010);
-	LogDebug("0xa0000010 (should be 41414141) = 0x%08x\n", foo);
-	*/
-
 	//Turn off secondary oscillator (requires unlock sequence)
 	//OSCCON = 0
 	SerialExecuteMemoryWrite(0xBF803B30, 0xaa996655);
@@ -625,17 +630,70 @@ bool MicrochipPIC32Device::IsProgrammed()
 		SerialExecuteMemoryWrite(0xBF802620, 0x00000000);
 		usleep(500 * 1000);
 	}
-
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
+	*/
 }
 
 void MicrochipPIC32Device::Erase()
 {
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
+	LogIndenter li;
+	LogVerbose("Bulk erase...\n");
+
+	//Bulk erase
+	EnterMtapMode();
+	SendMchpCommand(MCHP_ERASE);
+
+	//Clear reset
+	SendMchpCommand(MCHP_DE_ASSERT_RST);
+
+	//Poll every 10 ms until status is clear
+	while(true)
+	{
+		auto stat = GetStatus();
+		if(!stat.bits.flash_busy && stat.bits.cfg_rdy)
+			break;
+		usleep(10 * 1000);
+	}
+
+	//Read back
+
+	ResetToIdle();
+	EnterSerialExecMode();
+
+	LogVerbose("Blank checking boot flash...\n");
+	uint32_t flash_base = 0xBFC00000;
+	uint32_t flash_end = flash_base + m_devinfo->boot_flash_size * 1024;
+	for(uint32_t ptr = flash_base; ptr < flash_end; ptr += 4)
+	{
+		if( (ptr & 0xfff) == 0)
+			LogDebug("    %08x / %08x\n", ptr, flash_end);
+
+		uint32_t flash_value = SerialExecuteMemoryRead(ptr);
+		if(flash_value != 0xffffffff)
+		{
+			LogDebug("Got non-blank value 0x%08x at address 0x%08x\n", flash_value, ptr);
+			return;
+		}
+	}
+
+
+	//Read back all memory
+	LogVerbose("Blank checking program flash...\n");
+	flash_base = 0xBD000000;
+	flash_end = flash_base + m_devinfo->program_flash_size * 1024;
+	for(uint32_t ptr = flash_base; ptr < flash_end; ptr += 4)
+	{
+		if( (ptr & 0xfff) == 0)
+			LogDebug("    %08x / %08x\n", ptr, flash_end);
+
+		uint32_t flash_value = SerialExecuteMemoryRead(ptr);
+		if(flash_value != 0xffffffff)
+		{
+			LogDebug("Got non-blank value 0x%08x at address 0x%08x\n", flash_value, ptr);
+			return;
+		}
+	}
+
+	LogDebug("Device is blank\n");
 }
 
 void MicrochipPIC32Device::Program(FirmwareImage* /*image*/)
