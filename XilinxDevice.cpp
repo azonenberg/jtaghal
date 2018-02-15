@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2017 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -66,7 +66,7 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 	//Save the original ID code to give to the derived class
 	unsigned int idcode_raw = idcode;
 
-	//Rightmost bit is always a zero, ignore it
+	//Rightmost bit is always a one, ignore it
 	idcode >>= 1;
 
 	//Sanity check manufacturer ID
@@ -105,6 +105,10 @@ JtagDevice* XilinxDevice::CreateDevice(unsigned int idcode, JtagInterface* iface
 
 	case XILINX_FAMILY_7SERIES:
 		return Xilinx7SeriesDevice::CreateDevice(arraysize, rev, idcode_raw, iface, pos);
+
+	case XILINX_FAMILY_ULTRASCALE:
+	case XILINX_FAMILY_USPLUS:
+		return XilinxUltrascaleDevice::CreateDevice(arraysize, family, rev, idcode_raw, iface, pos);
 
 	default:
 		throw JtagExceptionWrapper(
