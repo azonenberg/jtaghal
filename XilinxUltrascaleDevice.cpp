@@ -189,62 +189,88 @@ int XilinxUltrascaleDevice::GetSerialNumberLengthBits()
 
 void XilinxUltrascaleDevice::GetSerialNumber(unsigned char* data)
 {
-	/*
 	InternalErase();
 
 	//Enter ISC mode (wipes configuration)
 	ResetToIdle();
-	SetIR(INST_ISC_ENABLE);
+
+	SetIRForAllSLRs(INST_ISC_ENABLE);
 
 	//Read the DNA value
-	SetIR(INST_XSC_DNA);
-	unsigned char zeros[8] = {0x00};
-	ScanDR(zeros, data, 57);
+	SetIRForMasterSLR(INST_XSC_DNA);
+	unsigned char zeros[12] = {0x00};
+	ScanDR(zeros, data, 96);
 
 	//Done
-	SetIR(INST_ISC_DISABLE);
-	*/
-	memset(data, 0, GetSerialNumberLength());
-	LogWarning("XilinxUltrascaleDevice::GetSerialNumber not implemented\n");
+	SetIRForAllSLRs(INST_ISC_DISABLE);
 }
 
 bool XilinxUltrascaleDevice::IsProgrammed()
 {
-	/*
 	XilinxUltrascaleDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_REG_STAT);
 	return statreg.bits.done;
-	*/
-	LogWarning("XilinxUltrascaleDevice::IsProgrammed not implemented\n");
-	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Configuration
 
+void XilinxUltrascaleDevice::SetIRForMasterSLR(unsigned char irval, bool defer)
+{
+	//Build the IR
+	uint64_t final_op = 0;
+	for(unsigned int i=0; i<m_slrCount; i++)
+	{
+		//Default to skipping this one
+		uint32_t op = INST_SLR_BYPASS;
+
+		if(i == m_masterSLR)
+			op = irval;
+
+		final_op = (final_op << 6) | op;
+	}
+
+	//Send it (this assumes a little endian host)
+	if(defer)
+		JtagDevice::SetIRDeferred((const unsigned char*)&final_op, m_irlength);
+	else
+		JtagDevice::SetIR((const unsigned char*)&final_op, m_irlength);
+}
+
+void XilinxUltrascaleDevice::SetIRForAllSLRs(unsigned char irval, bool defer)
+{
+	//Build the IR
+	uint64_t final_op = 0;
+	for(unsigned int i=0; i<m_slrCount; i++)
+	{
+		//Default to skipping this one
+		uint32_t op = INST_SLR_BYPASS;
+
+		if(i == m_masterSLR)
+			op = irval;
+
+		final_op = (final_op << 6) | op;
+	}
+
+	//Send it (this assumes a little endian host)
+	if(defer)
+		JtagDevice::SetIRDeferred((const unsigned char*)&final_op, m_irlength);
+	else
+		JtagDevice::SetIR((const unsigned char*)&final_op, m_irlength);
+}
+
 void XilinxUltrascaleDevice::Erase()
 {
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::Erase not implemented",
-		"");
-
-	/*
 	ResetToIdle();
 	InternalErase();
-	SetIR(INST_BYPASS);
-	*/
+	SetIRForAllSLRs(INST_BYPASS);
 }
 
 void XilinxUltrascaleDevice::InternalErase()
 {
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::InternalErase not implemented",
-		"");
-
-	/*
 	//Load the JPROGRAM instruction to clear configuration memory
 	LogDebug("Clearing configuration memory...\n");
-	SetIR(INST_JPROGRAM);
+	SetIRForAllSLRs(INST_JPROGRAM);
 	SendDummyClocks(32);
 
 	//Poll status register until housecleaning is done
@@ -252,7 +278,7 @@ void XilinxUltrascaleDevice::InternalErase()
 	int i;
 	for(i=0; i<10; i++)
 	{
-		statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+		statreg.word = ReadWordConfigRegister(CONFIG_REG_STAT);
 		if(statreg.bits.init_b)
 			break;
 
@@ -265,7 +291,6 @@ void XilinxUltrascaleDevice::InternalErase()
 			"INIT_B not high after 5 seconds, possible board fault",
 			"");
 	}
-	*/
 }
 
 
@@ -371,18 +396,14 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 
 void XilinxUltrascaleDevice::PrintStatusRegister()
 {
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::PrintStatusRegister not implemented",
-		"");
-
-	/*
 	XilinxUltrascaleDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_REG_STAT);
 	LogIndenter li;
+
 	LogVerbose(
 		"Status register is 0x%04x\n"
 		"  CRC error         : %u\n"
-		"  Secured           : %u\n"
+		"  Decrytor enabled  : %u\n"
 		"  MMCM lock         : %u\n"
 		"  DCI match         : %u\n"
 		"  EOS               : %u\n"
@@ -395,15 +416,15 @@ void XilinxUltrascaleDevice::PrintStatusRegister()
 		"  Done released     : %u\n"
 		"  Done pin          : %u\n"
 		"  IDCODE error      : %u\n"
-		"  Decrypt error     : %u\n"
-		"  XADC overheat     : %u\n"
+		"  Security error    : %u\n"
+		"  SYSMON overheat   : %u\n"
 		"  Startup state     : %u\n"
 		"  Reserved          : %u\n"
 		"  Bus width         : %u\n"
 		"  Reserved          : %u\n",
 		statreg.word,
 		statreg.bits.crc_err,
-		statreg.bits.part_secured,
+		statreg.bits.decryptor_enabled,
 		statreg.bits.mmcm_lock,
 		statreg.bits.dci_match,
 		statreg.bits.eos,
@@ -416,14 +437,13 @@ void XilinxUltrascaleDevice::PrintStatusRegister()
 		statreg.bits.release_done,
 		statreg.bits.done,
 		statreg.bits.id_error,
-		statreg.bits.dec_error,
-		statreg.bits.xadc_over_temp,
+		statreg.bits.security_error,
+		statreg.bits.sysmon_over_temp,
 		statreg.bits.startup_state,
 		statreg.bits.reserved_1,
 		statreg.bits.bus_width,
 		statreg.bits.reserved_2
 		);
-	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,9 +452,9 @@ void XilinxUltrascaleDevice::PrintStatusRegister()
 /**
 	@brief Reads a single 32-bit word from a config register
 
-	Reference: UG470 page 87
+	Reference: UG570 page 164
 
-	Note that 7-series devices expect data clocked in MSB first but the JTAG API clocks data LSB first.
+	Note that UltraScale devices expect data clocked in MSB first but the JTAG API clocks data LSB first.
 	Some swapping is required as a result.
 
 	Clock data into CFG_IN register
@@ -449,18 +469,18 @@ void XilinxUltrascaleDevice::PrintStatusRegister()
 
 	@param reg The configuration register to read
  */
-/*
 uint32_t XilinxUltrascaleDevice::ReadWordConfigRegister(unsigned int reg)
 {
 	//Send the read request
-	SetIR(INST_CFG_IN);
-	XilinxUltrascaleDeviceConfigurationFrame frames[] =
+	//TODO: Should this be directed to the master SLR only, or all SLRs?
+	SetIRForMasterSLR(INST_CFG_IN);
+		XilinxUltrascaleDeviceConfigurationFrame frames[] =
 	{
-		{ word: 0xaa995566 },												//Sync word
-		{ bits: {0, 0, 0,   X7_CONFIG_OP_NOP,  X7_CONFIG_FRAME_TYPE_1} },	//Dummy word
-		{ bits: {1, 0, reg, X7_CONFIG_OP_READ, X7_CONFIG_FRAME_TYPE_1} },	//Read the register
-		{ bits: {0, 0, 0,   X7_CONFIG_OP_NOP,  X7_CONFIG_FRAME_TYPE_1} },	//Two dummy words required
-		{ bits: {0, 0, 0,   X7_CONFIG_OP_NOP,  X7_CONFIG_FRAME_TYPE_1} }
+		{ word: 0xaa995566 },										//Sync word
+		{ bits: {0, 0, 0,   CONFIG_OP_NOP,  CONFIG_FRAME_TYPE_1} },	//Dummy word
+		{ bits: {1, 0, reg, CONFIG_OP_READ, CONFIG_FRAME_TYPE_1} },	//Read the register
+		{ bits: {0, 0, 0,   CONFIG_OP_NOP,  CONFIG_FRAME_TYPE_1} },	//Two dummy words required
+		{ bits: {0, 0, 0,   CONFIG_OP_NOP,  CONFIG_FRAME_TYPE_1} }
 	};
 
 	unsigned char* packet = (unsigned char*) frames;
@@ -468,73 +488,17 @@ uint32_t XilinxUltrascaleDevice::ReadWordConfigRegister(unsigned int reg)
 	ScanDR(packet, NULL, sizeof(frames) * 8);
 
 	//Read the data
-	SetIR(INST_CFG_OUT);
+	SetIRForMasterSLR(INST_CFG_OUT);
+
 	unsigned char unused[4] = {0};
 	uint32_t reg_out = {0};
 	ScanDR(unused, (unsigned char*)&reg_out, 32);
 	FlipBitAndEndian32Array((unsigned char*)&reg_out, 4);
 
-	SetIR(INST_BYPASS);
-
+	SetIRForAllSLRs(INST_BYPASS);
 	return reg_out;
 }
-*/
-/**
-	@brief Reads several 16-bit words from a config register.
 
-	The current implementation uses type 1 packets and is thus limited to reading less than 32 words.
-
-	@throw JtagException if the read fails
-
-	@param reg		The configuration register to read
-	@param dout 	Buffer to read into
-	@param count	Number of 16-bit words to read
- */
-/*
-void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* dout, unsigned int count)
-{
-	if(count < 32)
-	{
-		//Send the read request
-		SetIR(INST_CFG_IN);
-		XilinxSpartan6DeviceConfigurationFrame frames[] =
-		{
-			{ bits: {0,     0,   S6_CONFIG_OP_NOP,  S6_CONFIG_FRAME_TYPE_1} },	//Dummy word
-			{ word: 0xaa99 },													//Sync word
-			{ word: 0x5566 },
-			{ bits: {count, reg, S6_CONFIG_OP_READ, S6_CONFIG_FRAME_TYPE_1} },	//Read the register
-			{ bits: {0,     0,   S6_CONFIG_OP_NOP,  S6_CONFIG_FRAME_TYPE_1} },	//Two dummy words required
-			{ bits: {0,     0,   S6_CONFIG_OP_NOP,  S6_CONFIG_FRAME_TYPE_1} }
-		};
-		unsigned char* packet = (unsigned char*) frames;
-		FlipBitAndEndianArray(packet, sizeof(frames));			//MSB needs to get sent first
-		ScanDR(packet, NULL, sizeof(frames) * 8);								//Table 6-5 of UG380 v2.4 says we need 160 clocks
-																				//but it seems we only need 80. See WebCase 948541
-
-		//Read the data
-		SetIR(INST_CFG_OUT);
-		unsigned char unused[32];
-		ScanDR(unused, (unsigned char*)dout, count*16);
-		FlipBitAndEndianArray((unsigned char*)dout, count*2);
-	}
-
-	else
-	{
-		//TODO: use type 2 read
-		throw JtagExceptionWrapper(
-			"ReadWordsConfigRegister() not implemented for count>32",
-			"");
-	}
-}
-*/
-//void XilinxSpartan6Device::WriteWordConfigRegister(unsigned int /*reg*/, uint16_t /*value*/)
-/*
-{
-	throw JtagExceptionWrapper(
-		"WriteWordConfigRegister() not implemented",
-		"");
-}
-*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream parsing
 

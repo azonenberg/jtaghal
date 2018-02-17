@@ -37,7 +37,9 @@
 #define XilinxUltrascaleDevice_h
 
 /**
-	@brief 7-series configuration frame (see UG470 page 87)
+	@brief UltraScale configuration frame (see UG570 page 158)
+
+	Same as 7 series
 
 	\ingroup libjtaghal
  */
@@ -60,16 +62,16 @@ union XilinxUltrascaleDeviceConfigurationFrame
 			@brief Opcode
 
 			Must be one of the following:
-			\li	XilinxUltrascaleDevice::X7_CONFIG_OP_NOP
-			\li XilinxUltrascaleDevice::X7_CONFIG_OP_READ
-			\li XilinxUltrascaleDevice::X7_CONFIG_OP_WRITE
+			\li	XilinxUltrascaleDevice::CONFIG_OP_NOP
+			\li XilinxUltrascaleDevice::CONFIG_OP_READ
+			\li XilinxUltrascaleDevice::CONFIG_OP_WRITE
 		 */
 		unsigned int op:2;
 
 		/**
 			@brief Frame type
 
-			Must be XilinxUltrascaleDevice::X7_CONFIG_FRAME_TYPE_1
+			Must be XilinxUltrascaleDevice::CONFIG_FRAME_TYPE_1
 		 */
 		unsigned int type:3;
 	} __attribute__ ((packed)) bits;
@@ -91,7 +93,7 @@ union XilinxUltrascaleDeviceConfigurationFrame
 		/**
 			@brief Frame type
 
-			Must be XilinxUltrascaleDevice::X7_CONFIG_FRAME_TYPE_2
+			Must be XilinxUltrascaleDevice::CONFIG_FRAME_TYPE_2
 		 */
 		unsigned int type:3;
 	} __attribute__ ((packed)) bits_type2;
@@ -101,23 +103,23 @@ union XilinxUltrascaleDeviceConfigurationFrame
 } __attribute__ ((packed));
 
 /**
-	@brief 7-series status register (see UG470 table 5-28)
+	@brief UltraScale status register (see UG570 table 9-25)
+
+	Very similar to the 7-series status register but with a few fields renamed.
 
 	\ingroup libjtaghal
  */
-
 union XilinxUltrascaleDeviceStatusRegister
 {
 	struct
 	{
-		/*
 		///Indicates that the device failed to configure due to a CRC error
 		unsigned int crc_err:1;
 
-		///Indicates that the device is in secure mode (encrypted bitstream)
-		unsigned int part_secured:1;
+		///Indicates that the crypto subsystem is active
+		unsigned int decryptor_enabled:1;
 
-		///Indicates MMCMs are locked
+		///Indicates MMCMs and PLLs are locked
 		unsigned int mmcm_lock:1;
 
 		///Indicates DCI is matched
@@ -153,11 +155,11 @@ union XilinxUltrascaleDeviceStatusRegister
 		///Indicates an ID code error occurred (write with wrong bitstream)
 		unsigned int id_error:1;
 
-		///Decryption error
-		unsigned int dec_error:1;
+		///Security / crypto error
+		unsigned int security_error:1;
 
 		///Indicates board is too hot
-		unsigned int xadc_over_temp:1;
+		unsigned int sysmon_over_temp:1;
 
 		///Status of startup state machine
 		unsigned int startup_state:3;
@@ -167,7 +169,7 @@ union XilinxUltrascaleDeviceStatusRegister
 
 		///Config bus width (see table 5-26)
 		unsigned int bus_width:2;
-		*/
+
 		///Reserved
 		unsigned int reserved_2:5;
 
@@ -212,10 +214,15 @@ public:
 		VUPLUS_9		= 0x131,
 	};
 
-	/*
-	///6-bit-wide JTAG instructions (see BSDL file). Mostly, but not entirely, same as Spartan-6.
+	///6-bit-wide JTAG instructions (see BSDL file). Seems to be same as 7 series
+	//except for SLR_BYPASS (my name, there's no official name in the docs that I can find)
+	//(TODO: is this the same as for SLR-based 7 series?)
 	enum instructions
 	{
+		///Turn off the JTAG subsystem for a SLR we're not talking to
+		INST_SLR_BYPASS			= 0x24,
+
+		/*
 		///User-defined instruction 1
 		INST_USER1				= 0x02,
 
@@ -229,28 +236,29 @@ public:
 		///User-defined instruction 4
 		///Not same as Spartan-6
 		INST_USER4				= 0x23,
-
+		*/
 		///Read configuration register
 		INST_CFG_OUT			= 0x04,
 
 		///Write configuration register
 		INST_CFG_IN				= 0x05,
 
+		/*
 		///Read user ID code
 		INST_USERCODE			= 0x08,
 
 		///Read ID code
 		INST_IDCODE				= 0x09,
-
+		*/
 		///Enters programming mode (erases FPGA configuration)
 		INST_JPROGRAM			= 0x0B,
-
+		/*
 		///Runs the FPGA startup sequence (must supply dummy clocks after)
 		INST_JSTART				= 0x0C,
 
 		///Runs the FPGA shutdown sequence (must supply dummy clocks after)
 		INST_JSHUTDOWN			= 0x0D,
-
+		*/
 		///Enters In-System Configuration mode (must load INST_JPROGRAM before)
 		INST_ISC_ENABLE			= 0x10,
 
@@ -258,17 +266,16 @@ public:
 		INST_ISC_DISABLE		= 0x16,
 
 		///Read device DNA (must load INST_ISC_ENABLE before and INST_ISC_DISABLE after)
-		///Not same as Spartan-6
+		///Same as 7-series but not same as Spartan-6
 		INST_XSC_DNA			= 0x17,
-
+		/*
 		///Access to the ADC
 		///Not present in Spartan-6
 		INST_XADC_DRP			= 0x37,
-
+		*/
 		///Standard JTAG bypass
 		INST_BYPASS				= 0x3F
 	};
-	*/
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
@@ -304,14 +311,12 @@ public:
 	virtual void Program(FirmwareImage* image);
 
 	virtual void Reboot();
-	/*
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal configuration helpers
 protected:
 	uint32_t ReadWordConfigRegister(unsigned int reg);
-	void ReadWordsConfigRegister(unsigned int reg, uint32_t* dout, unsigned int count);
-	void WriteWordConfigRegister(unsigned int reg, uint32_t value);
-	*/
+
 	virtual XilinxFPGABitstream* ParseBitstreamInternals(
 		const unsigned char* data,
 		size_t len,
@@ -323,34 +328,30 @@ protected:
 protected:
 
 	/**
-		@brief 7-series configuration opcodes (see UG470 page 87). Same as for Spartan-6.
+		@brief UltraScale configuration opcodes (see UG570 page 159). Same as for Spartan-6 and 7 series
 	 */
-	/*
-	enum x7_config_opcodes
+	enum config_opcodes
 	{
-		X7_CONFIG_OP_NOP	= 0,
-		X7_CONFIG_OP_READ	= 1,
-		X7_CONFIG_OP_WRITE	= 2
+		CONFIG_OP_NOP	= 0,
+		CONFIG_OP_READ	= 1,
+		CONFIG_OP_WRITE	= 2
 	};
-	*/
 
 	/**
-		@brief 7-series configuration frame types (see UG470 page 87). Same as for Spartan-6.
+		@brief UltraScale configuration frame types (see 5G470 page 158). Same as for Spartan-6 and 7 series
 	 */
-	/*
-	enum x7_config_frame_types
+	enum config_frame_types
 	{
-		X7_CONFIG_FRAME_TYPE_1 = 1,
-		X7_CONFIG_FRAME_TYPE_2 = 2
+		CONFIG_FRAME_TYPE_1 = 1,
+		CONFIG_FRAME_TYPE_2 = 2
 	};
-	*/
 
 	/**
-		@brief 7-series configuration registers (see UG470 page 104). Not same as Spartan-6.
+		@brief UltraScale configuration registers (see UG670 page 159). Seems to be same as 7 series.
 	 */
-	/*
-	enum x7_config_regs
+	enum ultrascale_config_regs
 	{
+		/*
 		X7_CONFIG_REG_CRC		= 0x00,
 		X7_CONFIG_REG_FAR		= 0x01,
 		X7_CONFIG_REG_FDRI		= 0x02,
@@ -358,7 +359,9 @@ protected:
 		X7_CONFIG_REG_CMD		= 0x04,
 		X7_CONFIG_REG_CTL0		= 0x05,
 		X7_CONFIG_REG_MASK		= 0x06,
-		X7_CONFIG_REG_STAT		= 0x07,
+		*/
+		CONFIG_REG_STAT			= 0x07,
+		/*
 		X7_CONFIG_REG_LOUT		= 0x08,
 		X7_CONFIG_REG_COR0		= 0x09,
 		X7_CONFIG_REG_MFWR		= 0x0A,
@@ -381,8 +384,8 @@ protected:
 		X7_CONFIG_REG_BSPI		= 0x1F,
 
 		X7_CONFIG_REG_MAX		//max config reg value
+		*/
 	};
-	*/
 
 	/**
 		@brief 7-series CMD register values (see UG470 page 89-90)
@@ -416,13 +419,9 @@ protected:
 	// Helpers for chain manipulation
 
 protected:
-	/*
-	void SetIR(unsigned char irval)
-	{ JtagDevice::SetIR(&irval, m_irlength); }
 
-	void SetIRDeferred(unsigned char irval)
-	{ JtagDevice::SetIRDeferred(&irval, m_irlength); }
-	*/
+	void SetIRForMasterSLR(unsigned char irval, bool defer = false);
+	void SetIRForAllSLRs(unsigned char irval, bool defer = false);
 
 protected:
 
