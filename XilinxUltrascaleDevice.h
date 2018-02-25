@@ -252,13 +252,13 @@ public:
 		*/
 		///Enters programming mode (erases FPGA configuration)
 		INST_JPROGRAM			= 0x0B,
-		/*
+
 		///Runs the FPGA startup sequence (must supply dummy clocks after)
 		INST_JSTART				= 0x0C,
 
 		///Runs the FPGA shutdown sequence (must supply dummy clocks after)
-		INST_JSHUTDOWN			= 0x0D,
-		*/
+		//INST_JSHUTDOWN			= 0x0D,
+
 		///Enters In-System Configuration mode (must load INST_JPROGRAM before)
 		INST_ISC_ENABLE			= 0x10,
 
@@ -268,11 +268,11 @@ public:
 		///Read device DNA (must load INST_ISC_ENABLE before and INST_ISC_DISABLE after)
 		///Same as 7-series but not same as Spartan-6
 		INST_XSC_DNA			= 0x17,
-		/*
+
 		///Access to the ADC
 		///Not present in Spartan-6
-		INST_XADC_DRP			= 0x37,
-		*/
+		//INST_XADC_DRP			= 0x37,
+
 		///Standard JTAG bypass
 		INST_BYPASS				= 0x3F
 	};
@@ -338,7 +338,7 @@ protected:
 	};
 
 	/**
-		@brief UltraScale configuration frame types (see 5G470 page 158). Same as for Spartan-6 and 7 series
+		@brief UltraScale configuration frame types (see UG570 page 158). Same as for Spartan-6 and 7 series
 	 */
 	enum config_frame_types
 	{
@@ -347,73 +347,71 @@ protected:
 	};
 
 	/**
-		@brief UltraScale configuration registers (see UG670 page 159). Seems to be same as 7 series.
+		@brief UltraScale configuration registers (see UG570 page 159). Seems to be same as 7 series.
 	 */
 	enum ultrascale_config_regs
 	{
-		/*
-		X7_CONFIG_REG_CRC		= 0x00,
-		X7_CONFIG_REG_FAR		= 0x01,
-		X7_CONFIG_REG_FDRI		= 0x02,
-		X7_CONFIG_REG_FDRO		= 0x03,
-		X7_CONFIG_REG_CMD		= 0x04,
-		X7_CONFIG_REG_CTL0		= 0x05,
-		X7_CONFIG_REG_MASK		= 0x06,
-		*/
-		CONFIG_REG_STAT			= 0x07,
-		/*
-		X7_CONFIG_REG_LOUT		= 0x08,
-		X7_CONFIG_REG_COR0		= 0x09,
-		X7_CONFIG_REG_MFWR		= 0x0A,
-		X7_CONFIG_REG_CBC		= 0x0B,
-		X7_CONFIG_REG_IDCODE	= 0x0C,
-		X7_CONFIG_REG_AXSS		= 0x0D,
-		X7_CONFIG_REG_COR1		= 0x0E,
+		CONFIG_REG_CRC		= 0x00,
+		CONFIG_REG_FAR		= 0x01,
+		CONFIG_REG_FDRI		= 0x02,
+		CONFIG_REG_FDRO		= 0x03,
+		CONFIG_REG_CMD		= 0x04,
+		CONFIG_REG_CTL0		= 0x05,
+		CONFIG_REG_MASK		= 0x06,
+		CONFIG_REG_STAT		= 0x07,
+		CONFIG_REG_LOUT		= 0x08,
+		CONFIG_REG_COR0		= 0x09,
+		CONFIG_REG_MFWR		= 0x0A,
+		CONFIG_REG_CBC		= 0x0B,
+		CONFIG_REG_IDCODE	= 0x0C,
+		CONFIG_REG_AXSS		= 0x0D,
+		CONFIG_REG_COR1		= 0x0E,
 		//0x0F reserved or usused
-		X7_CONFIG_REG_WBSTAR	= 0x10,
-		X7_CONFIG_REG_TIMER		= 0x11,
+		CONFIG_REG_WBSTAR	= 0x10,
+		CONFIG_REG_TIMER		= 0x11,
 		//0x12 reserved or unused
-		//0x13 reserved or unused
+		//0x13 reserved. Vivado seems to write 0x00000000 to it. Wonder what it does?
 		//0x14 reserved or unused
 		//0x15 reserved or unused
-		X7_CONFIG_REG_BOOTSTS	= 0x16,
+		CONFIG_REG_BOOTSTS	= 0x16,
 		//0x17 reserved or unused
-		X7_CONFIG_REG_CTL1		= 0x18,
+		CONFIG_REG_CTL1		= 0x18,
 		//0x19 and up reserved or unused
 
-		X7_CONFIG_REG_BSPI		= 0x1F,
+		CONFIG_REG_BSPI		= 0x1F,
 
-		X7_CONFIG_REG_MAX		//max config reg value
-		*/
+		CONFIG_REG_MAX		//max config reg value
 	};
 
 	/**
-		@brief 7-series CMD register values (see UG470 page 89-90)
+		@brief UltraScale CMD register values (see UG570 page table 9-22).
+
+		Seems to be  mostly same as 7 series but a few things changed (commented)
 	 */
-	/*
-	enum x7_cmd_values
+	enum cmd_values
 	{
-		X7_CMD_NULL			= 0x00,
-		X7_CMD_WCFG			= 0x01,
-		X7_CMD_MFW			= 0x02,
-		X7_CMD_LFRM			= 0x03,
-		X7_CMD_RCFG			= 0x04,
-		X7_CMD_START		= 0x05,
-		X7_CMD_RCAP			= 0x06,
-		X7_CMD_RCRC			= 0x07,
-		X7_CMD_AGHIGH		= 0x08,
-		X7_CMD_SWITCH		= 0x09,
-		X7_CMD_GRESTORE		= 0x0a,
-		X7_CMD_SHUTDOWN		= 0x0b,
-		X7_CMD_GCAPTURE		= 0x0c,
-		X7_CMD_DESYNC		= 0x0d,
+		CMD_NULL		= 0x00,
+		CMD_WCFG		= 0x01,
+		CMD_MFW			= 0x02,
+		CMD_LFRM		= 0x03,	//also DGHIGH
+		CMD_RCFG		= 0x04,
+		CMD_START		= 0x05,
+		//0x06 is reserved, was CMD_RCAP in 7 series
+		CMD_RCRC		= 0x07,
+		CMD_AGHIGH		= 0x08,
+		CMD_SWITCH		= 0x09,
+		CMD_GRESTORE	= 0x0a,
+		CMD_SHUTDOWN	= 0x0b,
+		//0x0c is reserved, was CMD_GCAPTURE in 7 series
+		CMD_DESYNC		= 0x0d,
 		//0x0e is reserved
-		X7_CMD_IPROG		= 0x0f,
-		X7_CMD_CRCC			= 0x10,
-		X7_CMD_LTIMER		= 0x11,
-		X7_CMD_MAX
+		CMD_IPROG		= 0x0f,
+		CMD_CRCC		= 0x10,
+		CMD_LTIMER		= 0x11,
+		CMD_BSPI_READ	= 0x12,	//new in ultrascale, restart bitstream read from flash)
+		CMD_FALL_EDGE	= 0x13,	//new in ultrascale, switch to capturing bitstream data on negedge CCLK
+		CMD_MAX
 	};
-	*/
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation

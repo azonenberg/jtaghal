@@ -89,6 +89,8 @@ XilinxUltrascaleDevice::XilinxUltrascaleDevice(
 
 	//Each SLR has its own instruction register but they're concatenated
 	m_irlength = 6 * m_slrCount;
+
+	PrintStatusRegister();
 }
 
 /**
@@ -293,7 +295,6 @@ void XilinxUltrascaleDevice::InternalErase()
 	}
 }
 
-
 FirmwareImage* XilinxUltrascaleDevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
 	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
@@ -312,11 +313,6 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 			"");
 	}
 
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::Program not implemented",
-		"");
-
-	/*
 	//Verify the ID code matches the device we're plugged into
 	//Mask out the stepping number since this is irrelevant
 	if((0x0fffffff & bitstream->idcode) != (0x0fffffff & m_idcode) )
@@ -360,12 +356,44 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 
 	//Send the bitstream to the FPGA
 	LogVerbose("Loading new bitstream...\n");
-	SetIR(INST_CFG_IN);
-	ScanDR(flipped_bitstream, NULL, xbit->raw_bitstream_len * 8);
+	SetIRForMasterSLR(INST_CFG_IN);
+	//ScanDR(flipped_bitstream, NULL, xbit->raw_bitstream_len * 8);
+
+	//Need to break up the scan op since it's so big!!
+	if(m_iface->GetDeviceCount() > 1)
+	{
+		throw JtagExceptionWrapper(
+			"Bypassing extra devices not yet supported!",
+			"");
+	}
+	m_iface->EnterShiftDR();
+	size_t bytes_sent = 0;
+	size_t bytes_to_send = xbit->raw_bitstream_len;
+	while(bytes_to_send != 0)
+	{
+		size_t block_bytes = bytes_to_send;
+		const size_t one_megabyte = 1024 * 1024;
+		if(block_bytes > one_megabyte)
+			block_bytes = one_megabyte;
+
+		//Need to toggle TMS at the end of the last block
+		bool last_block = (block_bytes == bytes_to_send);
+
+		m_iface->ShiftData(last_block, flipped_bitstream + bytes_sent, NULL, block_bytes * 8);
+
+		LogDebug("Programming... 0x%08zx bytes sent, 0x%08zx bytes left\n",
+			bytes_sent, bytes_to_send);
+
+		//Done, update counts
+		bytes_sent += block_bytes;
+		bytes_to_send -= block_bytes;
+	}
+	m_iface->LeaveExit1DR();
+	m_iface->Commit();
 
 	//Start up the FPGA
-	SetIR(INST_JSTART);
-	SendDummyClocks(64);
+	SetIRForAllSLRs(INST_JSTART);
+	SendDummyClocks(2000);			//per UG570 table 6-5 line 25
 
 	//Clean up
 	delete[] flipped_bitstream;
@@ -373,7 +401,7 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 
 	//Get the status register and verify that configuration was successful
 	XilinxUltrascaleDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_REG_STAT);
 	if(statreg.bits.done != 1 || statreg.bits.gwe != 1)
 	{
 		if(statreg.bits.crc_err)
@@ -390,7 +418,7 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 				"");
 		}
 	}
-	*/
+
 	ResetToIdle();
 }
 
@@ -403,7 +431,7 @@ void XilinxUltrascaleDevice::PrintStatusRegister()
 	LogVerbose(
 		"Status register is 0x%04x\n"
 		"  CRC error         : %u\n"
-		"  Decrytor enabled  : %u\n"
+		"  Decryptor enabled : %u\n"
 		"  MMCM lock         : %u\n"
 		"  DCI match         : %u\n"
 		"  EOS               : %u\n"
@@ -528,14 +556,8 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 	//Skip the sync word
 	fpos += sizeof(syncword);
 
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::ParseBitstreamInternals not implemented",
-		"");
-
-	/*
-
 	//String names for config regs
-	static const char* config_register_names[X7_CONFIG_REG_MAX]=
+	static const char* config_register_names[CONFIG_REG_MAX]=
 	{
 		"CRC",
 		"FAR",
@@ -586,18 +608,20 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 		"LFRM",
 		"RCFG",
 		"START",
-		"RCAP",
+		"RESERVED_06_WAS_RCAP",
 		"RCRC",
 		"AGHIGH",
 		"SWITCH",
 		"GRESTORE",
 		"SHUTDOWN",
-		"GCAPTURE",
+		"RESERVED_0C_WAS_GCAPTURE",
 		"DESYNC",
 		"RESERVED_0E"
 		"IPROG",
 		"CRCC",
-		"LTIMER"
+		"LTIMER",
+		"BSPI_READ",
+		"FALL_EDGE"
 	};
 
 	//Parse frames
@@ -612,17 +636,17 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 		fpos += 4;
 
 		//Look at the frame type and process it
-		if(frame.bits.type == X7_CONFIG_FRAME_TYPE_1)
+		if(frame.bits.type == CONFIG_FRAME_TYPE_1)
 		{
 			//Skip nops, dont print details
-			if(frame.bits.op == X7_CONFIG_OP_NOP)
+			if(frame.bits.op == CONFIG_OP_NOP)
 			{
 				//printf("NOP at 0x%x\n", (int)fpos);
 				continue;
 			}
 
 			//Validate frame
-			if(frame.bits.reg_addr >= X7_CONFIG_REG_MAX)
+			if(frame.bits.reg_addr >= CONFIG_REG_MAX)
 			{
 				LogWarning("[XilinxUltrascaleDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 					frame.bits.reg_addr, (int)fpos);
@@ -642,14 +666,14 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 				);
 
 			//See if it's a write, if so pull out some data
-			if(frame.bits.op == X7_CONFIG_OP_WRITE)
+			if(frame.bits.op == CONFIG_OP_WRITE)
 			{
 				LogIndenter li;
 
 				//Look at the frame data
 				switch(frame.bits.reg_addr)
 				{
-					case X7_CONFIG_REG_CMD:
+					case CONFIG_REG_CMD:
 					{
 						//Expect 1 word
 						if(frame.bits.count != 1)
@@ -660,20 +684,20 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 								"");
 						}
 						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
-						if(cmd_value >= X7_CMD_MAX)
+						if(cmd_value >= CMD_MAX)
 							LogWarning("Undocumented command value %d in bitstream\n", cmd_value);
 						else
 							LogDebug("Command = %s\n", cmd_values[cmd_value]);
 
 						//We're done, skip to the end of the bitstream
-						if(cmd_value == X7_CMD_DESYNC)
+						if(cmd_value == CMD_DESYNC)
 						{
 							fpos = len;
 							continue;
 						}
 					}
 					break;
-					case X7_CONFIG_REG_IDCODE:
+					case CONFIG_REG_IDCODE:
 					{
 						//Expect 1 word
 						if(frame.bits.count != 1)
@@ -707,7 +731,7 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 			//Discard the contents
 			fpos += 4*frame.bits.count;
 		}
-		else if(frame.bits.type == X7_CONFIG_FRAME_TYPE_2)
+		else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
 		{
 			unsigned int framesize = frame.bits_type2.count;
 			LogIndenter li;
@@ -729,7 +753,7 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 				"Invalid frame type",
 				"");
 		}
-	}*/
+	}
 
 	//All OK
 	return bitstream;
@@ -737,15 +761,7 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 
 void XilinxUltrascaleDevice::Reboot()
 {
-	throw JtagExceptionWrapper(
-		"XilinxUltrascaleDevice::Reboot not implemented",
-		"");
-
-	/*
-	ResetToIdle();
-	SetIR(INST_JPROGRAM);
-	SetIR(INST_BYPASS);
-	*/
+	InternalErase();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -753,7 +769,7 @@ void XilinxUltrascaleDevice::Reboot()
 
 size_t XilinxUltrascaleDevice::GetNumUserInstructions()
 {
-	return 4;
+	return 0;	//not implemented yet
 }
 
 void XilinxUltrascaleDevice::SelectUserInstruction(size_t /*index*/)
