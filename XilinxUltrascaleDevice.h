@@ -214,7 +214,7 @@ public:
 		VUPLUS_9		= 0x131,
 	};
 
-	///6-bit-wide JTAG instructions (see BSDL file). Seems to be same as 7 series
+	///6-bit-wide JTAG instructions (see BSDL file). Seems to be mostly same as 7 series
 	//except for SLR_BYPASS (my name, there's no official name in the docs that I can find)
 	//(TODO: is this the same as for SLR-based 7 series?)
 	enum instructions
@@ -243,13 +243,12 @@ public:
 		///Write configuration register
 		INST_CFG_IN				= 0x05,
 
-		/*
 		///Read user ID code
-		INST_USERCODE			= 0x08,
+		//INST_USERCODE			= 0x08,
 
 		///Read ID code
 		INST_IDCODE				= 0x09,
-		*/
+
 		///Enters programming mode (erases FPGA configuration)
 		INST_JPROGRAM			= 0x0B,
 
@@ -261,6 +260,9 @@ public:
 
 		///Enters In-System Configuration mode (must load INST_JPROGRAM before)
 		INST_ISC_ENABLE			= 0x10,
+
+		//Do nothing. This is used after JPROGRAM while waiting for reset
+		INST_ISC_NOOP 			= 0x14,
 
 		///Leaves In-System Configuration mode
 		INST_ISC_DISABLE		= 0x16,
@@ -325,8 +327,8 @@ protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration type definitions
-protected:
 
+public:
 	/**
 		@brief UltraScale configuration opcodes (see UG570 page 159). Same as for Spartan-6 and 7 series
 	 */
@@ -412,6 +414,28 @@ protected:
 		CMD_FALL_EDGE	= 0x13,	//new in ultrascale, switch to capturing bitstream data on negedge CCLK
 		CMD_MAX
 	};
+
+protected:
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Bitstream analysis
+
+	bool ParseType1ConfigFrame(
+		XilinxUltrascaleDeviceConfigurationFrame frame,
+		const unsigned char* data,
+		size_t len,
+		size_t& fpos,
+		uint32_t& idcode,
+		bool flip_bit_order = false);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SVF parsing (TODO: move into base class or something)
+
+public:
+	void AnalyzeSVF(std::string path);
+
+protected:
+	bool GetSVFLine(FILE* fp, std::string& line);
+	std::string GetSVFOpcode(std::string& line);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation

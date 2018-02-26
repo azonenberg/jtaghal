@@ -89,8 +89,6 @@ XilinxUltrascaleDevice::XilinxUltrascaleDevice(
 
 	//Each SLR has its own instruction register but they're concatenated
 	m_irlength = 6 * m_slrCount;
-
-	PrintStatusRegister();
 }
 
 /**
@@ -273,7 +271,16 @@ void XilinxUltrascaleDevice::InternalErase()
 	//Load the JPROGRAM instruction to clear configuration memory
 	LogDebug("Clearing configuration memory...\n");
 	SetIRForAllSLRs(INST_JPROGRAM);
-	SendDummyClocks(32);
+
+	//Load the ISC_NOOP instruction immediately after. This isn't mentioned in the ultrascale datasheet
+	//but the generated SVF's do it.
+	SetIRForAllSLRs(INST_ISC_NOOP);
+
+	//Wait a minimum of 100 us for things to reset (per generated SVF comments)
+	usleep(100 * 1000);
+
+	//Send a bunch of dummy clocks to make sure everything propagated
+	SendDummyClocks(10000);
 
 	//Poll status register until housecleaning is done
 	XilinxUltrascaleDeviceStatusRegister statreg;
@@ -281,7 +288,7 @@ void XilinxUltrascaleDevice::InternalErase()
 	for(i=0; i<10; i++)
 	{
 		statreg.word = ReadWordConfigRegister(CONFIG_REG_STAT);
-		if(statreg.bits.init_b)
+		if(statreg.bits.init_b && !statreg.bits.done)
 			break;
 
 		//wait 500ms
@@ -556,6 +563,64 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 	//Skip the sync word
 	fpos += sizeof(syncword);
 
+	//Parse frames
+	while(fpos < len)
+	{
+		//Pull and byte-swap the frame header
+		XilinxUltrascaleDeviceConfigurationFrame frame =
+			*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(data + fpos);
+		FlipEndian32Array((unsigned char*)&frame, sizeof(frame));
+
+		//Go past the header
+		fpos += 4;
+
+		//Look at the frame type and process it
+		if(frame.bits.type == CONFIG_FRAME_TYPE_1)
+		{
+			if(!ParseType1ConfigFrame(frame, data, len, fpos, bitstream->idcode))
+			{
+				delete[] bitstream->raw_bitstream;
+				delete[] bitstream;
+				return NULL;
+			}
+		}
+		else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
+		{
+			unsigned int framesize = frame.bits_type2.count;
+			LogIndenter li;
+
+			//Print stats
+			LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
+				(int)fpos,
+				framesize
+				);
+
+			//Discard data + header
+			//There seems to be an unused trailing word after the last data word
+			fpos += 4*(2 + framesize);
+		}
+		else
+		{
+			delete[] bitstream->raw_bitstream;
+			delete[] bitstream;
+			throw JtagExceptionWrapper(
+				"Invalid frame type",
+				"");
+		}
+	}
+
+	//All OK
+	return bitstream;
+}
+
+bool XilinxUltrascaleDevice::ParseType1ConfigFrame(
+	XilinxUltrascaleDeviceConfigurationFrame frame,
+	const unsigned char* data,
+	size_t len,
+	size_t& fpos,
+	uint32_t& idcode,
+	bool flip_bit_order)
+{
 	//String names for config regs
 	static const char* config_register_names[CONFIG_REG_MAX]=
 	{
@@ -600,6 +665,7 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 		"WRITE",
 		"INVALID"
 	};
+
 	static const char* cmd_values[]=
 	{
 		"NULL",
@@ -624,144 +690,528 @@ XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
 		"FALL_EDGE"
 	};
 
-	//Parse frames
-	while(fpos < len)
+	//Skip nops, dont print details
+	if(frame.bits.op == CONFIG_OP_NOP)
 	{
-		//Pull and byte-swap the frame header
-		XilinxUltrascaleDeviceConfigurationFrame frame =
-			*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(data + fpos);
-		FlipEndian32Array((unsigned char*)&frame, sizeof(frame));
+		//printf("NOP at 0x%x\n", (int)fpos);
+		return true;
+	}
 
-		//Go past the header
-		fpos += 4;
+	//Validate frame
+	if(frame.bits.reg_addr >= CONFIG_REG_MAX)
+	{
+		LogWarning("[XilinxUltrascaleDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
+			frame.bits.reg_addr, (int)fpos);
+		return false;
+	}
 
-		//Look at the frame type and process it
-		if(frame.bits.type == CONFIG_FRAME_TYPE_1)
+	//Print stats
+	LogDebug("Config frame starting at 0x%x: Type 1 %s to register 0x%02x (%s), %u words\n",
+		(int)fpos,
+		config_opcodes[frame.bits.op],
+		frame.bits.reg_addr,
+		config_register_names[frame.bits.reg_addr],
+		frame.bits.count
+		);
+
+	//See if it's a write, if so pull out some data
+	if(frame.bits.op == CONFIG_OP_WRITE)
+	{
+		LogIndenter li;
+
+		//Look at the frame data
+		switch(frame.bits.reg_addr)
 		{
-			//Skip nops, dont print details
-			if(frame.bits.op == CONFIG_OP_NOP)
+			case CONFIG_REG_CMD:
 			{
-				//printf("NOP at 0x%x\n", (int)fpos);
-				continue;
-			}
-
-			//Validate frame
-			if(frame.bits.reg_addr >= CONFIG_REG_MAX)
-			{
-				LogWarning("[XilinxUltrascaleDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
-					frame.bits.reg_addr, (int)fpos);
-				delete bitstream;
-				throw JtagExceptionWrapper(
-					"Invalid register address in bitstream",
-					"");
-			}
-
-			//Print stats
-			LogDebug("Config frame starting at 0x%x: Type 1 %s to register 0x%02x (%s), %u words\n",
-				(int)fpos,
-				config_opcodes[frame.bits.op],
-				frame.bits.reg_addr,
-				config_register_names[frame.bits.reg_addr],
-				frame.bits.count
-				);
-
-			//See if it's a write, if so pull out some data
-			if(frame.bits.op == CONFIG_OP_WRITE)
-			{
-				LogIndenter li;
-
-				//Look at the frame data
-				switch(frame.bits.reg_addr)
+				//Expect 1 word
+				if(frame.bits.count != 1)
 				{
-					case CONFIG_REG_CMD:
-					{
-						//Expect 1 word
-						if(frame.bits.count != 1)
-						{
-							delete bitstream;
-							throw JtagExceptionWrapper(
-								"Invalid write (not 1 word) to CMD register in config frame",
-								"");
-						}
-						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
-						if(cmd_value >= CMD_MAX)
-							LogWarning("Undocumented command value %d in bitstream\n", cmd_value);
-						else
-							LogDebug("Command = %s\n", cmd_values[cmd_value]);
+					LogError("Invalid write (not 1 word) to CMD register in config frame");
+					return false;
+				}
+				uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
 
-						//We're done, skip to the end of the bitstream
-						if(cmd_value == CMD_DESYNC)
-						{
-							fpos = len;
-							continue;
-						}
-					}
-					break;
-					case CONFIG_REG_IDCODE:
-					{
-						//Expect 1 word
-						if(frame.bits.count != 1)
-						{
-							delete bitstream;
-							throw JtagExceptionWrapper(
-								"Invalid write (not 1 word) to IDCODE register in config frame",
-								"");
-						}
+				//Flip if reading from SVF bit order
+				if(flip_bit_order)
+					FlipBitArray((uint8_t*)&cmd_value, 4);
 
-						//Pull the value
-						uint32_t idcode = GetBigEndianUint32FromByteArray(data, fpos);
-						LogDebug("ID code = %08x\n", idcode);
-						bitstream->idcode = idcode;
-					}
-					break;
+				if(cmd_value >= CMD_MAX)
+					LogWarning("Undocumented command value %d in bitstream\n", cmd_value);
+				else
+					LogDebug("Command = %s\n", cmd_values[cmd_value]);
 
-
-				default:
-
-					if(frame.bits.count == 1)
-					{
-						uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
-						LogDebug("Data = 0x%08x\n", cmd_value);
-					}
-
-					break;
+				//We're done, skip to the end of the bitstream
+				if(cmd_value == CMD_DESYNC)
+				{
+					fpos = len;
+					return true;
 				}
 			}
+			break;
+			case CONFIG_REG_IDCODE:
+			{
+				//Expect 1 word
+				if(frame.bits.count != 1)
+				{
+					LogError("Invalid write (not 1 word) to IDCODE register in config frame");
+					return false;
+				}
 
-			//Discard the contents
-			fpos += 4*frame.bits.count;
-		}
-		else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
-		{
-			unsigned int framesize = frame.bits_type2.count;
-			LogIndenter li;
+				//Pull the value
+				idcode = GetBigEndianUint32FromByteArray(data, fpos);
 
-			//Print stats
-			LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
-				(int)fpos,
-				framesize
-				);
+				//Flip if reading from SVF bit order
+				if(flip_bit_order)
+					FlipBitArray((uint8_t*)&idcode, 4);
 
-			//Discard data + header
-			//There seems to be an unused trailing word after the last data word
-			fpos += 4*(2 + framesize);
-		}
-		else
-		{
-			delete bitstream;
-			throw JtagExceptionWrapper(
-				"Invalid frame type",
-				"");
+				LogDebug("ID code = %08x\n", idcode);
+			}
+			break;
+
+
+		default:
+
+			if(frame.bits.count == 1)
+			{
+				uint32_t cmd_value = GetBigEndianUint32FromByteArray(data, fpos);
+
+				//Flip if reading from SVF bit order
+				if(flip_bit_order)
+					FlipBitArray((uint8_t*)&cmd_value, 4);
+
+				LogDebug("Data = 0x%08x\n", cmd_value);
+			}
+
+			break;
 		}
 	}
 
-	//All OK
-	return bitstream;
+	//Discard the contents
+	fpos += 4*frame.bits.count;
+
+	return true;
 }
 
 void XilinxUltrascaleDevice::Reboot()
 {
 	InternalErase();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SVF stuff
+
+bool XilinxUltrascaleDevice::GetSVFLine(FILE* fp, string& line)
+{
+	line = "";
+
+	string whitespace = "";
+
+	bool in_comment = false;
+	while(!feof(fp))
+	{
+		char tmp = fgetc(fp);
+
+		if(in_comment)
+		{
+			//Newline means "done"
+			if(tmp == '\n')
+			{
+				in_comment = false;
+				continue;
+			}
+
+			//otherwise ignore it
+		}
+
+		else
+		{
+			//Skip leading whitespace
+			if( (line == "") && isspace(tmp) )
+				continue;
+
+			//C++ style comment means enter comment mode
+			//TODO: support comments in the middle of a block
+			if(line == "/" && tmp == '/')
+			{
+				line = "";
+				in_comment = true;
+				continue;
+			}
+
+			//Stop when we get a semicolon
+			if(tmp == ';')
+				return true;
+
+			//Skip newlines
+			if(tmp == '\n')
+				continue;
+
+			//Nope, add the incoming character.
+			//Buffer whitespace and only add when we get a non-space character
+			if(isspace(tmp))
+				whitespace += tmp;
+			else
+			{
+				line += whitespace;
+				line += tmp;
+				whitespace = "";
+			}
+		}
+	}
+
+	return false;
+}
+
+string XilinxUltrascaleDevice::GetSVFOpcode(string& line)
+{
+	string op;
+	for(size_t i=0; i<line.length(); i++)
+	{
+		if(isspace(line[i]))
+			break;
+		else
+			op += line[i];
+	}
+
+	return op;
+}
+
+void XilinxUltrascaleDevice::AnalyzeSVF(string path)
+{
+	LogVerbose("Analyzing SVF...\n");
+	LogIndenter li;
+
+	FILE* fp = fopen(path.c_str(), "r");
+	if(!fp)
+	{
+		throw JtagExceptionWrapper(
+			"XilinxUltrascaleDevice::AnalyzeSVF: file not found\n",
+			"");
+	}
+
+	vector<uint8_t> cfg_data;
+
+	string line;
+	bool append_dr = false;
+	while(GetSVFLine(fp, line))
+	{
+		//Parse out the opcode
+		string opcode = GetSVFOpcode(line);
+
+		//TRST: Must be OFF, ignore that
+		if(opcode == "TRST")
+		{
+			if(line == "TRST OFF")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: TRST other than OFF not supported\n",
+					line);
+			}
+		}
+
+		//ENDIR: Must be IDLE, ignore that
+		else if(opcode == "ENDIR")
+		{
+			if(line == "ENDIR IDLE")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: ENDIR other than IDLE not supported\n",
+					line);
+			}
+		}
+
+		//ENDDR: Must be IDLE or DRPAUSE
+		else if(opcode == "ENDDR")
+		{
+			if(line == "ENDDR IDLE")
+			{
+				append_dr = false;
+				continue;
+			}
+			else if(line == "ENDDR DRPAUSE")
+			{
+				append_dr = true;
+				continue;
+			}
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: ENDDR other than IDLE and DRPAUSE not supported\n",
+					line);
+			}
+		}
+
+		//HIR/HDR/TIR/TDR: Must be 0
+		else if(opcode == "HIR")
+		{
+			if(line == "HIR 0")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: HIR other than 0 not supported\n",
+					line);
+			}
+		}
+		else if(opcode == "HDR")
+		{
+			if(line == "HDR 0")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: HDR other than 0 not supported\n",
+					line);
+			}
+		}
+		else if(opcode == "TIR")
+		{
+			if(line == "TIR 0")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: TIR other than 0 not supported\n",
+					line);
+			}
+		}
+		else if(opcode == "TDR")
+		{
+			if(line == "TDR 0")
+				continue;
+			else
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: TDR other than 0 not supported\n",
+					line);
+			}
+		}
+
+		//Ignore STATE for now
+		else if(opcode == "STATE")
+		{
+			LogDebug("State change: %s\n", line.c_str());
+			continue;
+		}
+
+		//Ignore frequency (no importance to use)
+		else if(opcode == "FREQUENCY")
+			continue;
+
+		//Dummy clocks
+		else if(opcode == "RUNTEST")
+		{
+			//Parse it
+			float sec;
+			int clocks;
+			if(line.find("SEC") != string::npos)
+			{
+				sscanf(line.c_str(), "RUNTEST %f SEC", &sec);
+				LogDebug("Sleep %.2f ms\n", sec * 1000);
+			}
+			else if(1 == sscanf(line.c_str(), "RUNTEST %d TCK", &clocks))
+				LogDebug("Send %d dummy clocks\n", clocks);
+		}
+
+		//Shift INSTRUCTION REGISTER
+		else if(opcode == "SIR")
+		{
+			int nclocks;
+			unsigned int ir;
+			if(2 != sscanf(line.c_str(), "SIR %d TDI (%x)", &nclocks, &ir))	//TODO: handle TDO/mask
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: Malformed Shift-IR line\n",
+					line);
+			}
+
+			//Verify that we have the right size
+			if(nclocks != m_irlength)
+			{
+				throw JtagExceptionWrapper(
+					"XilinxUltrascaleDevice::AnalyzeSVF: Strange IR length\n",
+					line);
+			}
+
+			//Parse it out, 6 bits at a time
+			//Our convention is that the LEFTMOST slr in the IR is #0
+			vector<unsigned int> irs;
+			for(unsigned int i=0; i<m_slrCount; i++)
+			{
+				int shamt = (m_slrCount - 1 - i) * 6;
+				irs.push_back( (ir >> shamt) & 0x3f );
+			}
+
+			string textir;
+			for(unsigned int i=0; i<m_slrCount; i++)
+			{
+				switch(irs[i])
+				{
+				case INST_IDCODE:
+					textir += "IDCODE";
+					break;
+
+				case INST_SLR_BYPASS:
+					textir += "SLR_BYPASS";
+					break;
+
+				case INST_CFG_OUT:
+					textir += "CFG_OUT";
+					break;
+
+				case INST_CFG_IN:
+					textir += "CFG_IN";
+					break;
+
+				case INST_JPROGRAM:
+					textir += "JPROGRAM";
+					break;
+
+				case INST_JSTART:
+					textir += "JSTART";
+					break;
+
+				case INST_ISC_NOOP:
+					textir += "ISC_NOOP";
+					break;
+
+				default:
+					textir += "FIXME";
+					break;
+				}
+
+				if(i+1 < m_slrCount)
+					textir += ", ";
+			}
+			LogDebug("Set IR: { %s }\n", textir.c_str());
+		}
+
+		//Shift DATA REGISTER
+		else if(opcode == "SDR")
+		{
+			//Read the length
+			unsigned int len = 0;
+			if(1 != sscanf(line.c_str(), "SDR %d TDI", &len))
+			{
+				LogWarning("Malformed SDR line\n");
+				continue;
+			}
+
+			//Convert to bytes so we know how much hex to read
+			unsigned int bytelen = len / 8;
+
+			//Read the hex data a byte at a time until we get it all
+			unsigned char* bytes = new unsigned char[bytelen];
+
+			//Start by pulling out the hex data itself and removing fluff
+			size_t start = line.find("(") + 1;
+			unsigned int bval;
+			for(size_t i=0; i<bytelen; i++)
+			{
+				char hex[3] = { line[2*i + start], line[2*i + start + 1], 0};
+				sscanf(hex, "%x", &bval);
+				bytes[i] = bval;
+			}
+
+			//SVF sends the rightmost byte first. This is kinda silly, since we can't stream it!
+			FlipByteArray(bytes, bytelen);
+
+			//Make a big array of everything sent, possibly across multiple transactions.
+			//If we're appending, there's more data to come.
+			//Otherwise, process it.
+			for(size_t i=0; i<bytelen; i++)
+				cfg_data.push_back(bytes[i]);
+			delete[] bytes;
+
+			if(append_dr)
+				continue;
+
+			LogDebug("Send %zu bytes\n", cfg_data.size());
+			LogIndenter li;
+
+			//Got everything. Parse it.
+			bool found_sync = false;
+			size_t fpos = 0;
+			while(fpos<cfg_data.size())
+			{
+				if(!found_sync)
+				{
+					//Pull out four bytes at a time
+					//Swap bit ordering (see UG570 p. 139)
+					uint32_t block = *reinterpret_cast<uint32_t*>(&cfg_data[fpos]);
+					FlipBitAndEndian32Array((unsigned char*)&block, 4);
+
+					if(block == 0xffffffff)
+						LogDebug("Dummy word\n");
+					else if(block == 0x000000bb)
+						LogDebug("Bus width sync word\n");
+					else if(block == 0x11220044)
+						LogDebug("Bus width detect word\n");
+					else if(block == 0xaa995566)
+					{
+						LogDebug("Bitstream sync word\n");
+						found_sync = true;
+					}
+					else
+						LogDebug("Block %08x\n", block);
+
+					fpos += 4;
+					continue;
+				}
+
+				//Pull and byte-swap the frame header
+				XilinxUltrascaleDeviceConfigurationFrame frame =
+					*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(&cfg_data[fpos]);
+				FlipBitAndEndian32Array((unsigned char*)&frame, sizeof(frame));
+				fpos += 4;
+
+				//See what it is
+				uint32_t idcode;
+				if(frame.bits_type2.type == XilinxUltrascaleDevice::CONFIG_FRAME_TYPE_1)
+				{
+					if(!ParseType1ConfigFrame(frame, &cfg_data[0], cfg_data.size(), fpos, idcode, true))
+						break;
+				}
+				else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
+				{
+					unsigned int framesize = frame.bits_type2.count;
+					LogIndenter li;
+
+					//Print stats
+					LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
+						(int)fpos,
+						framesize
+						);
+
+					//Discard data + header
+					//There seems to be an unused trailing word after the last data word??
+					fpos += 4*(2 + framesize);
+				}
+
+				else
+				{
+					LogError("Invalid frame type %d (0x%08x)\n", frame.bits.type, frame.word);
+					fpos += 4;
+					continue;
+				}
+			}
+
+			//Clean up
+			cfg_data.clear();
+		}
+
+		else
+			LogDebug("Unsupported opcode: op=%s\n", opcode.c_str());
+
+		//LogDebug("NEW LINE: %s\n", line.c_str());
+	}
+
+	fclose(fp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
