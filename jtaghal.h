@@ -135,6 +135,7 @@
 #include "XilinxCPLDBitstream.h"
 #include "XilinxCoolRunnerIIDevice.h"
 #include "XilinxFPGABitstream.h"
+#include "Xilinx3DFPGABitstream.h"
 #include "XilinxFPGA.h"
 #include "Xilinx7SeriesDevice.h"
 #include "XilinxUltrascaleDevice.h"

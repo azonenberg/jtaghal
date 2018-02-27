@@ -30,63 +30,34 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of XilinxFPGA
+	@brief Implementation of Xilinx3DFPGABitstream
  */
+#include "jtaghal.h"
 
-#ifndef XilinxFPGA_h
-#define XilinxFPGA_h
+using namespace std;
 
 /**
-	@brief Abstract base class for all Xilinx FPGAs
-
-	\ingroup libjtaghal
+	@brief Initializes this object to empty
  */
-class XilinxFPGA	: public XilinxDevice
-					, public JtagFPGA
+Xilinx3DFPGABitstream::Xilinx3DFPGABitstream()
 {
-public:
-	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);
-	virtual ~XilinxFPGA();
 
-protected:
-	//Static function for parsing bitstream headers (common to all Xilinx devices)
-	void ParseBitstreamCore(XilinxFPGABitstream* bitstream, const unsigned char* data, size_t len);\
+}
 
-	/**
-		@brief Parse a full bitstream image (specific to the derived FPGA family)
+/**
+	@brief Free bitstream memory
+ */
+Xilinx3DFPGABitstream::~Xilinx3DFPGABitstream()
+{
+	for(auto b : m_bitstreams)
+		delete b;
+	m_bitstreams.clear();
+}
 
-		@throw JtagException if the bitstream is malformed or for the wrong device family
-
-		@param data			Pointer to the bitstream data
-		@param len			Length of the bitstream
-		@param bitstream	The bitstream object to load into
-		@param fpos			Position in the bitstream image to start parsing (after the end of headers)
-		@param bVerbose		Set to true for verbose debug output on bitstream internals
-	 */
-	virtual void ParseBitstreamInternals(
-		const unsigned char* data,
-		size_t len,
-		XilinxFPGABitstream* bitstream,
-		size_t fpos) =0;
-
-	virtual void PrintStatusRegister() =0;
-
-public:
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
-	virtual void DumpIndirect(int buswidth, std::string fname);
-
-	/**
-		@brief Reboots the FPGA and loads from external memory, if possible
-	 */
-	virtual void Reboot() =0;
-
-	virtual uint16_t LoadIndirectProgrammingImage(int buswidth, std::string image_fname = "");
-};
-
-#endif
+string Xilinx3DFPGABitstream::GetDescription()
+{
+	char retval[1024];
+	snprintf(retval, sizeof(retval), "bitstream \"%s\" (%s %s) for device \"%s\" (%zu blocks)",
+		desc.c_str(), date.c_str(), time.c_str(), devname.c_str(), m_bitstreams.size());
+	return retval;
+}

@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -67,15 +67,17 @@ XilinxFPGA::~XilinxFPGA()
 
 	@throw JtagException if the bitstream is malformed or for the wrong device family
 
+	@param bitstream	The bitstream object being initialized
 	@param data			Pointer to the bitstream data
 	@param len			Length of the bitstream
 
 	@return A bitstream suitable for loading into this device
  */
-FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t len)
+void XilinxFPGA::ParseBitstreamCore(
+	XilinxFPGABitstream* bitstream,
+	const unsigned char* data,
+	size_t len)
 {
-	XilinxFPGABitstream* bitstream = new XilinxFPGABitstream;
-
 	//TODO: Some kind of ID code in FPGABitstream object so we can tell what type it is?
 
 	/**
@@ -100,8 +102,8 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 			"");
 	}
 
-	//Make sure it's larger than 4KB (no valid bitstream is that small, and it means we don't need to length-check
-	//the headers as much
+	//Make sure it's larger than 4KB.
+	//No valid bitstream is that small, and it means we don't need to length-check the headers as much
 	if(len < 4096)
 	{
 		throw JtagExceptionWrapper(
@@ -202,7 +204,7 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 
 			default:
 				//no idea
-				return NULL;
+				LogWarning("Unknown bitstream header block \"%c\"\n", record_type);
 		}
 
 		if(record_type == 'e')
@@ -217,8 +219,6 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 	//Should be all FF's, then an AA
 	if(data[fpos] != 0xff)
 	{
-		delete bitstream;
-
 		LogError(
 			"[XilinxFPGA] Expected 0xFF filler at end of bitstream headers (position 0x%x), found 0x%02x instead\n",
 			(int)fpos,
@@ -235,15 +235,13 @@ FPGABitstream* XilinxFPGA::ParseBitstreamCore(const unsigned char* data, size_t 
 	}
 	if(fpos == len)
 	{
-		delete bitstream;
-
 		throw JtagExceptionWrapper(
 			"Unexpected end of bitstream found",
 			"");
 	}
 
 	//Call the derived class function to read the bulk bitstream data
-	return ParseBitstreamInternals(data, len, bitstream, fpos);
+	ParseBitstreamInternals(data, len, bitstream, fpos);
 }
 
 bool XilinxFPGA::HasIndirectFlashSupport()

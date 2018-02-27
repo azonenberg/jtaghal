@@ -304,13 +304,25 @@ void XilinxUltrascaleDevice::InternalErase()
 
 FirmwareImage* XilinxUltrascaleDevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
+	Xilinx3DFPGABitstream* bitstream = new Xilinx3DFPGABitstream;
+	try
+	{
+		XilinxFPGA::ParseBitstreamCore(bitstream, data, len);
+	}
+	catch(const JtagException& ex)
+	{
+		delete bitstream;
+		throw ex;
+	}
+
+	return static_cast<FirmwareImage*>(bitstream);
 }
 
-void XilinxUltrascaleDevice::Program(FirmwareImage* image)
+void XilinxUltrascaleDevice::Program(FirmwareImage* /*image*/)
 {
 	LogIndenter li;
 
+	/*
 	//Should be an FPGA bitstream
 	FPGABitstream* bitstream = static_cast<FPGABitstream*>(image);
 	if(bitstream == NULL)
@@ -427,6 +439,7 @@ void XilinxUltrascaleDevice::Program(FirmwareImage* image)
 	}
 
 	ResetToIdle();
+	*/
 }
 
 void XilinxUltrascaleDevice::PrintStatusRegister()
@@ -537,90 +550,174 @@ uint32_t XilinxUltrascaleDevice::ReadWordConfigRegister(unsigned int reg)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream parsing
 
-XilinxFPGABitstream* XilinxUltrascaleDevice::ParseBitstreamInternals(
+void XilinxUltrascaleDevice::ParseBitstreamInternals(
 	const unsigned char* data,
 	size_t len,
 	XilinxFPGABitstream* bitstream,
 	size_t fpos)
 {
 	LogDebug("Parsing bitstream internals...\n");
+	LogIndenter li;
 
-	//Expect aa 99 55 66 (sync word)
-	unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
-	if(0 != memcmp(data+fpos, syncword, sizeof(syncword)))
+	Xilinx3DFPGABitstream* topbit = dynamic_cast<Xilinx3DFPGABitstream*>(bitstream);
+	if(!topbit)
 	{
-		delete bitstream;
 		throw JtagExceptionWrapper(
-			"No valid sync word found",
+			"Not a 3D FPGA bitstream!",
 			"");
 	}
 
-	//Allocate space and copy the entire bitstream into raw_bitstream
-	bitstream->raw_bitstream_len = len-fpos;
-	bitstream->raw_bitstream = new unsigned char[bitstream->raw_bitstream_len];
-	memcpy(bitstream->raw_bitstream, data+fpos, bitstream->raw_bitstream_len);
-
-	//Skip the sync word
-	fpos += sizeof(syncword);
-
-	//Parse frames
-	while(fpos < len)
+	//We should have a whole sub-bitstream for each SLR.
+	for(unsigned int i=0; i<m_slrCount; i++)
 	{
-		//Pull and byte-swap the frame header
-		XilinxUltrascaleDeviceConfigurationFrame frame =
-			*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(data + fpos);
-		FlipEndian32Array((unsigned char*)&frame, sizeof(frame));
+		if(fpos >= len)
+			break;
 
-		//Go past the header
-		fpos += 4;
+		LogDebug("SLR %u\n", i);
+		LogIndenter li;
 
-		//Look at the frame type and process it
-		if(frame.bits.type == CONFIG_FRAME_TYPE_1)
+		size_t slrbase = fpos;
+
+		//Create a new bitstream for this block
+		//We don't yet know how long it is, so allocate enough to hold the entire remainder of the bitstream.
+		//This wastes a bit of RAM, maybe at some point we can optimize to clean this up.
+		XilinxFPGABitstream* slrbit = new XilinxFPGABitstream;
+		size_t initial_length = len - fpos;
+		slrbit->raw_bitstream = new unsigned char[initial_length];
+		memcpy(slrbit->raw_bitstream, data + fpos, initial_length);
+		topbit->m_bitstreams.push_back(slrbit);
+
+		//Expect aa 99 55 66 (sync word)
+		unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
+		if(0 != memcmp(data+fpos, syncword, sizeof(syncword)))
 		{
-			if(!ParseType1ConfigFrame(frame, data, len, fpos, bitstream->idcode))
-			{
-				delete[] bitstream->raw_bitstream;
-				delete[] bitstream;
-				return NULL;
-			}
-		}
-		else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
-		{
-			unsigned int framesize = frame.bits_type2.count;
-			LogIndenter li;
-
-			//Print stats
-			LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
-				(int)fpos,
-				framesize
-				);
-
-			//Discard data + header
-			//There seems to be an unused trailing word after the last data word
-			fpos += 4*(2 + framesize);
-		}
-		else
-		{
-			delete[] bitstream->raw_bitstream;
-			delete[] bitstream;
 			throw JtagExceptionWrapper(
-				"Invalid frame type",
+				"No valid sync word found",
 				"");
 		}
+
+		//Skip the sync word
+		fpos += sizeof(syncword);
+
+		//Parse frames
+		while(fpos < len)
+		{
+			//Pull and byte-swap the frame header
+			XilinxUltrascaleDeviceConfigurationFrame frame =
+				*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(data + fpos);
+			FlipEndian32Array((unsigned char*)&frame, sizeof(frame));
+
+			//Go past the header
+			fpos += 4;
+
+			//Look at the frame type and process it
+			if(frame.bits.type == CONFIG_FRAME_TYPE_1)
+			{
+				bool desync;
+				if(!ParseType1ConfigFrame(frame, data, len, fpos, bitstream->idcode, desync))
+				{
+					throw JtagExceptionWrapper(
+						"Failed to parse Type-1 frame",
+						"");
+				}
+
+				//Handle trailing data after a desync request
+				if(desync)
+				{
+					LogDebug("Got desync command!\n");
+
+					//If this is the last SLR: TODO
+					if(i+1 == m_slrCount)
+					{
+					}
+
+					//Nope. Stop when we get to the next sync word
+					else
+					{
+						size_t nnops = 0;
+						while(fpos < len)
+						{
+							//Sync word means done
+							if(0 == memcmp(data+fpos, syncword, sizeof(syncword)))
+							{
+								if(nnops)
+									LogDebug("Found %zu trailing NOPs after desync\n", nnops);
+								break;
+							}
+
+							//Should be type-1 NOP frames afterwards
+							//We probably don't need this many but whatever
+							else
+							{
+								frame =
+									*reinterpret_cast<const XilinxUltrascaleDeviceConfigurationFrame*>(data + fpos);
+								FlipEndian32Array((unsigned char*)&frame, sizeof(frame));
+
+								//Go past the header
+								fpos += 4;
+
+								//Expecting a NOP
+								if(
+									(frame.bits.type == CONFIG_FRAME_TYPE_1) &&
+									(frame.bits.op == XilinxUltrascaleDevice::CONFIG_OP_NOP)
+								 )
+								{
+									//LogDebug("NOP\n");
+									nnops ++;
+								}
+								else
+									LogWarning("Unknown frame %08x\n", frame.word);
+							}
+						}
+					}
+
+					//After a desync we're done
+					break;
+				}
+			}
+			else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
+			{
+				unsigned int framesize = frame.bits_type2.count;
+				LogIndenter li;
+
+				//Print stats
+				LogDebug("Config frame starting at 0x%x: Type 2, %u words\n",
+					(int)fpos,
+					framesize
+					);
+
+				//Discard data + header
+				//There seems to be an unused trailing word after the last data word
+				fpos += 4*(2 + framesize);
+			}
+			else
+			{
+				throw JtagExceptionWrapper(
+					"Invalid frame type",
+					"");
+			}
+		}
+
+		//Done parsing frames
+		//Save the actual length
+		slrbit->raw_bitstream_len = fpos - slrbase;
+		LogDebug("SLR bitstream length: %zu bytes\n", slrbit->raw_bitstream_len);
 	}
 
-	//All OK
-	return bitstream;
+	exit(1);
 }
 
 bool XilinxUltrascaleDevice::ParseType1ConfigFrame(
 	XilinxUltrascaleDeviceConfigurationFrame frame,
 	const unsigned char* data,
-	size_t len,
+	size_t /*len*/,
 	size_t& fpos,
 	uint32_t& idcode,
+	bool& desync,
 	bool flip_bit_order)
 {
+	desync = false;
+
 	//String names for config regs
 	static const char* config_register_names[CONFIG_REG_MAX]=
 	{
@@ -743,12 +840,10 @@ bool XilinxUltrascaleDevice::ParseType1ConfigFrame(
 
 				//We're done, skip to the end of the bitstream
 				if(cmd_value == CMD_DESYNC)
-				{
-					fpos = len;
-					return true;
-				}
+					desync = true;
 			}
 			break;
+
 			case CONFIG_REG_IDCODE:
 			{
 				//Expect 1 word
@@ -1137,6 +1232,7 @@ void XilinxUltrascaleDevice::AnalyzeSVF(string path)
 			//Got everything. Parse it.
 			bool found_sync = false;
 			size_t fpos = 0;
+			size_t nnops = 0;
 			while(fpos<cfg_data.size())
 			{
 				if(!found_sync)
@@ -1154,9 +1250,16 @@ void XilinxUltrascaleDevice::AnalyzeSVF(string path)
 						LogDebug("Bus width detect word\n");
 					else if(block == 0xaa995566)
 					{
+						if(nnops)
+						{
+							LogDebug("%zu NOPs\n", nnops);
+							nnops = 0;
+						}
 						LogDebug("Bitstream sync word\n");
 						found_sync = true;
 					}
+					else if(block == 0x20000000)
+						nnops ++;
 					else
 						LogDebug("Block %08x\n", block);
 
@@ -1174,8 +1277,14 @@ void XilinxUltrascaleDevice::AnalyzeSVF(string path)
 				uint32_t idcode;
 				if(frame.bits_type2.type == XilinxUltrascaleDevice::CONFIG_FRAME_TYPE_1)
 				{
-					if(!ParseType1ConfigFrame(frame, &cfg_data[0], cfg_data.size(), fpos, idcode, true))
+					bool desync;
+					if(!ParseType1ConfigFrame(frame, &cfg_data[0], cfg_data.size(), fpos, idcode, desync, true))
 						break;
+					if(desync)
+					{
+						found_sync = false;
+						continue;
+					}
 				}
 				else if(frame.bits.type == CONFIG_FRAME_TYPE_2)
 				{

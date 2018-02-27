@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2017 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -208,7 +208,18 @@ void XilinxSpartan3ADevice::Reboot()
 
 FirmwareImage* XilinxSpartan3ADevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
+	XilinxFPGABitstream* bitstream = new XilinxFPGABitstream;
+	try
+	{
+		XilinxFPGA::ParseBitstreamCore(bitstream, data, len);
+	}
+	catch(const JtagException& ex)
+	{
+		delete bitstream;
+		throw ex;
+	}
+
+	return static_cast<FirmwareImage*>(bitstream);
 }
 
 void XilinxSpartan3ADevice::Program(FirmwareImage* image)
@@ -433,7 +444,7 @@ void XilinxSpartan3ADevice::ReadWordsConfigRegister(unsigned int reg, uint16_t* 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream parsing
 */
-XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
+void XilinxSpartan3ADevice::ParseBitstreamInternals(
 	const unsigned char* data,
 	size_t len,
 	XilinxFPGABitstream* bitstream,
@@ -446,7 +457,6 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 	unsigned char syncword[2] = {0xaa, 0x99};
 	if(0 != memcmp(data+fpos, syncword, sizeof(syncword)))
 	{
-		delete bitstream;
 		throw JtagExceptionWrapper(
 			"No valid sync word found",
 			"");
@@ -544,7 +554,6 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 		{
 			LogWarning("[XilinxSpartan3ADevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 				frame.bits.reg_addr, (int)fpos);
-			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid register address in bitstream",
 				"");
@@ -579,7 +588,6 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 						//Expect 1 word
 						if(frame.bits.count != 1)
 						{
-							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to CMD register in config frame",
 								"");
@@ -606,7 +614,6 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 						//Expect 2 words
 						if(frame.bits.count != 2)
 						{
-							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to IDCODE register in config frame",
 								"");
@@ -626,7 +633,6 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 						//Expect 2 words
 						if(frame.bits.count != 2)
 						{
-							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 2 word) to CRC register in config frame",
 								"");
@@ -674,15 +680,11 @@ XilinxFPGABitstream* XilinxSpartan3ADevice::ParseBitstreamInternals(
 		}
 		else
 		{
-			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid frame type",
 				"");
 		}
 	}
-
-	//All OK
-	return bitstream;
 }
 
 

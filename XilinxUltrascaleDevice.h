@@ -319,7 +319,7 @@ public:
 protected:
 	uint32_t ReadWordConfigRegister(unsigned int reg);
 
-	virtual XilinxFPGABitstream* ParseBitstreamInternals(
+	virtual void ParseBitstreamInternals(
 		const unsigned char* data,
 		size_t len,
 		XilinxFPGABitstream* bitstream,
@@ -425,6 +425,7 @@ protected:
 		size_t len,
 		size_t& fpos,
 		uint32_t& idcode,
+		bool& desync,
 		bool flip_bit_order = false);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

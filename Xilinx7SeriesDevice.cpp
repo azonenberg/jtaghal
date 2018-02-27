@@ -261,7 +261,18 @@ void Xilinx7SeriesDevice::InternalErase()
 
 FirmwareImage* Xilinx7SeriesDevice::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	return static_cast<FirmwareImage*>(XilinxFPGA::ParseBitstreamCore(data, len));
+	XilinxFPGABitstream* bitstream = new XilinxFPGABitstream;
+	try
+	{
+		XilinxFPGA::ParseBitstreamCore(bitstream, data, len);
+	}
+	catch(const JtagException& ex)
+	{
+		delete bitstream;
+		throw ex;
+	}
+
+	return static_cast<FirmwareImage*>(bitstream);
 }
 
 void Xilinx7SeriesDevice::Program(FirmwareImage* image)
@@ -517,7 +528,7 @@ void XilinxSpartan6Device::ReadWordsConfigRegister(unsigned int reg, uint16_t* d
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream parsing
 
-XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
+void Xilinx7SeriesDevice::ParseBitstreamInternals(
 	const unsigned char* data,
 	size_t len,
 	XilinxFPGABitstream* bitstream,
@@ -529,7 +540,6 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 	unsigned char syncword[4] = {0xaa, 0x99, 0x55, 0x66};
 	if(0 != memcmp(data+fpos, syncword, sizeof(syncword)))
 	{
-		delete bitstream;
 		throw JtagExceptionWrapper(
 			"No valid sync word found",
 			"");
@@ -635,7 +645,6 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 			{
 				LogWarning("[Xilinx7SeriesDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 					frame.bits.reg_addr, (int)fpos);
-				delete bitstream;
 				throw JtagExceptionWrapper(
 					"Invalid register address in bitstream",
 					"");
@@ -663,7 +672,6 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 						//Expect 1 word
 						if(frame.bits.count != 1)
 						{
-							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to CMD register in config frame",
 								"");
@@ -687,7 +695,6 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 						//Expect 1 word
 						if(frame.bits.count != 1)
 						{
-							delete bitstream;
 							throw JtagExceptionWrapper(
 								"Invalid write (not 1 word) to IDCODE register in config frame",
 								"");
@@ -733,15 +740,11 @@ XilinxFPGABitstream* Xilinx7SeriesDevice::ParseBitstreamInternals(
 		}
 		else
 		{
-			delete bitstream;
 			throw JtagExceptionWrapper(
 				"Invalid frame type",
 				"");
 		}
 	}
-
-	//All OK
-	return bitstream;
 }
 
 void Xilinx7SeriesDevice::Reboot()

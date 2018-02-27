@@ -101,6 +101,7 @@ jtaghal:
 
         # Vendor devices
         - XilinxFPGABitstream.cpp
+        - Xilinx3DFPGABitstream.cpp
         - XilinxCPLDBitstream.cpp
 
     flags:
