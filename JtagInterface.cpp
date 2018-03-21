@@ -113,13 +113,27 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 	#endif	//#ifdef HAVE_DJTG
 
 	#ifdef HAVE_FTD2XX
-		//Create an FTDIJtagInterface on the first port we can find
-		int nftdi = FTDIJtagInterface::GetInterfaceCount();
-		if(nftdi == 0)
-			return NULL;
-		string serial = FTDIJtagInterface::GetSerialNumber(nftdi);
-		if(serial != "")
-			return new FTDIJtagInterface(serial);
+		{
+			//Create an FTDIJtagInterface on the first port we can find
+			int nftdi = FTDIJtagInterface::GetInterfaceCount();
+			if(nftdi == 0)
+				return NULL;
+			string serial = FTDIJtagInterface::GetSerialNumber(nftdi);
+			if(serial != "")
+				return new FTDIJtagInterface(serial);
+		}
+	#endif
+
+	#ifdef HAVE_LIBFTDI
+		{
+			//Create an FTDIFreeJtagInterface on the first port we can find
+			int nftdi = FTDIFreeJtagInterface::GetInterfaceCount();
+			if(nftdi == 0)
+				return NULL;
+			string serial = FTDIFreeJtagInterface::GetSerialNumber(nftdi);
+			if(serial != "")
+				return new FTDIFreeJtagInterface(serial);
+		}
 	#endif
 
 	//No interfaces found
