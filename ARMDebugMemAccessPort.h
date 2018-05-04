@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -47,36 +47,36 @@ union ARMDebugMemAPControlStatusWord
 	{
 		///Size of the access to perform
 		unsigned int size:3;
-		
+
 		///Reserved, should be zero
 		unsigned int reserved_zero_1:1;
-		
+
 		///Address increment/pack mode
 		unsigned int auto_increment:2;
-		
+
 		///Debug port enable (RO)
 		unsigned int enable:1;
-		
+
 		///Transfer in progress
 		unsigned int busy:1;
-		
+
 		///Operating mode (write as zero, read undefined)
 		unsigned int mode:4;
-		
+
 		///Reserved, should be zero
 		unsigned int reserved_zero_2:11;
-		
+
 		///Secure privileged debug flag (not sure what this is)
 		unsigned int secure_priv_debug:1;
-		
+
 		///Bus access protection (implementation defined)
 		unsigned int bus_protect:7;
-		
+
 		///Debug software access enable (implementation defined)
 		unsigned int debug_sw_enable:1;
-		
+
 	} __attribute__ ((packed)) bits;
-	
+
 	///The raw status register value
 	uint32_t word;
 } __attribute__ ((packed));
@@ -88,7 +88,7 @@ class ARMAPBDevice;
 
 /**
 	@brief A memory mapped debug interface
-	
+
 	\ingroup libjtaghal
  */
 class ARMDebugMemAccessPort : public ARMDebugAccessPort
@@ -96,17 +96,17 @@ class ARMDebugMemAccessPort : public ARMDebugAccessPort
 public:
 	ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
 	virtual ~ARMDebugMemAccessPort();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Memory access
-	
+
 	uint32_t ReadWord(uint32_t addr);
-	
+
 	void WriteWord(uint32_t addr, uint32_t value);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
-	
+
 	enum AccessSize
 	{
 		ACCESS_BYTE		= 0,
@@ -114,32 +114,32 @@ public:
 		ACCESS_WORD		= 2,
 		ACCESS_INVALID	= 3,
 	};
-	
+
 	enum ComponentClass
 	{
 		CLASS_ROMTABLE = 1,
 		CLASS_CORESIGHT	= 9
 	};
-	
+
 	virtual void PrintStatusRegister();
-	
+
 	virtual std::string GetDescription();
-	
+
 	ARMDebugMemAPControlStatusWord GetStatusRegister();
-	
+
 	virtual bool IsEnabled();
-	
+
 protected:
 
 	void FindRootRomTable();
 	void LoadROMTable(uint32_t baseAddress);
-	
+
 	void ProcessDebugBlock(uint32_t base_address);
 
 	bool m_debugBusIsDedicated;
 	bool m_hasDebugRom;
 	uint32_t m_debugBaseAddress;
-	
+
 	///The list of devices found on the AP
 	std::vector<ARMAPBDevice*> m_debugDevices;
 };
