@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -36,7 +36,6 @@
 #ifndef ARMDebugPeripheralIDRegister_h
 #define ARMDebugPeripheralIDRegister_h
 
-#include <stdlib.h>
 
 /**
 	@brief ADI component ID register bitfield
@@ -47,31 +46,31 @@ public:
 
 	///Part number (TODO)
 	unsigned int partnum:12;
-	
+
 	///JEP106 identity code
 	unsigned int jep106_id:7;
-	
+
 	///Indicates if JEP106 code is valid
 	unsigned int jep106_used:1;
-	
+
 	///Peripheral revision number
 	unsigned int revnum:4;
-	
+
 	///Customer modification ID
 	unsigned int cust_mod:4;
-	
+
 	///Manufacturer rev number (stepping)
 	unsigned int revand:4;
-	
+
 	///JEP106 continuation code
 	unsigned int jep106_cont:4;
-	
+
 	///Log2(#4K address space blocks)
 	unsigned int log_4k_blocks:4;
-	
+
 	///Unmapped
 	unsigned int reserved_zero:24;
-	
+
 } __attribute__ ((packed));
 
 /**
@@ -81,7 +80,7 @@ union ARMDebugPeripheralIDRegister
 {
 	///The bitfield
 	ARMDebugPeripheralIDRegisterBits bits;
-	
+
 	///The raw status register value
 	uint64_t word;
 } __attribute__ ((packed));
