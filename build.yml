@@ -100,6 +100,8 @@ jtaghal:
         - XilinxSpartan6Device.cpp
 
         # Vendor devices
+        - ARMDebugPort.cpp
+        - ARMDebugMemAccessPort.cpp
         - XilinxFPGABitstream.cpp
         - Xilinx3DFPGABitstream.cpp
         - XilinxCPLDBitstream.cpp
