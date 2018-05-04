@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -49,34 +49,34 @@ union ARMDebugPortIDRegister
 	{
 		///Type of AP
 		unsigned int type:4;
-		
+
 		///Variant of AP
 		unsigned int variant:4;
-		
+
 		///Reserved, SBZ
 		unsigned int reserved_zero:8;
-		
+
 		///Class (1 = mem-AP, 0=not mem-AP)
 		unsigned int is_mem_ap:1;
-		
+
 		///Identity code (must be 0x3B)
 		unsigned int identity:7;
-		
+
 		///Continuation code (must be 0x4)
 		unsigned int continuation:4;
-		
+
 		///Revision of the AP design
 		unsigned int revision : 4;
-		
+
 	} __attribute__ ((packed)) bits;
-	
+
 	///The raw status register value
 	uint32_t word;
 } __attribute__ ((packed));
 
 /**
 	@brief An AP attached to an ADIv5 DP
-	
+
 	\ingroup libjtaghal
  */
 class ARMDebugAccessPort
@@ -84,7 +84,7 @@ class ARMDebugAccessPort
 public:
 	ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
 	virtual ~ARMDebugAccessPort();
-	
+
 	enum dap_type
 	{
 		DAP_JTAG = 0,
@@ -92,21 +92,21 @@ public:
 		DAP_APB = 2,
 		DAP_INVALID
 	};
-	
+
 	dap_type GetBusType()
 	{ return m_daptype; }
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
-	
+
 	virtual void PrintStatusRegister() =0;
 	virtual bool IsEnabled() =0;
-	
+
 	virtual std::string GetDescription() =0;
-	
+
 	ARMDebugPort* GetDebugPort()
 	{ return m_dp; }
-	
+
 protected:
 	ARMDebugPort* m_dp;
 	uint8_t m_apnum;

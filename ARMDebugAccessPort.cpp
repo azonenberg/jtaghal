@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -46,7 +46,7 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 	, m_id(id)
 {
 	m_daptype = (dap_type)id.bits.type;
-	
+
 	//Sanity checks
 	switch(id.bits.type)
 	{
@@ -59,9 +59,9 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 				JtagException::EXCEPTION_TYPE_GIGO);
 		}
 		break;
-	
+
 	case ARMDebugAccessPort::DAP_AHB:
-		
+
 		if(!id.bits.is_mem_ap)
 		{
 			throw JtagExceptionWrapper(
@@ -69,11 +69,11 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
 		}
-		
+
 		break;
-		
+
 	case ARMDebugAccessPort::DAP_APB:
-		
+
 		if(!id.bits.is_mem_ap)
 		{
 			throw JtagExceptionWrapper(
@@ -81,9 +81,9 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 				"",
 				JtagException::EXCEPTION_TYPE_GIGO);
 		}
-		
+
 		break;
-		
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown bus type",
@@ -95,5 +95,5 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 
 ARMDebugAccessPort::~ARMDebugAccessPort()
 {
-	
+
 }
