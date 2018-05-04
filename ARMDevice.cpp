@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -101,10 +101,7 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	switch(partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
-		LogError("Ignoring ARMDebugPort for now (not ported): %x, %x, %x, %zx, %p\n",
-			partnum, rev, idcode_raw, pos, iface);
-		//return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
-		return NULL;
+		return ARMDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
 
 	default:
 		throw JtagExceptionWrapper(
