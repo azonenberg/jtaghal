@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -44,7 +44,7 @@ class ARMDebugMemAccessPort;
 
 /**
 	@brief A device attached to an ARM APB bus (may be a debug core or something else)
-	
+
 	\ingroup libjtaghal
  */
 class ARMAPBDevice
@@ -52,26 +52,26 @@ class ARMAPBDevice
 public:
 	ARMAPBDevice(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
 	virtual ~ARMAPBDevice();
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 
 	virtual std::string GetDescription() =0;
-	
+
 protected:
 
 	///reads a register given the offset from our base address
 	uint32_t ReadRegisterByOffset(uint32_t offset);
-	
+
 	///reads a register given the index into a 32-bit register space
 	uint32_t ReadRegisterByIndex(uint32_t index);
 
 	///The Mem-AP
 	ARMDebugMemAccessPort* m_ap;
-	
+
 	///The peripheral ID register
 	ARMDebugPeripheralIDRegisterBits m_idreg;
-	
+
 	///Base address of the device
 	uint32_t m_address;
 };
