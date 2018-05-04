@@ -49,7 +49,7 @@ using namespace std;
 ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
 	: ARMAPBDevice(ap, address, idreg)
 {
-	printf("Cortex-A9 initializing at %08x\n", address);
+	LogDebug("Cortex-A9 initializing at %08x\n", address);
 
 	//Read the Debug ID register and extract flags
 	ARMv7DebugIDRegister did;
@@ -78,7 +78,7 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 
 	//Read DBGDSCR to get status stuff (TODO: make struct) for this
 	//uint32_t foo = ReadRegisterByIndex(DBGDSCR_EXT);
-	//printf("foo = %x\n", foo);
+	//LogDebug("foo = %x\n", foo);
 
 	//
 
@@ -86,7 +86,7 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 	//uint32_t pc = SampleProgramCounter();
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
 
-	//printf("    value = %08x\n", value);
+	//LogDebug("    value = %08x\n", value);
 }
 
 ARMCortexA9::~ARMCortexA9()
@@ -114,7 +114,7 @@ string ARMCortexA9::GetDescription()
 
 void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 {
-	printf("    Rev %u variant %u\n", did.bits.revision, did.bits.variant);
+	LogDebug("    Rev %u variant %u\n", did.bits.revision, did.bits.variant);
 
 	const char* arches[]=
 	{
@@ -136,23 +136,23 @@ void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 		"reserved f"
 	};
 
-	printf("    Arch %s\n", arches[did.bits.debug_arch_version]);
+	LogDebug("    Arch %s\n", arches[did.bits.debug_arch_version]);
 
 
 	if(did.bits.sec_ext)
 	{
-		printf("    Security extensions\n");
+		LogDebug("    Security extensions\n");
 		if(did.bits.sec_ext && did.bits.no_secure_halt)
-			printf("        (but no secure halt)\n");
+			LogDebug("        (but no secure halt)\n");
 	}
 	if(did.bits.pcsr_legacy_addr)
-		printf("    PCSR is at legacy address\n");
+		LogDebug("    PCSR is at legacy address\n");
 	if(did.bits.has_dbgdevid)
-		printf("    Has debug device ID\n");
+		LogDebug("    Has debug device ID\n");
 	//TODO: arch version
-	printf("    %d breakpoints (%d with context matching)\n",
+	LogDebug("    %d breakpoints (%d with context matching)\n",
 		did.bits.bpoints_minus_one+1, did.bits.context_bpoints_minus_one+1);
-	printf("    %d watchpoints\n", did.bits.wpoints_minus_one + 1);
+	LogDebug("    %d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

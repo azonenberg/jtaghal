@@ -101,6 +101,7 @@ jtaghal:
 
         # Vendor devices
         - ARMAPBDevice.cpp
+        - ARMCortexA9.cpp
         - ARMDebugPort.cpp
         - ARMDebugMemAccessPort.cpp
         - XilinxFPGABitstream.cpp
