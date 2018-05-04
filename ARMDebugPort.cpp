@@ -74,8 +74,7 @@ ARMDebugPort::ARMDebugPort(
 		{
 			throw JtagExceptionWrapper(
 				"Unknown ARM debug device (not designed by ARM Ltd)",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 
 		//If it's a JTAG-AP, skip it for now
@@ -116,12 +115,11 @@ JtagDevice* ARMDebugPort::CreateDevice(
 		return new ARMDebugPort(partnum, rev, idcode, iface, pos);
 
 	default:
-		fprintf(stderr, "ARMDebugPort::CreateDevice(partnum=%x, rev=%x, idcode=%08x)\n", partnum, rev, idcode);
+		LogError("ARMDebugPort::CreateDevice(partnum=%x, rev=%x, idcode=%08x)\n", partnum, rev, idcode);
 
 		throw JtagExceptionWrapper(
 			"Unknown ARM debug device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 }
 
@@ -134,7 +132,7 @@ void ARMDebugPort::EnableDebugging()
 	ARMDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
-		printf("    Error bit is set, clearing\n");
+		LogDebug("    Error bit is set, clearing\n");
 		ClearStatusRegisterErrors();
 	}
 
@@ -149,8 +147,7 @@ void ARMDebugPort::EnableDebugging()
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get ACK to system powerup request",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	//Power up the debug logic
@@ -164,8 +161,7 @@ void ARMDebugPort::EnableDebugging()
 	{
 		throw JtagExceptionWrapper(
 			"Failed to get ACK to debug powerup request",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 }
 
@@ -180,8 +176,7 @@ uint32_t ARMDebugPort::ReadMemory(uint32_t address)
 	{
 		throw JtagExceptionWrapper(
 			"Cannot read memory because there is no AHB MEM-AP",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	//Use the default Mem-AP to read it
@@ -196,8 +191,7 @@ void ARMDebugPort::WriteMemory(uint32_t address, uint32_t value)
 	{
 		throw JtagExceptionWrapper(
 			"Cannot write memory because there is no AHB MEM-AP",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	//Use the default Mem-AP to write it
@@ -220,8 +214,7 @@ std::string ARMDebugPort::GetDescription()
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown ARM device (ID code not in database)",
-			"",
-			JtagException::EXCEPTION_TYPE_GIGO);
+			"");
 	}
 
 	char srev[16];
@@ -235,23 +228,23 @@ std::string ARMDebugPort::GetDescription()
 
 void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg)
 {
-	printf("DAP status: %08x\n", reg.word);
-	printf("    Sys pwrup ack:     %u\n", reg.bits.sys_pwrup_ack);
-	printf("    Sys pwrup req:     %u\n", reg.bits.sys_pwrup_req);
-	printf("    Debug pwrup ack:   %u\n", reg.bits.debug_pwrup_ack);
-	printf("    Debug pwrup req:   %u\n", reg.bits.debug_pwrup_req);
-	printf("    Debug reset ack:   %u\n", reg.bits.debug_reset_ack);
-	printf("    Debug reset req:   %u\n", reg.bits.debug_reset_req);
+	LogDebug("DAP status: %08x\n", reg.word);
+	LogDebug("    Sys pwrup ack:     %u\n", reg.bits.sys_pwrup_ack);
+	LogDebug("    Sys pwrup req:     %u\n", reg.bits.sys_pwrup_req);
+	LogDebug("    Debug pwrup ack:   %u\n", reg.bits.debug_pwrup_ack);
+	LogDebug("    Debug pwrup req:   %u\n", reg.bits.debug_pwrup_req);
+	LogDebug("    Debug reset ack:   %u\n", reg.bits.debug_reset_ack);
+	LogDebug("    Debug reset req:   %u\n", reg.bits.debug_reset_req);
 	//ignore reserved
-	printf("    Transaction count: %u\n", reg.bits.trans_count);
-	printf("    Mask lane:         %u\n", reg.bits.mask_lane);
-	//printf("    Write error:       %u\n", reg.bits.wr_data_err);
-	//printf("    Read OK:           %u\n", reg.bits.read_ok);
-	printf("    Sticky error:      %u\n", reg.bits.sticky_err);
-	printf("    Sticky compare:    %u\n", reg.bits.sticky_compare);
-	printf("    Transfer mode:     %u\n", reg.bits.transfer_mode);
-	printf("    Sticky overrun:    %u\n", reg.bits.sticky_overrun);
-	printf("    Sticky overrun en: %u\n", reg.bits.sticky_overrun_en);
+	LogDebug("    Transaction count: %u\n", reg.bits.trans_count);
+	LogDebug("    Mask lane:         %u\n", reg.bits.mask_lane);
+	//LogDebug("    Write error:       %u\n", reg.bits.wr_data_err);
+	//LogDebug("    Read OK:           %u\n", reg.bits.read_ok);
+	LogDebug("    Sticky error:      %u\n", reg.bits.sticky_err);
+	LogDebug("    Sticky compare:    %u\n", reg.bits.sticky_compare);
+	LogDebug("    Transfer mode:     %u\n", reg.bits.transfer_mode);
+	LogDebug("    Sticky overrun:    %u\n", reg.bits.sticky_overrun);
+	LogDebug("    Sticky overrun en: %u\n", reg.bits.sticky_overrun_en);
 
 	for(auto x : m_aps)
 		x.second->PrintStatusRegister();
@@ -345,8 +338,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
 			"Failed to read AP register (still waiting after way too long",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	//Verify the read was successful
@@ -357,8 +349,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
 			"Failed to read AP register",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 
 	return data_out;
@@ -413,8 +404,7 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Send a dummy read to get the response code
@@ -425,8 +415,7 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Send some dummy data
@@ -442,8 +431,7 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
 			"Failed to write AP register",
-			"",
-			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
+			"");
 	}
 }
 
@@ -478,8 +466,7 @@ uint32_t ARMDebugPort::DPRegisterRead(DpReg addr)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Send some dummy data
@@ -514,8 +501,7 @@ void ARMDebugPort::DPRegisterWrite(DpReg addr, uint32_t wdata)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 	}
 
 	//Send some dummy data
