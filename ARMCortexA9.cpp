@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -50,7 +50,7 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 	: ARMAPBDevice(ap, address, idreg)
 {
 	printf("Cortex-A9 initializing at %08x\n", address);
-	
+
 	//Read the Debug ID register and extract flags
 	ARMv7DebugIDRegister did;
 	did.word = ReadRegisterByIndex(DBGDIDR);
@@ -66,32 +66,32 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 		m_pcsrIndex = DBGPCSR_LEGACY;
 	else
 		m_pcsrIndex = DBGPCSR;
-	
+
 	//Print it out
 	PrintIDRegister(did);
-	
+
 	//TODO: Write to DBGDRCR to halt the CPU (C11.11.17)
-	
+
 	//TODO: Write to DBGDSCCR to force write-through cache (C11.11.19)
-	
+
 	//DBGDEVID[3:0] 2226
-	
+
 	//Read DBGDSCR to get status stuff (TODO: make struct) for this
 	//uint32_t foo = ReadRegisterByIndex(DBGDSCR_EXT);
 	//printf("foo = %x\n", foo);
-	
+
 	//
-	
+
 	//Read the PC and dump the instruction at that address
 	//uint32_t pc = SampleProgramCounter();
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
-	
+
 	//printf("    value = %08x\n", value);
 }
 
 ARMCortexA9::~ARMCortexA9()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,14 +108,14 @@ string ARMCortexA9::GetDescription()
 		m_idreg.cust_mod,
 		m_idreg.revand
 		);
-	
+
 	return string(tmp);
 }
 
 void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 {
 	printf("    Rev %u variant %u\n", did.bits.revision, did.bits.variant);
-	
+
 	const char* arches[]=
 	{
 		"reserved 0",
@@ -135,10 +135,10 @@ void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 		"reserved e",
 		"reserved f"
 	};
-	
+
 	printf("    Arch %s\n", arches[did.bits.debug_arch_version]);
-	
-	
+
+
 	if(did.bits.sec_ext)
 	{
 		printf("    Security extensions\n");
