@@ -130,6 +130,7 @@
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
+#include "ARMDebugPort.h"
 #include "MicrochipMicrocontroller.h"
 #include "XilinxCPLD.h"
 #include "XilinxCPLDBitstream.h"

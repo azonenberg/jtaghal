@@ -55,8 +55,7 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 		{
 			throw JtagExceptionWrapper(
 				"JTAG-AP cannot be a MEM-AP",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 		break;
 
@@ -66,8 +65,7 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 		{
 			throw JtagExceptionWrapper(
 				"AHB bus must be a MEM-AP",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 
 		break;
@@ -78,8 +76,7 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 		{
 			throw JtagExceptionWrapper(
 				"APB bus must be a MEM-AP",
-				"",
-				JtagException::EXCEPTION_TYPE_GIGO);
+				"");
 		}
 
 		break;
@@ -87,8 +84,7 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown bus type",
-			"",
-			JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
+			"");
 		break;
 		}
 }
