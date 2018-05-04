@@ -103,6 +103,7 @@ jtaghal:
         - ARMAPBDevice.cpp
         - ARMCortexA9.cpp
         - ARMDebugPort.cpp
+        - ARMDebugAccessPort.cpp
         - ARMDebugMemAccessPort.cpp
         - XilinxFPGABitstream.cpp
         - Xilinx3DFPGABitstream.cpp
