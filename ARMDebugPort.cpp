@@ -55,19 +55,37 @@ ARMDebugPort::ARMDebugPort(
 	m_irlength = 4;
 
 	//No Mem-AP for now
-	m_defaultMemAP = NULL;
+	m_defaultMemAP 		= NULL;
+	m_defaultRegisterAP	= NULL;
 
 	//Turn on the debug stuff
 	EnableDebugging();
 
 	//Figure out how many APs we have
+	LogDebug("Searching for APs...\n");
 	uint8_t nap = 0;
 	for(; nap<255; nap++)
 	{
+		LogIndenter li;
+
 		ARMDebugPortIDRegister idr;
 		idr.word = APRegisterRead(nap, REG_IDR);
 		if(idr.word == 0)
 			break;
+
+		/*
+		LogDebug("Found AP with ID 0x%08x\n", idr.word);
+		{
+			LogIndenter li;
+			LogDebug("Type:         %x\n", idr.bits.type);
+			LogDebug("Variant:      %x\n", idr.bits.variant);
+			LogDebug("Reserved:     %x\n", idr.bits.reserved_zero);
+			LogDebug("Is mem AP:    %x\n", idr.bits.is_mem_ap);
+			LogDebug("Identity:     %x\n", idr.bits.identity);
+			LogDebug("Continuation: %x\n", idr.bits.continuation);
+			LogDebug("Revision:     %x\n", idr.bits.revision);
+		}
+		*/
 
 		//Sanity check that it's a valid ARM DAP
 		if( (idr.bits.continuation != 0x4) || (idr.bits.identity != 0x3b) )
@@ -78,8 +96,12 @@ ARMDebugPort::ARMDebugPort(
 		}
 
 		//If it's a JTAG-AP, skip it for now
+		//(this seems to be fpga config?)
 		if(!idr.bits.is_mem_ap)
+		{
+			LogDebug("Found JTAG-AP at index %d\n", nap);
 			continue;
+		}
 
 		//Create a new MEM-AP
 		else
@@ -87,11 +109,37 @@ ARMDebugPort::ARMDebugPort(
 			ARMDebugMemAccessPort* ap = new ARMDebugMemAccessPort(this, nap, idr);
 			m_aps[nap] = ap;
 
-			//If it's an AHB-AP, and we don't have a default Mem-AP, this one is probably RAM.
+			if(ap->GetBusType() == ARMDebugAccessPort::DAP_AHB)
+				LogDebug("Found AHB MEM-AP at index %d\n", nap);
+			else if(ap->GetBusType() == ARMDebugAccessPort::DAP_APB)
+				LogDebug("Found APB MEM-AP at index %d\n", nap);
+
+			//If it's an AHB Mem-AP, and we don't have a default Mem-AP, this one is probably RAM.
 			//Use it as our default AP.
 			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_AHB) && (m_defaultMemAP == NULL) )
+			{
+				LogIndenter li;
+				LogDebug("Using as default RAM Mem-AP\n");
 				m_defaultMemAP = ap;
+			}
+
+			//If it's an APB Mem-AP, and we don't have a default Mem-AP, this one is probably debug registers.
+			//Use it as our default AP.
+			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_APB) && (m_defaultRegisterAP == NULL) )
+			{
+				LogIndenter li;
+				LogDebug("Using as default register Mem-AP\n");
+				m_defaultRegisterAP = ap;
+			}
 		}
+	}
+
+	//Initialize each of the APs once they are all open
+	LogDebug("Initializing APs...\n");
+	{
+		LogIndenter li;
+		for(auto it : m_aps)
+			it.second->Initialize();
 	}
 }
 
@@ -139,6 +187,7 @@ void ARMDebugPort::EnableDebugging()
 	//Power up the system
 	stat.word = 0;
 	stat.bits.sys_pwrup_req = 1;
+	stat.bits.debug_pwrup_req = 1;
 	DPRegisterWrite(REG_CTRL_STAT, stat.word);
 
 	//Verify it powered up OK
@@ -149,14 +198,6 @@ void ARMDebugPort::EnableDebugging()
 			"Failed to get ACK to system powerup request",
 			"");
 	}
-
-	//Power up the debug logic
-	stat.word = 0;
-	stat.bits.debug_pwrup_req = 1;
-	DPRegisterWrite(REG_CTRL_STAT, stat.word);
-
-	//Verify it powered up OK
-	stat = GetStatusRegister();
 	if(!stat.bits.debug_pwrup_ack)
 	{
 		throw JtagExceptionWrapper(
@@ -198,6 +239,35 @@ void ARMDebugPort::WriteMemory(uint32_t address, uint32_t value)
 	m_defaultMemAP->WriteWord(address, value);
 }
 
+uint32_t ARMDebugPort::ReadDebugRegister(uint32_t address)
+{
+	//Sanity check
+	if(m_defaultRegisterAP == NULL)
+	{
+		throw JtagExceptionWrapper(
+			"Cannot read register because there is no APB MEM-AP",
+			"");
+	}
+
+	//Use the default Mem-AP to read it
+	return m_defaultRegisterAP->ReadWord(address);
+}
+
+///Writes a single 32-bit word of memory
+void ARMDebugPort::WriteDebugRegister(uint32_t address, uint32_t value)
+{
+	//Sanity check
+	if(m_defaultRegisterAP == NULL)
+	{
+		throw JtagExceptionWrapper(
+			"Cannot write register because there is no APB MEM-AP",
+			"");
+	}
+
+	//Use the default Mem-AP to write it
+	m_defaultRegisterAP->WriteWord(address, value);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device info
 
@@ -226,7 +296,7 @@ std::string ARMDebugPort::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Chain querying
 
-void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg)
+void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg, bool children)
 {
 	LogDebug("DAP status: %08x\n", reg.word);
 	LogDebug("    Sys pwrup ack:     %u\n", reg.bits.sys_pwrup_ack);
@@ -240,14 +310,17 @@ void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg)
 	LogDebug("    Mask lane:         %u\n", reg.bits.mask_lane);
 	//LogDebug("    Write error:       %u\n", reg.bits.wr_data_err);
 	//LogDebug("    Read OK:           %u\n", reg.bits.read_ok);
-	LogDebug("    Sticky error:      %u\n", reg.bits.sticky_err);
+	LogDebug("    Sticky err:        %u\n", reg.bits.sticky_err);
 	LogDebug("    Sticky compare:    %u\n", reg.bits.sticky_compare);
 	LogDebug("    Transfer mode:     %u\n", reg.bits.transfer_mode);
 	LogDebug("    Sticky overrun:    %u\n", reg.bits.sticky_overrun);
 	LogDebug("    Sticky overrun en: %u\n", reg.bits.sticky_overrun_en);
 
-	for(auto x : m_aps)
-		x.second->PrintStatusRegister();
+	if(children)
+	{
+		for(auto x : m_aps)
+			x.second->PrintStatusRegister();
+	}
 }
 
 /**
@@ -289,7 +362,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 
 	//Poll until we get a good read back
 	int i = 0;
-	int nmax = 100;
+	int nmax = 50;
 	for(; i<nmax; i++)
 	{
 		//Send the 3-bit A / RnW field to request the read
@@ -299,15 +372,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		m_iface->EnterShiftDR();
 		m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
 		if(ack_out != OK_OR_FAULT)
-		{
-			//ignore it, the previous request generated a wait or something
-			/*
-			throw JtagExceptionWrapper(
-				"Don't know what to do with WAIT request from DAP",
-				"",
-				JtagException::EXCEPTION_TYPE_UNIMPLEMENTED);
-			*/
-		}
+			LogWarning("Don't know what to do with WAIT request from DAP\n");
 
 		//Send some dummy data
 		unsigned char unused[4] = {0};
@@ -328,8 +393,12 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 			break;
 
 		//No go? Try again after a millisecond
+		if(i == 0)
+			LogDebug("No go, trying again after 1 ms\n");
 		usleep(1 * 1000);
 	}
+	if(i > 0)
+		LogDebug("Poll ended after %d ms\n", i);
 
 	//Give up if we still got nothing
 	if(i == nmax)
@@ -337,7 +406,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		DebugAbort();
 		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
-			"Failed to read AP register (still waiting after way too long",
+			"Failed to read AP register (still waiting after way too long)",
 			"");
 	}
 
@@ -345,11 +414,18 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 	ARMDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
+		LogError("Something went wrong (sticky error bit set when reading AP %d register %d)\n", ap, addr);
+		PrintStatusRegister(stat, false);
+
 		DebugAbort();
 		ClearStatusRegisterErrors();
+
+		//
+
 		throw JtagExceptionWrapper(
 			"Failed to read AP register",
 			"");
+		exit(1);
 	}
 
 	return data_out;
@@ -427,6 +503,10 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	ARMDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
+		LogError("Write of %08x to register %x on AP %d failed\n",
+			wdata, addr, ap);
+		m_aps[ap]->PrintStatusRegister();
+
 		DebugAbort();
 		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(

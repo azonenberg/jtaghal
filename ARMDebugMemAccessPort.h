@@ -70,10 +70,13 @@ union ARMDebugMemAPControlStatusWord
 		unsigned int secure_priv_debug:1;
 
 		///Bus access protection (implementation defined)
-		unsigned int bus_protect:7;
+		unsigned int bus_protect:6;
 
-		///Debug software access enable (implementation defined)
-		unsigned int debug_sw_enable:1;
+		///Secure transfer (high=nonsecure)
+		unsigned int nonsecure_transfer:1;
+
+		//Reserved, should be zero
+		unsigned int reserved_zero_3 : 1;
 
 	} __attribute__ ((packed)) bits;
 
@@ -96,6 +99,9 @@ class ARMDebugMemAccessPort : public ARMDebugAccessPort
 public:
 	ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
 	virtual ~ARMDebugMemAccessPort();
+
+	//Called after all other Mem-APs are up
+	virtual void Initialize();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Memory access

@@ -85,6 +85,8 @@ public:
 	ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
 	virtual ~ARMDebugAccessPort();
 
+	virtual void Initialize() =0;
+
 	enum dap_type
 	{
 		DAP_JTAG = 0,

@@ -63,14 +63,21 @@ ARMDebugMemAccessPort::ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, AR
 			"Invalid DAP type",
 			"");
 	}
+}
 
+void ARMDebugMemAccessPort::Initialize()
+{
 	//If we're enabled, try to load the ROM (if any)
 	ARMDebugMemAPControlStatusWord csw = GetStatusRegister();
 	if(csw.bits.enable)
 	{
+		LogDebug("Searching for debug ROMs in AP %d (%s)...\n", m_apnum, (m_daptype == DAP_AHB) ? "AHB" : "APB");
+		LogIndenter li;
 		FindRootRomTable();
 		if(m_hasDebugRom)
 			LoadROMTable(m_debugBaseAddress);
+		else
+			LogDebug("No debug ROM found\n");
 	}
 
 	//Looks like the AHB DAP for Zynq is used for main system memory access
@@ -96,18 +103,20 @@ bool ARMDebugMemAccessPort::IsEnabled()
 void ARMDebugMemAccessPort::PrintStatusRegister()
 {
 	ARMDebugMemAPControlStatusWord csw = GetStatusRegister();
-	LogDebug("    Status register for AP %u:\n", m_apnum);
+	LogIndenter li;
+	LogDebug("Status register for AP %u:\n", m_apnum);
+	LogIndenter li2;
 	if(csw.bits.size >= ACCESS_INVALID)
-		LogDebug("        Size          : UNDEFINED\n");
+		LogDebug("Size               : UNDEFINED\n");
 	else
-		LogDebug("        Size          : %s\n", g_cswLenNames[csw.bits.size]);
-	LogDebug("        Auto inc      : %u\n", csw.bits.auto_increment);
-	LogDebug("        Enable        : %u\n", csw.bits.enable);
-	LogDebug("        Busy          : %u\n", csw.bits.busy);
-	LogDebug("        Mode          : %u\n", csw.bits.mode);
-	LogDebug("        Secure debug  : %u\n", csw.bits.secure_priv_debug);
-	LogDebug("        Bus protection: %u\n", csw.bits.bus_protect);
-	LogDebug("        Debug SW      : %u\n", csw.bits.debug_sw_enable);
+		LogDebug("Size               : %s\n", g_cswLenNames[csw.bits.size]);
+	LogDebug("Auto inc           : %u\n", csw.bits.auto_increment);
+	LogDebug("Enable             : %u\n", csw.bits.enable);
+	LogDebug("Busy               : %u\n", csw.bits.busy);
+	LogDebug("Mode               : %u\n", csw.bits.mode);
+	LogDebug("Secure debug       : %u\n", csw.bits.secure_priv_debug);
+	LogDebug("Bus protection     : %u\n", csw.bits.bus_protect);
+	LogDebug("Nonsecure transfer : %u\n", csw.bits.nonsecure_transfer);
 }
 
 string ARMDebugMemAccessPort::GetDescription()
@@ -134,11 +143,13 @@ uint32_t ARMDebugMemAccessPort::ReadWord(uint32_t addr)
 	return m_dp->APRegisterRead(m_apnum, ARMDebugPort::REG_MEM_DRW);
 }
 
-void ARMDebugMemAccessPort::WriteWord(uint32_t /*addr*/, uint32_t /*value*/)
+void ARMDebugMemAccessPort::WriteWord(uint32_t addr, uint32_t value)
 {
-	throw JtagExceptionWrapper(
-		"WriteWord() not yet implemented",
-		"");
+	//Write the address
+	m_dp->APRegisterWrite(m_apnum, ARMDebugPort::REG_MEM_TAR, addr);
+
+	//Write data
+	m_dp->APRegisterWrite(m_apnum, ARMDebugPort::REG_MEM_DRW, value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,6 +188,9 @@ void ARMDebugMemAccessPort::FindRootRomTable()
 
 void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 {
+	LogDebug("Loading ROM table at address %08x\n", baseAddress);
+	LogIndenter li;
+
 	//Read ROM table entries until we get to an invalid one
 	for(int i=0; i<960; i++)
 	{
@@ -247,8 +261,11 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 
 			//Additional ROM table
 			case CLASS_ROMTABLE:
-				//LogDebug("Found extra ROM table at 0x%08x, loading\n", address);
-				LoadROMTable(address);
+				{
+					LogDebug("Found extra ROM table at 0x%08x, loading\n", address);
+					LogIndenter li;
+					LoadROMTable(address);
+				}
 				break;
 
 			//Don't know what to do with anything else
@@ -298,9 +315,10 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 			"");
 	}
 
-	//unsigned int blockcount = (1 << reg.bits.log_4k_blocks);
-	//LogDebug("Found debug component at %08x (rev/mod/step %u/%u/%u, %u 4KB pages)\n",
-	//	base_address, reg.bits.revnum, reg.bits.cust_mod, reg.bits.revand, blockcount);
+	unsigned int blockcount = (1 << reg.bits.log_4k_blocks);
+	LogDebug("Found debug component at %08x (rev/mod/step %u/%u/%u, %u 4KB pages)\n",
+		base_address, reg.bits.revnum, reg.bits.cust_mod, reg.bits.revand, blockcount);
+	LogIndenter li;
 
 	//Check IDCODE for Xilinx
 	if( (reg.bits.jep106_cont == 0x00) && (reg.bits.jep106_id == 0x49) )
@@ -310,12 +328,12 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 		//See Xilinx UG585 page 729 table 28-5
 		if(reg.bits.partnum == 0x001)
 		{
-			//LogDebug("    Xilinx Fabric Trace Monitor\n");
+			LogDebug("Xilinx Fabric Trace Monitor\n");
 		}
 
 		//unknown, skip it
 		else
-			LogWarning("    Unknown Xilinx device (part number 0x%x)\n", reg.bits.partnum);
+			LogWarning("Unknown Xilinx device (part number 0x%x)\n", reg.bits.partnum);
 
 	}
 
@@ -325,37 +343,37 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 		switch(reg.bits.partnum)
 		{
 			case 0x906:
-				//LogDebug("    CoreSight Cross Trigger Interface\n");
+				LogDebug("CoreSight Cross Trigger Interface\n");
 				break;
 
 			case 0x907:
-				//LogDebug("    CoreSight Embedded Trace Buffer\n");
+				LogDebug("CoreSight Embedded Trace Buffer\n");
 				break;
 
 			case 0x908:
-				//LogDebug("    CoreSight Trace Funnel\n");
+				LogDebug("CoreSight Trace Funnel\n");
 				break;
 
 			case 0x912:
-				//LogDebug("    CoreSight Trace Port Interface Unit\n");
+				LogDebug("CoreSight Trace Port Interface Unit\n");
 				break;
 
 			//ID is 913, not 914. CoreSight Components TRM is wrong.
 			//See ARM #TAC650738
 			case 0x913:
-				//LogDebug("    CoreSight Instrumentation Trace Macrocell\n");
+				LogDebug("CoreSight Instrumentation Trace Macrocell\n");
 				break;
 
 			case 0x914:
-				//LogDebug("    CoreSight Serial Wire Output\n");
+				LogDebug("CoreSight Serial Wire Output\n");
 				break;
 
 			case 0x950:
-				//LogDebug("    Cortex-A9 Program Trace Macrocell\n");
+				LogDebug("Cortex-A9 Program Trace Macrocell\n");
 				break;
 
 			case 0x9A0:
-				//LogDebug("    Cortex-A9 Performance Monitoring Unit\n");
+				LogDebug("Cortex-A9 Performance Monitoring Unit\n");
 				break;
 
 			case 0xC09:
@@ -367,7 +385,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 				break;
 
 			default:
-				LogWarning("    Unknown ARM device (part number 0x%x)\n", reg.bits.partnum);
+				LogWarning("Unknown ARM device (part number 0x%x)\n", reg.bits.partnum);
 				break;
 		}
 	}
@@ -375,13 +393,13 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 	//Check IDCODE for Switchcore (?)
 	else if( (reg.bits.jep106_cont == 0x03) && (reg.bits.jep106_id == 0x09) )
 	{
-		//LogWarning("    Unknown Switchcore device (part number 0x%x)\n", reg.bits.partnum);
+		//LogWarning("Unknown Switchcore device (part number 0x%x)\n", reg.bits.partnum);
 	}
 
 	//Unknown vendor
 	else
 	{
-		LogWarning("    Unknown device (JEP106 %u:%x, part number 0x%x)\n",
+		LogWarning("Unknown device (JEP106 %u:%x, part number 0x%x)\n",
 			reg.bits.jep106_cont, reg.bits.jep106_id, reg.bits.partnum);
 	}
 }

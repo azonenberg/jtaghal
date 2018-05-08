@@ -70,6 +70,8 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 	//Print it out
 	PrintIDRegister(did);
 
+	//DBGDSMCR turn off MMU
+
 	//TODO: Write to DBGDRCR to halt the CPU (C11.11.17)
 
 	//TODO: Write to DBGDSCCR to force write-through cache (C11.11.19)
@@ -77,13 +79,28 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 	//DBGDEVID[3:0] 2226
 
 	//Read DBGDSCR to get status stuff (TODO: make struct) for this
-	//uint32_t foo = ReadRegisterByIndex(DBGDSCR_EXT);
-	//LogDebug("foo = %x\n", foo);
+	//uint32_t dbgdscr = ReadRegisterByIndex(DBGDSCR_EXT);
+	//LogDebug("DBGDSCR = %x\n", dbgdscr);
 
-	//
+	//Pins of interest are MIO bank 1, pins 50/51
+
+	//Read PSS_IDCODE
+	//uint32_t pss_idcode = ReadMemory(0xF8000530);
+	//uint32_t pss_idcode = m_ap->ReadWord(0xF8000530);
+	//LogDebug("pss_idcode = %08x\n", pss_idcode);
+
+	//MIO LED @ MIO7
+	//MIO inputs at MIO50, 51
+	//GPIO controller is at 0xe0000000
+	//Read DIRM to see what
+	//Read DATA_RO?
+
+	//Read L0_SEL
+
 
 	//Read the PC and dump the instruction at that address
-	//uint32_t pc = SampleProgramCounter();
+	uint32_t pc = SampleProgramCounter();
+	LogDebug("PC = %08x\n", pc);
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
 
 	//LogDebug("    value = %08x\n", value);

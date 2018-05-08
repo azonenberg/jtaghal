@@ -147,13 +147,19 @@ public:
 	virtual std::string GetDescription();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Memory access
+	// Memory access via AHB
 
 	///Read a single 32-bit word of memory (TODO support smaller sizes)
 	virtual uint32_t ReadMemory(uint32_t address);
 
 	///Writes a single 32-bit word of memory (TODO support smaller sizes)
 	virtual void WriteMemory(uint32_t address, uint32_t value);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debug register access via APB
+
+	virtual uint32_t ReadDebugRegister(uint32_t address);
+	virtual void WriteDebugRegister(uint32_t address, uint32_t value);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for debug port manipulation
@@ -183,18 +189,18 @@ public:
 	//Well-defined AP registers
 	enum ApReg
 	{
-		REG_MEM_CSW	 = 0x00,
-		REG_MEM_TAR  = 0x04,
-		REG_MEM_DRW  = 0x0C,
-		REG_MEM_BASE = 0xF8,
+		REG_MEM_CSW		= 0x00,	//Control/status word
+		REG_MEM_TAR		= 0x04,	//Transfer address register
+		REG_MEM_DRW		= 0x0C,	//Data read/write
+		REG_MEM_BASE	= 0xF8,	//Location of debug ROM
 
-		REG_IDR		= 0xFC
+		REG_IDR			= 0xFC	//ID code
 	};
 
 protected:
 	ARMDebugPortStatusRegister GetStatusRegister();
 	void ClearStatusRegisterErrors();
-	void PrintStatusRegister(ARMDebugPortStatusRegister reg);
+	void PrintStatusRegister(ARMDebugPortStatusRegister reg, bool children = true);
 
 	uint32_t DPRegisterRead(DpReg addr);
 	void DPRegisterWrite(DpReg addr, uint32_t wdata);
@@ -231,6 +237,9 @@ protected:
 
 	///The default Mem-AP used for memory access
 	ARMDebugMemAccessPort* m_defaultMemAP;
+
+	//The default Mem-AP used for debug register access
+	ARMDebugMemAccessPort* m_defaultRegisterAP;
 };
 
 #endif
