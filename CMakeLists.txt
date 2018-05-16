@@ -22,6 +22,7 @@ set(JTAGHAL_SOURCES
     JtagInterface.cpp
     DigilentJtagInterface.cpp
     FTDIJtagInterface.cpp
+    FTDIFreeJtagInterface.cpp
     NetworkedJtagInterface.cpp
     PipeJtagInterface.cpp
     ARMDevice.cpp
@@ -47,6 +48,9 @@ target_link_libraries(jtaghal log)
 target_link_libraries(jtaghal xptools)
 if(FTD2XX_LIB)
     target_link_libraries(jtaghal ftd2xx)
+endif()
+if(LIBFTDI_LIB)
+    target_link_libraries(jtaghal ftdi1)
 endif()
 set_property(TARGET jtaghal PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET log PROPERTY POSITION_INDEPENDENT_CODE ON)
