@@ -117,11 +117,11 @@ string JtagException::GetDescription() const
 		temp_buf,
 		sizeof(temp_buf)-1,
 		"JtagException object thrown from %s\n"
-		"    File         : %s\n"
-		"    Line         : %d\n"
-		"    Library error: %s\n"
-		"    System error : %s\n"
-		"    Message      : %s\n",
+		"    File        : %s\n"
+		"    Line        : %d\n"
+		"    Library err : %s\n"
+		"    System err  : %s\n"
+		"    Message     : %s\n",
 			m_prettyfunction.c_str(),
 			shortfile.c_str(),
 			m_line,

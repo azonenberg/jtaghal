@@ -63,7 +63,7 @@ class FTDIJtagInterface : public JtagInterface
 						, public GPIOInterface
 {
 public:
-	FTDIJtagInterface(const std::string& serial);
+	FTDIJtagInterface(const std::string& serial, const std::string& layout);
 	virtual ~FTDIJtagInterface();
 
 	static int GetDefaultFrequency(int index);
@@ -105,7 +105,7 @@ protected:
 	std::vector<unsigned char> m_writeBuffer;
 
 protected:
-	void SharedCtorInit(uint32_t type);
+	void SharedCtorInit(uint32_t type, const std::string& layout);
 
 protected:
 	///@brief Cached name of this adapter
