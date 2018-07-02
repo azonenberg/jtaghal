@@ -230,6 +230,10 @@ protected:
 	std::vector<JtagDevice*> m_devices;
 
 	//Performance profiling
+
+	//Debug helpers
+	void PrintChainFaultMessage();
+
 protected:
 	///Number of shift operations performed on this interface
 	size_t m_perfShiftOps;

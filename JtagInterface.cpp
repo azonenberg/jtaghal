@@ -227,6 +227,18 @@ void JtagInterface::LeaveExit1DR()
 // High-level JTAG interface
 
 /**
+	@brief Prints an error when we fail to initialize the scan chain
+ */
+void JtagInterface::PrintChainFaultMessage()
+{
+	LogNotice("Failed to initialize the JTAG chain. Possible causes:\n");
+	LogNotice("* Target is not powered\n");
+	LogNotice("* Target has JTAG disabled\n");
+	LogNotice("* Target is connected incorrectly\n");
+	LogNotice("* JTAG adapter is not working correctly\n");
+}
+
+/**
 	@brief Initializes the scan chain and gets the number of devices present
 
 	Assumes less than 1024 bits of total IR length.
@@ -249,8 +261,9 @@ void JtagInterface::InitializeChain()
 	ShiftData(false, lots_of_zeros, temp, 1024);
 	if(0 != (temp[127] & 0x80))
 	{
+		PrintChainFaultMessage();
 		throw JtagExceptionWrapper(
-			"TDO is still 1 after 1024 clocks of TDI=0 in SHIFT-IR state, possible board fault",
+			"TDO is stuck at 1 after 1024 clocks of TDI=0 in SHIFT-IR state.\n"
 			"");
 	}
 
@@ -258,8 +271,9 @@ void JtagInterface::InitializeChain()
 	ShiftData(true, lots_of_ones, temp, 1024);
 	if(0 == (temp[127] & 0x80))
 	{
+		PrintChainFaultMessage();
 		throw JtagExceptionWrapper(
-			"TDO is still 0 after 1024 clocks of TDI=1 in SHIFT-IR state, possible board fault",
+			"TDO is stuck at 0 after 1024 clocks of TDI=1 in SHIFT-IR state, possible board fault.\n",
 			"");
 	}
 	LeaveExit1IR();
@@ -271,8 +285,9 @@ void JtagInterface::InitializeChain()
 	//Sanity check that we got a zero bit back
 	if(0 != (temp[127] & 0x80))
 	{
+		PrintChainFaultMessage();
 		throw JtagExceptionWrapper(
-			"TDO is still 1 after 1024 clocks in SHIFT-DR state, possible board fault",
+			"TDO is stuck at 1 after 1024 clocks in SHIFT-DR state, possible board fault.\n",
 			"");
 	}
 
@@ -310,7 +325,6 @@ void JtagInterface::InitializeChain()
 		if(!(idcode & 0x1))
 		{
 			LogError("Invalid IDCODE %08x at index %zu.\n", idcode, i);
-			LogNotice("Check that JTAG is enabled, correctly connected, and all devices have power.\n");
 			throw JtagExceptionWrapper(
 				"Devices without IDCODE are not supported.",
 				"");
