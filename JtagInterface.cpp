@@ -263,7 +263,7 @@ void JtagInterface::InitializeChain()
 	{
 		PrintChainFaultMessage();
 		throw JtagExceptionWrapper(
-			"TDO is stuck at 1 after 1024 clocks of TDI=0 in SHIFT-IR state.\n"
+			"TDO is stuck at 1 after 1024 clocks of TDI=0 in SHIFT-IR state.\n",
 			"");
 	}
 
@@ -277,6 +277,15 @@ void JtagInterface::InitializeChain()
 			"");
 	}
 	LeaveExit1IR();
+
+	//See how many zeroes we got back (this should be # of total IR bits?)
+	int irsize = 0;
+	for(; irsize<1024; irsize++)
+	{
+		if(PeekBit(temp, irsize))
+			break;
+	}
+	LogDebug("Found %d total IR bits\n", irsize);
 
 	//Shift zeros into everyone's DR
 	EnterShiftDR();

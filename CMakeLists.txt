@@ -1,14 +1,17 @@
 # CMake build script for jtaghal.
 # Intended to be integrated into a larger project, not built standalone.
 
-set(JTAGHAL_SOURCES 
+set(JTAGHAL_SOURCES
 	jtaghal.cpp
+
 	JtagException.cpp
+
     FirmwareImage.cpp
     ByteArrayFirmwareImage.cpp
     RawBinaryFirmwareImage.cpp
     CPLDBitstream.cpp
     FPGABitstream.cpp
+
     DebuggableDevice.cpp
     ProgrammableDevice.cpp
     ProgrammableLogicDevice.cpp
@@ -17,6 +20,7 @@ set(JTAGHAL_SOURCES
     FPGA.cpp
     JtagFPGA.cpp
     Microcontroller.cpp
+
     DebuggerInterface.cpp
     GPIOInterface.cpp
     JtagInterface.cpp
@@ -24,10 +28,18 @@ set(JTAGHAL_SOURCES
     FTDIJtagInterface.cpp
     NetworkedJtagInterface.cpp
     PipeJtagInterface.cpp
+
+    ARMAPBDevice.cpp
+    ARMCortexA9.cpp
+    ARMDebugAccessPort.cpp
+    ARMDebugMemAccessPort.cpp
+    ARMDebugPort.cpp
     ARMDevice.cpp
+
     MicrochipDevice.cpp
     MicrochipMicrocontroller.cpp
     MicrochipPIC32Device.cpp
+
     XilinxDevice.cpp
     XilinxCPLD.cpp
     XilinxCoolRunnerIIDevice.cpp
