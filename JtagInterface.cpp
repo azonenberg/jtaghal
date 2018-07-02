@@ -74,6 +74,8 @@ JtagInterface::~JtagInterface()
 /**
 	@brief Creates a default JTAG interface on a best-effort basis.
 
+	TODO: This is too prone to failure, remove and require manual configuration?
+
 	First, the JTAGD_HOST environment variable is checked. If it exists, and is a string of the form host:port, then
 	a NetworkedJtagInterface is returned, connecting to that host:port.
 
@@ -113,13 +115,13 @@ JtagInterface* JtagInterface::CreateDefaultInterface()
 	#endif	//#ifdef HAVE_DJTG
 
 	#ifdef HAVE_FTD2XX
-		//Create an FTDIJtagInterface on the first port we can find
+		//Create an FTDIJtagInterface on the first port we can find and assume it's a HS1
 		int nftdi = FTDIJtagInterface::GetInterfaceCount();
 		if(nftdi == 0)
 			return NULL;
 		string serial = FTDIJtagInterface::GetSerialNumber(nftdi);
 		if(serial != "")
-			return new FTDIJtagInterface(serial);
+			return new FTDIJtagInterface(serial, "hs1");
 	#endif
 
 	//No interfaces found
@@ -307,9 +309,10 @@ void JtagInterface::InitializeChain()
 		//TODO: Support devices not implementing IDCODE
 		if(!(idcode & 0x1))
 		{
-			LogError("Bad IDCODE %08x at index %zu\n", idcode, i);
+			LogError("Invalid IDCODE %08x at index %zu.\n", idcode, i);
+			LogNotice("Check that JTAG is enabled, correctly connected, and all devices have power.\n");
 			throw JtagExceptionWrapper(
-				"Devices without IDCODE are not supported",
+				"Devices without IDCODE are not supported.",
 				"");
 		}
 	}

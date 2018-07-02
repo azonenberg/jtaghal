@@ -147,7 +147,7 @@ bool FTDIJtagInterface::IsJtagCapable(int index)
 			"");
 	}
 
-	//printf("device %d type %d desc %s serial %s flags %d\n", index, type, desc, serial, flags);
+	LogDebug("device %d type %d desc %s serial %s flags %d\n", index, type, desc, serial, flags);
 	//return true;
 
 	if( (type == FT_DEVICE_2232H) || (type == FT_DEVICE_4232H) || (type == FT_DEVICE_232H) )
@@ -217,8 +217,9 @@ int FTDIJtagInterface::GetDefaultFrequency(int /*index*/)
 	@throw JtagException if the connection could not be establishes or the serial number is invalid
 
 	@param serial		Serial number of the device to connect to
+	@param layout		Adapter layout to use
  */
-FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
+FTDIJtagInterface::FTDIJtagInterface(const std::string& serial, const std::string& layout)
 {
 	//Enable use of azonenberg's custom PID
 	FT_STATUS err = FT_OK;
@@ -259,13 +260,13 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial)
 	m_freq = 10000000;
 
 	//Do the real init
-	SharedCtorInit(type);
+	SharedCtorInit(type, layout);
 }
 
 /**
 	@brief Shared initialization used by all constructors
  */
-void FTDIJtagInterface::SharedCtorInit(uint32_t type)
+void FTDIJtagInterface::SharedCtorInit(uint32_t type, const std::string& layout)
 {
 	FT_STATUS err = FT_OK;
 
@@ -423,14 +424,36 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type)
 	Commit();
 
 	//Initialize the GPIO pins
-	//GPIOL3 has to be high by default in order to enable outputs in HS1 and usb-jtag-mini boards
+	//Start out by making everything inputs
+	//TODO: have matching "tristate jtag pins on shutdown" config?
 	for(int i=0; i<12; i++)
 	{
 		m_gpioValue.push_back(false);
 		m_gpioDirection.push_back(false);
 	}
-	SetGpioDirectionDeferred(3, true);
-	SetGpioValueDeferred(3, true);
+
+	//Digilent HS1 and azonenberg's usb-jtag-mini (0403:8028): GPIOL3 is active HIGH output enable
+	if(layout == "hs1")
+	{
+		SetGpioDirectionDeferred(3, true);
+		SetGpioValueDeferred(3, true);
+	}
+
+	//JTAGKey (or compatible bus blaster etc): GPIOL0 is active LOW output enable
+	else if(layout == "jtagkey")
+	{
+		SetGpioDirectionDeferred(0, true);
+		SetGpioValueDeferred(0, false);
+	}
+
+	else
+	{
+		throw JtagExceptionWrapper(
+			string("Unrecognized FTDI layout ") + layout,
+			"");
+	}
+
+	//Push GPIO config to activate outputs
 	WriteGpioState();
 
 	//Set timeouts
