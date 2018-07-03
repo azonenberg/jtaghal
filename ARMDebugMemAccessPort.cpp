@@ -262,7 +262,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 			//Additional ROM table
 			case CLASS_ROMTABLE:
 				{
-					LogDebug("Found extra ROM table at 0x%08x, loading\n", address);
+					LogDebug("Found extra ROM table at %08x, loading\n", address);
 					LogIndenter li;
 					LoadROMTable(address);
 				}
@@ -270,7 +270,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 
 			//Don't know what to do with anything else
 			default:
-				LogWarning("Found unknown component class 0x%x, skipping\n", ccls);
+				LogWarning("Found unknown component class %x, skipping\n", ccls);
 				throw JtagExceptionWrapper(
 					"Unknown debug component class",
 					"");
@@ -316,7 +316,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 	}
 
 	unsigned int blockcount = (1 << reg.bits.log_4k_blocks);
-	LogDebug("Found debug component at %08x (rev/mod/step %u/%u/%u, %u 4KB pages)\n",
+	LogDebug("Found debug component at %08x (rev %u.%u.%u, %u 4KB pages)\n",
 		base_address, reg.bits.revnum, reg.bits.cust_mod, reg.bits.revand, blockcount);
 	LogIndenter li;
 

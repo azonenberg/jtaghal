@@ -49,7 +49,8 @@ using namespace std;
 ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
 	: ARMAPBDevice(ap, address, idreg)
 {
-	LogDebug("Cortex-A9 initializing at %08x\n", address);
+	LogDebug("Found ARM Cortex-A9 at %08x, probing...\n", address);
+	LogIndenter li;
 
 	//Read the Debug ID register and extract flags
 	ARMv7DebugIDRegister did;
@@ -131,7 +132,7 @@ string ARMCortexA9::GetDescription()
 
 void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 {
-	LogDebug("    Rev %u variant %u\n", did.bits.revision, did.bits.variant);
+	LogDebug("CPU rev %u variant %u\n", did.bits.revision, did.bits.variant);
 
 	const char* arches[]=
 	{
@@ -153,23 +154,23 @@ void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 		"reserved f"
 	};
 
-	LogDebug("    Arch %s\n", arches[did.bits.debug_arch_version]);
+	LogDebug("Arch %s\n", arches[did.bits.debug_arch_version]);
 
 
 	if(did.bits.sec_ext)
 	{
-		LogDebug("    Security extensions\n");
+		LogDebug("Security extensions\n");
 		if(did.bits.sec_ext && did.bits.no_secure_halt)
-			LogDebug("        (but no secure halt)\n");
+			LogDebug("    (but no secure halt)\n");
 	}
 	if(did.bits.pcsr_legacy_addr)
-		LogDebug("    PCSR is at legacy address\n");
+		LogDebug("PCSR is at legacy address\n");
 	if(did.bits.has_dbgdevid)
-		LogDebug("    Has debug device ID\n");
+		LogDebug("Has debug device ID\n");
 	//TODO: arch version
-	LogDebug("    %d breakpoints (%d with context matching)\n",
+	LogDebug("%d breakpoints (%d with context matching)\n",
 		did.bits.bpoints_minus_one+1, did.bits.context_bpoints_minus_one+1);
-	LogDebug("    %d watchpoints\n", did.bits.wpoints_minus_one + 1);
+	LogDebug("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

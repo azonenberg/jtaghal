@@ -247,6 +247,8 @@ void JtagInterface::PrintChainFaultMessage()
  */
 void JtagInterface::InitializeChain()
 {
+	LogIndenter li;
+
 	unsigned char lots_of_ones[128];
 	memset(lots_of_ones, 0xff, sizeof(lots_of_ones));
 	unsigned char lots_of_zeros[128];
@@ -312,8 +314,7 @@ void JtagInterface::InitializeChain()
 			break;
 		}
 	}
-
-	//printf("DEBUG: Got %d devices\n", (int)m_devicecount);
+	LogDebug("Found %d total devices\n", (int) m_devicecount);
 
 	//Now we know how many devices we have! Reset the TAP
 	ResetToIdle();

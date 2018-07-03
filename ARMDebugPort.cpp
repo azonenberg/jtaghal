@@ -62,12 +62,13 @@ ARMDebugPort::ARMDebugPort(
 	EnableDebugging();
 
 	//Figure out how many APs we have
+	LogDebug("Found ARM JTAG-DP, probing...\n");
+	LogIndenter li;
 	LogDebug("Searching for APs...\n");
 	uint8_t nap = 0;
 	for(; nap<255; nap++)
 	{
 		LogIndenter li;
-
 		ARMDebugPortIDRegister idr;
 		idr.word = APRegisterRead(nap, REG_IDR);
 		if(idr.word == 0)
@@ -99,7 +100,9 @@ ARMDebugPort::ARMDebugPort(
 		//(this seems to be fpga config?)
 		if(!idr.bits.is_mem_ap)
 		{
-			LogDebug("Found JTAG-AP at index %d\n", nap);
+			LogDebug("Found JTAG-AP rev %d at index %d\n", idr.bits.revision, nap);
+			LogIndenter li;
+			LogDebug("Not supported yet, ignoring\n");
 			continue;
 		}
 
@@ -110,9 +113,9 @@ ARMDebugPort::ARMDebugPort(
 			m_aps[nap] = ap;
 
 			if(ap->GetBusType() == ARMDebugAccessPort::DAP_AHB)
-				LogDebug("Found AHB MEM-AP at index %d\n", nap);
+				LogDebug("Found AHB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 			else if(ap->GetBusType() == ARMDebugAccessPort::DAP_APB)
-				LogDebug("Found APB MEM-AP at index %d\n", nap);
+				LogDebug("Found APB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 
 			//If it's an AHB Mem-AP, and we don't have a default Mem-AP, this one is probably RAM.
 			//Use it as our default AP.
@@ -123,12 +126,12 @@ ARMDebugPort::ARMDebugPort(
 				m_defaultMemAP = ap;
 			}
 
-			//If it's an APB Mem-AP, and we don't have a default Mem-AP, this one is probably debug registers.
+			//If it's an APB Mem-AP, and we don't have a default Mem-AP, this one is probably CoreSight debug registers.
 			//Use it as our default AP.
 			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_APB) && (m_defaultRegisterAP == NULL) )
 			{
 				LogIndenter li;
-				LogDebug("Using as default register Mem-AP\n");
+				LogDebug("Using as default CoreSight Mem-AP\n");
 				m_defaultRegisterAP = ap;
 			}
 		}
