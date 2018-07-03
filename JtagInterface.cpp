@@ -230,7 +230,7 @@ void JtagInterface::InitializeChain()
 		if(PeekBit(temp, m_irtotal))
 			break;
 	}
-	LogDebug("Found %zu total IR bits\n", m_irtotal);
+	//LogDebug("Found %zu total IR bits\n", m_irtotal);
 
 	//Shift zeros into everyone's DR
 	EnterShiftDR();
@@ -257,7 +257,7 @@ void JtagInterface::InitializeChain()
 			break;
 		}
 	}
-	LogDebug("Found %d total devices\n", (int) m_devicecount);
+	//LogDebug("Found %d total devices\n", (int) m_devicecount);
 
 	//Now we know how many devices we have! Reset the TAP
 	ResetToIdle();
@@ -383,17 +383,42 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, size_t
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param count 	Instruction register length, in bits
  */
-void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* data, size_t count)
+void JtagInterface::SetIRDeferred(unsigned int device, const unsigned char* data, size_t count)
 {
-	if(m_devicecount != 1)
+	EnterShiftIR();
+
+	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
+	if(m_devicecount == 1)
+		ShiftData(true, data, NULL, count);
+
+	else
 	{
-		throw JtagExceptionWrapper(
-			"Bypassing extra devices not yet supported!",
-			"");
+		//First, calculate the total number of bits to shift. Set everything to "bypass" to start
+		size_t shift_bytes = m_irtotal >> 3;
+		if(m_irtotal & 7)
+			shift_bytes ++;
+		vector<uint8_t> txd;
+		for(size_t i=0; i<shift_bytes; i++)
+			txd.push_back(0xff);
+
+		//Calculate how many bits to send BEFORE our IR.
+		//This is the sum of all IR widths of devices with LOWER indexes than us.
+		size_t leading_bits = 0;
+		for(size_t i=0; i<device; i++)
+			leading_bits += m_devices[i]->GetIRLength();
+		size_t trailing_bits = m_irtotal - (count + leading_bits);
+
+		//Patch in the IR data we're sending
+		for(size_t i=0; i<count; i++)
+			PokeBit(&txd[0], i+leading_bits, PeekBit(data, i));
+
+		//Send the whole block
+		vector<uint8_t> rxd;
+		for(size_t i=0; i<shift_bytes; i++)
+			rxd.push_back(0x00);
+		ShiftData(true, &txd[0], NULL, m_irtotal);
 	}
 
-	EnterShiftIR();
-	ShiftData(true, data, NULL, count);
 	LeaveExit1IR();
 }
 
@@ -422,8 +447,6 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 	//We should probably redo this to be better!!
 	else
 	{
-		//We number devices such that device 0 is the LAST in the chain (at TDO) and N is the FIRST (at TDI).
-
 		//First, calculate the total number of bits to shift. Set everything to "bypass" to start
 		size_t shift_bytes = m_irtotal >> 3;
 		if(m_irtotal & 7)
@@ -435,27 +458,28 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 		//Calculate how many bits to send BEFORE our IR.
 		//This is the sum of all IR widths of devices with LOWER indexes than us.
 		size_t leading_bits = 0;
-		for(unsigned int i=0; i<device; i++)
+		for(size_t i=0; i<device; i++)
 			leading_bits += m_devices[i]->GetIRLength();
-		LogDebug("Leading bit length is %zu\n", leading_bits);
 		size_t trailing_bits = m_irtotal - (count + leading_bits);
-		LogDebug("Trailing bit length is %zu\n", trailing_bits);
 
 		//Patch in the IR data we're sending
+		for(size_t i=0; i<count; i++)
+			PokeBit(&txd[0], i+leading_bits, PeekBit(data, i));
 
+		//Send the whole block
+		//TODO: optimize, if data_out is null skip the readout
+		vector<uint8_t> rxd;
+		for(size_t i=0; i<shift_bytes; i++)
+			rxd.push_back(0x00);
+		ShiftData(true, &txd[0], &rxd[0], m_irtotal);
 
-		/*
-		if(m_devicecount != 1)
+		//Pull reply data out
+		if(data_out != NULL)
 		{
-			throw JtagExceptionWrapper(
-				"Bypassing extra devices not yet supported!",
-				"");
+			for(size_t i=0; i<count; i++)
+				PokeBit(data_out, i, PeekBit(&rxd[0], i+leading_bits));
 		}
-
-		ShiftData(true, data, data_out, count);
-		*/
 	}
-
 	LeaveExit1IR();
 
 	Commit();
@@ -474,17 +498,55 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 	@param rcv_data		Output data to scan, or NULL if no output is desired (faster)
 	@param count 		Number of bits to scan
  */
-void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
+void JtagInterface::ScanDR(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
-	if(m_devicecount != 1)
+	EnterShiftDR();
+
+	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
+	if(m_devicecount == 1)
+		ShiftData(true, send_data, rcv_data, count);
+
+	//Calculate padding and do the scan
+	else
 	{
-		throw JtagExceptionWrapper(
-			"Bypassing extra devices not yet supported!",
-			"");
+		//TDI  N	N-1		N-2		...		1	0	TDO
+		//		Trailing		Data		Leading
+
+		//First, calculate the total number of bits to shift.
+		//All other devices should be in bypass mode so they count as 1 bit
+		size_t shift_bits = (m_devicecount - 1) + count;
+		size_t shift_bytes = shift_bits >> 3;
+		if(shift_bits & 7)
+			shift_bytes ++;
+		vector<uint8_t> txd;
+		for(size_t i=0; i<shift_bytes; i++)
+			txd.push_back(0x00);
+
+		//Calculate how many bits to send BEFORE our DR.
+		//This is the number of devices with LOWER indexes than us.
+		//Coincidentally, this is also our device index :)
+		size_t leading_bits = device;
+		size_t trailing_bits = m_devicecount - (device + 1);
+
+		//Patch in the DR data we're sending
+		for(size_t i=0; i<count; i++)
+			PokeBit(&txd[0], i+leading_bits, PeekBit(send_data, i));
+
+		//Send the whole block
+		//TODO: optimize, if rcv_data is null skip the readout
+		vector<uint8_t> rxd;
+		for(size_t i=0; i<shift_bytes; i++)
+			rxd.push_back(0x00);
+		ShiftData(true, &txd[0], &rxd[0], shift_bits);
+
+		//Pull reply data out
+		if(rcv_data != NULL)
+		{
+			for(size_t i=0; i<count; i++)
+				PokeBit(rcv_data, i, PeekBit(&rxd[0], i+leading_bits));
+		}
 	}
 
-	EnterShiftDR();
-	ShiftData(true, send_data, rcv_data, count);
 	LeaveExit1DR();
 
 	Commit();
