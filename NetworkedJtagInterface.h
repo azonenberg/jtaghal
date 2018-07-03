@@ -61,13 +61,13 @@ public:
 	virtual int GetFrequency();
 
 	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	virtual void SendDummyClocks(int n);
-	virtual void SendDummyClocksDeferred(int n);
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	virtual void SendDummyClocks(size_t n);
+	virtual void SendDummyClocksDeferred(size_t n);
 	virtual void Commit();
 	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, int count);
+	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
 
 	//Mid level JTAG interface
 	virtual void TestLogicReset();
@@ -84,7 +84,7 @@ public:
 
 	//Explicit TMS shifting is no longer allowed, only state-level interface
 private:
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count);
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
 
 protected:
 

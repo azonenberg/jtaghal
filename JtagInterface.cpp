@@ -71,63 +71,6 @@ JtagInterface::~JtagInterface()
 	}
 }
 
-/**
-	@brief Creates a default JTAG interface on a best-effort basis.
-
-	TODO: This is too prone to failure, remove and require manual configuration?
-
-	First, the JTAGD_HOST environment variable is checked. If it exists, and is a string of the form host:port, then
-	a NetworkedJtagInterface is returned, connecting to that host:port.
-
-	If it is not set, and there is at least one Digilent JTAG device present, a DigilentJtagInterface is returned,
-	connecting to the first available interface.
-
-	Future implementations will fall back to an FTDIJtagInterface, or other interfaces, if nothing is found at this
-	point.
-
-	If all attempts have failed, NULL is returned.
-
-	@throw JtagException may be thrown by the constructor for a derived class if creation fails.
-
-	@return The interface object, or NULL if no suitable interface could be found
- */
-JtagInterface* JtagInterface::CreateDefaultInterface()
-{
-	//Check environment variable first
-	char* jhost = getenv("JTAGD_HOST");
-	if(jhost != NULL)
-	{
-		char host[1024];
-		int port;
-		if(2 == sscanf(jhost, "%1023[^:]:%5d", host, &port))
-		{
-			NetworkedJtagInterface* iface = new NetworkedJtagInterface;
-			iface->Connect(host, port);
-			return iface;
-		}
-	}
-
-	#ifdef HAVE_DJTG
-		//Create a DigilentJtagInterface on adapter 0 if we can find it
-		int ndigilent = DigilentJtagInterface::GetInterfaceCount();
-		if(ndigilent != 0)
-			return new DigilentJtagInterface(0);
-	#endif	//#ifdef HAVE_DJTG
-
-	#ifdef HAVE_FTD2XX
-		//Create an FTDIJtagInterface on the first port we can find and assume it's a HS1
-		int nftdi = FTDIJtagInterface::GetInterfaceCount();
-		if(nftdi == 0)
-			return NULL;
-		string serial = FTDIJtagInterface::GetSerialNumber(nftdi);
-		if(serial != "")
-			return new FTDIJtagInterface(serial, "hs1");
-	#endif
-
-	//No interfaces found
-	return NULL;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Low-level JTAG interface
 
@@ -281,13 +224,13 @@ void JtagInterface::InitializeChain()
 	LeaveExit1IR();
 
 	//See how many zeroes we got back (this should be # of total IR bits?)
-	int irsize = 0;
-	for(; irsize<1024; irsize++)
+	m_irtotal = 0;
+	for(; m_irtotal<1024; m_irtotal++)
 	{
-		if(PeekBit(temp, irsize))
+		if(PeekBit(temp, m_irtotal))
 			break;
 	}
-	LogDebug("Found %d total IR bits\n", irsize);
+	LogDebug("Found %zu total IR bits\n", m_irtotal);
 
 	//Shift zeros into everyone's DR
 	EnterShiftDR();
@@ -423,7 +366,7 @@ JtagDevice* JtagInterface::GetDevice(unsigned int device)
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param count 	Instruction register length, in bits
  */
-void JtagInterface::SetIR(unsigned int device, const unsigned char* data, int count)
+void JtagInterface::SetIR(unsigned int device, const unsigned char* data, size_t count)
 {
 	SetIRDeferred(device, data, count);
 	Commit();
@@ -440,7 +383,7 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, int co
 	@param data		The IR value to scan (see ShiftData() for bit/byte ordering)
 	@param count 	Instruction register length, in bits
  */
-void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* data, int count)
+void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* data, size_t count)
 {
 	if(m_devicecount != 1)
 	{
@@ -466,17 +409,53 @@ void JtagInterface::SetIRDeferred(unsigned int /*device*/, const unsigned char* 
 	@param data_out	IR capture value
 	@param count 	Instruction register length, in bits
  */
-void JtagInterface::SetIR(unsigned int /*device*/, const unsigned char* data, unsigned char* data_out, int count)
+void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsigned char* data_out, size_t count)
 {
-	if(m_devicecount != 1)
+	EnterShiftIR();
+
+	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
+	if(m_devicecount == 1)
+		ShiftData(true, data, data_out, count);
+
+	//Nope, we need to do a bit more work since there's more than one device.
+	//TODO: this is a very quick and dirty implementation that's not even remotely efficient.
+	//We should probably redo this to be better!!
+	else
 	{
-		throw JtagExceptionWrapper(
-			"Bypassing extra devices not yet supported!",
-			"");
+		//We number devices such that device 0 is the LAST in the chain (at TDO) and N is the FIRST (at TDI).
+
+		//First, calculate the total number of bits to shift. Set everything to "bypass" to start
+		size_t shift_bytes = m_irtotal >> 3;
+		if(m_irtotal & 7)
+			shift_bytes ++;
+		vector<uint8_t> txd;
+		for(size_t i=0; i<shift_bytes; i++)
+			txd.push_back(0xff);
+
+		//Calculate how many bits to send BEFORE our IR.
+		//This is the sum of all IR widths of devices with LOWER indexes than us.
+		size_t leading_bits = 0;
+		for(unsigned int i=0; i<device; i++)
+			leading_bits += m_devices[i]->GetIRLength();
+		LogDebug("Leading bit length is %zu\n", leading_bits);
+		size_t trailing_bits = m_irtotal - (count + leading_bits);
+		LogDebug("Trailing bit length is %zu\n", trailing_bits);
+
+		//Patch in the IR data we're sending
+
+
+		/*
+		if(m_devicecount != 1)
+		{
+			throw JtagExceptionWrapper(
+				"Bypassing extra devices not yet supported!",
+				"");
+		}
+
+		ShiftData(true, data, data_out, count);
+		*/
 	}
 
-	EnterShiftIR();
-	ShiftData(true, data, data_out, count);
 	LeaveExit1IR();
 
 	Commit();
@@ -495,7 +474,7 @@ void JtagInterface::SetIR(unsigned int /*device*/, const unsigned char* data, un
 	@param rcv_data		Output data to scan, or NULL if no output is desired (faster)
 	@param count 		Number of bits to scan
  */
-void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	if(m_devicecount != 1)
 	{
@@ -527,7 +506,7 @@ void JtagInterface::ScanDR(unsigned int /*device*/, const unsigned char* send_da
 	@param send_data	The data value to scan (see ShiftData() for bit/byte ordering)
 	@param count 		Number of bits to scan
  */
-void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char* send_data, int count)
+void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char* send_data, size_t count)
 {
 	if(m_devicecount != 1)
 	{
@@ -541,7 +520,7 @@ void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char*
 	LeaveExit1DR();
 }
 
-void JtagInterface::SendDummyClocksDeferred(int n)
+void JtagInterface::SendDummyClocksDeferred(size_t n)
 {
 	SendDummyClocks(n);
 }
@@ -577,7 +556,7 @@ bool JtagInterface::IsSplitScanSupported()
 	@param rcv_data		Output data to scan, or NULL if no output is desired (faster)
 	@param count 		Number of bits to scan
  */
-void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	if(m_devicecount != 1)
 	{
@@ -605,7 +584,7 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
 	@param rcv_data		Output data to scan, or NULL if no output is desired (faster)
 	@param count 		Number of bits to scan
  */
-void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_data, int count)
+void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_data, size_t count)
 {
 	if(m_devicecount != 1)
 	{
@@ -617,14 +596,14 @@ void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_
 	ShiftDataReadOnly(rcv_data, count);
 }
 
-bool JtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+bool JtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	//default to ShiftData() in base class
 	ShiftData(last_tms, send_data, rcv_data, count);
 	return false;
 }
 
-bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, int /*count*/)
+bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, size_t /*count*/)
 {
 	//no-op in base class
 	return false;

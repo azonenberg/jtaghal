@@ -129,7 +129,7 @@ int PipeJtagInterface::GetFrequency()
 	return freq;
 }
 
-void PipeJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void PipeJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
 
@@ -176,26 +176,26 @@ bool PipeJtagInterface::ShiftDataWriteOnly(
 	bool /*last_tms*/,
 	const unsigned char* /*send_data*/,
 	unsigned char* /*rcv_data*/,
-	int /*count*/)
+	size_t /*count*/)
 {
 	return false;
 }
 
 bool PipeJtagInterface::ShiftDataReadOnly(
 	unsigned char* /*rcv_data*/,
-	int /*count*/)
+	size_t /*count*/)
 {
 	return false;
 }
 
-void PipeJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, int /*count*/)
+void PipeJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, size_t /*count*/)
 {
 	throw JtagExceptionWrapper(
 		"PipeJtagInterface::ShiftTMS() is not supported (use state-level interface only)",
 		"");
 }
 
-void PipeJtagInterface::SendDummyClocks(int /*n*/)
+void PipeJtagInterface::SendDummyClocks(size_t /*n*/)
 {
 	LogError("SendDummyClocks not implemented\n");
 
@@ -212,7 +212,7 @@ void PipeJtagInterface::SendDummyClocks(int /*n*/)
 	*/
 }
 
-void PipeJtagInterface::SendDummyClocksDeferred(int n)
+void PipeJtagInterface::SendDummyClocksDeferred(size_t n)
 {
 	SendDummyClocks(n);	//no deferral supported
 }

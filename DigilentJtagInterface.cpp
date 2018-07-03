@@ -48,7 +48,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device enumeration
 
-/**	
+/**
 	@brief Gets the version number of the Digilent JTAG API
  */
 string DigilentJtagInterface::GetAPIVersion()
@@ -63,7 +63,7 @@ string DigilentJtagInterface::GetAPIVersion()
 	return string(buf);
 }
 
-/** 
+/**
 	@brief Gets the number of interfaces on the system
  */
 int DigilentJtagInterface::GetInterfaceCount()
@@ -79,9 +79,9 @@ int DigilentJtagInterface::GetInterfaceCount()
 
 /**
 	@brief Connects to a Digilent JTAG interface
-	
+
 	@throw JtagException if the connection could not be establishes or the index is invalid
-	
+
 	@param ndev		Zero-based index of the device to connect to
  */
 DigilentJtagInterface::DigilentJtagInterface(int ndev)
@@ -94,7 +94,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			GetLibraryError());
 	}
 	m_name = dvc.szName;
-	
+
 	char serial[16] = {0};
 	if(!DmgrGetInfo(&dvc, dinfoSN, serial))
 	{
@@ -103,7 +103,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			GetLibraryError());
 	}
 	m_serial = serial;
-	
+
 	//TODO: Figure out how big this can be - not clear from docs.
 	char userid[128] = {0};
 	if(!DmgrGetInfo(&dvc, dinfoUsrName, userid))
@@ -113,7 +113,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			GetLibraryError());
 	}
 	m_userid = userid;
-	
+
 	//Open the port after we got the info
 	if(!DmgrOpen(&m_hif, dvc.szConn))
 	{
@@ -121,7 +121,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Failed to connect to device",
 			GetLibraryError());
 	}
-	
+
 	//Enable the port
 	if(!DjtgEnable(m_hif))
 	{
@@ -130,7 +130,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Failed to enable port",
 			GetLibraryError());
 	}
-	
+
 	//Verify we only have one port - >1 not supported now (TODO expose ports as separate interfaces?)
 	INT32 pcount = 0;
 	if(!DjtgGetPortCount(m_hif, &pcount))
@@ -141,7 +141,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Failed to get device port count",
 			GetLibraryError());
 	}
-	
+
 	if(pcount != 1)
 	{
 		DjtgDisable(m_hif);
@@ -150,7 +150,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Devices with >1 port not supported",
 			"");
 	}
-	
+
 	//Check required features
 	DPRP portprops;
 	if(!DjtgGetPortProperties(m_hif, 0, &portprops))
@@ -161,7 +161,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Failed to get device port properties",
 			GetLibraryError());
 	}
-	
+
 	/*
 		TODO: See if any of these are needed
 		const DPRP  dprpJtgSetSpeed         = 0x00000001; // port supports set speed call
@@ -191,7 +191,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			"Required properties missing",
 			GetLibraryError());
 	}
-	
+
 	//Get the operating frequency
 	DWORD freq;
 	if(!DjtgGetSpeed(m_hif, &freq))
@@ -203,7 +203,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 			GetLibraryError());
 	}
 	m_freq = freq;
-	
+
 	//Set the timeout to much longer (60 seconds)
 	//so we can configure larger devices
 	if(!DmgrSetTransTimeout(m_hif, 1000 * 60))
@@ -218,7 +218,7 @@ DigilentJtagInterface::DigilentJtagInterface(int ndev)
 
 /**
 	@brief Interface destructor
-	
+
 	Closes handles and disconnects from the adapter.
  */
 DigilentJtagInterface::~DigilentJtagInterface()
@@ -267,13 +267,13 @@ string DigilentJtagInterface::GetLibraryError()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Low-level JTAG interface
 
-void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfDataBits += count;
-	
+
 	//Add TMS values
 	int bytecount = ceil(count / 4.0f);						//TODO: optimize this? Slow
 	unsigned char* data = new unsigned char[bytecount];
@@ -285,14 +285,14 @@ void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_d
 		else
 			PokeBit(data, 2*i + 1, last_tms);
 	}
-		
+
 	if(!DjtgPutTmsTdiBits(m_hif, data, rcv_data, count, false))
 	{
 		throw JtagExceptionWrapper(
 			"Failed to shift data",
 			GetLibraryError());
 	}
-	
+
 	/*
 	if(rcv_data != NULL)
 	{
@@ -305,51 +305,51 @@ void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_d
 		}
 		printf("\n");
 	}*/
-	
+
 	delete[] data;
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
-void DigilentJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int count)
+void DigilentJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, size_t count)
 {
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfModeBits += count;
-	
+
 	//Digilent API is brain-dead and does not make send_data const
 	//so we have to copy it :(
 	int bytecount = ceil(count / 8.0f);						//TODO: optimize this? Slow
 	unsigned char* send_data_copy = new unsigned char[bytecount];
 	memcpy(send_data_copy, send_data, bytecount);
-	
+
 	if(!DjtgPutTmsBits(m_hif, tdi, send_data_copy, NULL, count, false))
 	{
 		throw JtagExceptionWrapper(
 			"Failed to shift TMS",
 			GetLibraryError());
 	}
-	
+
 	delete[] send_data_copy;
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 
-void DigilentJtagInterface::SendDummyClocks(int n)
+void DigilentJtagInterface::SendDummyClocks(size_t n)
 {
 	double start = GetTime();
-	
+
 	m_perfShiftOps ++;
 	m_perfDummyClocks += n;
-	
+
 	if(!DjtgClockTck(m_hif, 0, 0, n, 0))
 	{
 		throw JtagExceptionWrapper(
 			"Failed to send dummy clocks",
 			GetLibraryError());
 	}
-	
+
 	m_perfShiftTime += GetTime() - start;
 }
 

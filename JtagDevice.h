@@ -79,12 +79,15 @@ public:
 	void ResetToIdle();
 	void Commit();
 
+	size_t GetIRLength()
+	{ return m_irlength; }
+
 	void EnterShiftDR();
 	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
 
 protected:
-	///Length of this device's instruction registr, in bits
-	int m_irlength;
+	///Length of this device's instruction register, in bits
+	size_t m_irlength;
 
 	///32-bit JEDEC ID code of this device
 	unsigned int m_idcode;

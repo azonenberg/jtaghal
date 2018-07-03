@@ -161,7 +161,7 @@ int NetworkedJtagInterface::GetFrequency()
 	return freq;
 }
 
-void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
 
@@ -195,7 +195,7 @@ bool NetworkedJtagInterface::IsSplitScanSupported()
 	return (dout != 0);
 }
 
-bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
 
@@ -242,7 +242,7 @@ bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned ch
 	}
 }
 
-bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int count)
+bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, size_t count)
 {
 	if(rcv_data == NULL)
 		return true;
@@ -282,14 +282,14 @@ bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int coun
 	}
 }
 
-void NetworkedJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, int /*count*/)
+void NetworkedJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, size_t /*count*/)
 {
 	throw JtagExceptionWrapper(
 		"NetworkedJtagInterface::ShiftTMS() is not supported (use state-level interface only)",
 		"");
 }
 
-void NetworkedJtagInterface::SendDummyClocks(int n)
+void NetworkedJtagInterface::SendDummyClocks(size_t n)
 {
 	double start = GetTime();
 
@@ -302,7 +302,7 @@ void NetworkedJtagInterface::SendDummyClocks(int n)
 	m_perfShiftTime += GetTime() - start;
 }
 
-void NetworkedJtagInterface::SendDummyClocksDeferred(int n)
+void NetworkedJtagInterface::SendDummyClocksDeferred(size_t n)
 {
 	double start = GetTime();
 

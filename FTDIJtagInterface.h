@@ -80,14 +80,14 @@ public:
 	virtual int GetFrequency();
 
 	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count);
-	virtual void SendDummyClocks(int n);
-	virtual void SendDummyClocksDeferred(int n);
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
+	virtual void SendDummyClocks(size_t n);
+	virtual void SendDummyClocksDeferred(size_t n);
 	virtual void Commit();
 	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, int count);
+	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
 
 	//GPIO stuff
 	virtual void ReadGpioState();
@@ -96,11 +96,11 @@ public:
 protected:
 	//Helpers for small scan operations
 	void GenerateShiftPacket(
-		const unsigned char* send_data, int count,
+		const unsigned char* send_data, size_t count,
 		bool want_read,
 		bool last_tms,
 		std::vector<unsigned char>& cmd_out);
-	void DoReadback(unsigned char* rcv_data, int count);
+	void DoReadback(unsigned char* rcv_data, size_t count);
 
 	std::vector<unsigned char> m_writeBuffer;
 

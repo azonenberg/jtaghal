@@ -686,7 +686,7 @@ int FTDIJtagInterface::GetFrequency()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Low-level JTAG interface
 
-void FTDIJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count)
+void FTDIJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
 
@@ -757,7 +757,7 @@ bool FTDIJtagInterface::IsSplitScanSupported()
 
 bool FTDIJtagInterface::ShiftDataWriteOnly(	bool last_tms,
 											const unsigned char* send_data,
-											unsigned char* rcv_data, int count)
+											unsigned char* rcv_data, size_t count)
 {
 	//If count is too big, don't pipeline
 	if(count >= (8 * 4096))
@@ -773,7 +773,7 @@ bool FTDIJtagInterface::ShiftDataWriteOnly(	bool last_tms,
 	return true;
 }
 
-bool FTDIJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int count)
+bool FTDIJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, size_t count)
 {
 	if(count >= (8 * 4096))
 		return false;
@@ -783,7 +783,7 @@ bool FTDIJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, int count)
 	return true;
 }
 
-void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, int count)
+void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, size_t count)
 {
 	int bytes_left = count / 8;
 	if( (count & 7) == 0)
@@ -818,7 +818,7 @@ void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, int count)
 }
 
 void FTDIJtagInterface::GenerateShiftPacket(
-	const unsigned char* send_data, int count,
+	const unsigned char* send_data, size_t count,
 	bool want_read,
 	bool last_tms,
 	std::vector<unsigned char>& cmd_out)
@@ -872,7 +872,7 @@ void FTDIJtagInterface::GenerateShiftPacket(
 												//Bit 0 is TMS bit
 }
 
-void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int count)
+void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, size_t count)
 {
 	double start = GetTime();
 
@@ -898,7 +898,7 @@ void FTDIJtagInterface::ShiftTMS(bool tdi, const unsigned char* send_data, int c
 	m_perfShiftTime += GetTime() - start;
 }
 
-void FTDIJtagInterface::SendDummyClocks(int n)
+void FTDIJtagInterface::SendDummyClocks(size_t n)
 {
 	SendDummyClocksDeferred(n);
 
@@ -911,7 +911,7 @@ void FTDIJtagInterface::SendDummyClocks(int n)
 	m_perfShiftTime += GetTime() - start;
 }
 
-void FTDIJtagInterface::SendDummyClocksDeferred(int n)
+void FTDIJtagInterface::SendDummyClocksDeferred(size_t n)
 {
 	double start = GetTime();
 

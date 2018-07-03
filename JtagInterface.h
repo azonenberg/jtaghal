@@ -52,14 +52,14 @@
 		\li SendDummyClocks()
 
 	\ingroup libjtaghal
+
+	NOTE: Devices are numbered such that TDI goes to device N and TDO goes to device 0.
  */
 class JtagInterface
 {
 public:
 	JtagInterface();
 	virtual ~JtagInterface();
-
-	static JtagInterface* CreateDefaultInterface();
 
 	//GetInterfaceCount() is a strongly recommended static member function for each derived class
 
@@ -116,7 +116,7 @@ public:
 		@param rcv_data		Data to shift out of TDO (may be NULL)
 		@param count		Number of bits to shift
 	 */
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count) =0;
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count) =0;
 
 	/**
 		@brief Sends the requested number of dummy clocks with TMS=0 and flushes the command to the interface.
@@ -125,7 +125,7 @@ public:
 
 		@param n			 Number of dummy clocks to send
 	 */
-	virtual void SendDummyClocks(int n) =0;
+	virtual void SendDummyClocks(size_t n) =0;
 
 	/**
 		@brief Sends the requested number of dummy clocks with TMS=0 and does not flush the write pipeline.
@@ -134,7 +134,7 @@ public:
 
 		@param n			 Number of dummy clocks to send
 	 */
-	virtual void SendDummyClocksDeferred(int n);
+	virtual void SendDummyClocksDeferred(size_t n);
 
 protected:
 	/**
@@ -152,7 +152,7 @@ protected:
 		@param send_data	Data to shift into TMS. Bit ordering is the same as for ShiftData().
 		@param count		Number of bits to shift
 	 */
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count) =0;
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count) =0;
 
 	//High-performance pipelined scan interface (wire level)
 public:
@@ -180,7 +180,7 @@ public:
 		@param rcv_data		Data to shift out of TDO (may be NULL)
 		@param count		Number of bits to shift
 	 */
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);
+	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 
 	/**
 		@brief Reads data from a ShiftDataWriteOnly() call.
@@ -192,7 +192,7 @@ public:
 		@param rcv_data		Data to shift out of TDO (may be NULL)
 		@param count		Number of bits to shift
 	 */
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, int count);
+	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
 
 	//Mid-level JTAG interface (state level)
 public:
@@ -209,19 +209,22 @@ public:
 	size_t GetDeviceCount();
 	unsigned int GetIDCode(unsigned int device);
 	JtagDevice* GetDevice(unsigned int device);
-	void SetIR(unsigned int device, const unsigned char* data, int count);
-	void SetIRDeferred(unsigned int device, const unsigned char* data, int count);
-	void SetIR(unsigned int device, const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(unsigned int device, const unsigned char* send_data, int count);
+	void SetIR(unsigned int device, const unsigned char* data, size_t count);
+	void SetIRDeferred(unsigned int device, const unsigned char* data, size_t count);
+	void SetIR(unsigned int device, const unsigned char* data, unsigned char* data_out, size_t count);
+	void ScanDR(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	void ScanDRDeferred(unsigned int device, const unsigned char* send_data, size_t count);
 	virtual bool IsSplitScanSupported();
-	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, int count);
+	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, size_t count);
 
 protected:
 
 	///@brief Number of devices in the scan chain
 	size_t m_devicecount;
+
+	///@brief Total IR length of the chain
+	size_t m_irtotal;
 
 	///@brief Array of device ID codes
 	std::vector<unsigned int> m_idcodes;

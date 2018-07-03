@@ -40,7 +40,7 @@
 
 /**
 	@brief A JTAG adapter exposed through the Digilent Adept SDK
-	
+
 	\ingroup libjtaghal
  */
 class DigilentJtagInterface : public JtagInterface
@@ -51,39 +51,39 @@ public:
 
 	static std::string GetAPIVersion();
 	static int GetInterfaceCount();
-	
+
 	static std::string GetName(int i);
 	static std::string GetSerial(int i);
 	static std::string GetUserID(int i);
 	static int GetDefaultFrequency(int i);
-	
+
 	//Setup stuff
 	virtual std::string GetName();
 	virtual std::string GetSerial();
 	virtual std::string GetUserID();
 	virtual int GetFrequency();
-	
+
 	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, int count);	
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, int count);
-	virtual void SendDummyClocks(int n);
-	
+	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
+	virtual void SendDummyClocks(size_t n);
+
 protected:
 
 	///@brief The adapter's name
 	std::string m_name;
-	
+
 	///@brief The adapter's serial number
 	std::string m_serial;
-	
+
 	///@brief The adapter's user ID
 	std::string m_userid;
-	
+
 	static std::string GetLibraryError();
-	
+
 	///@brief Digilent API interface handle
 	unsigned int m_hif;
-	
+
 	///@brief The adapter's clock frequency
 	int m_freq;
 };
