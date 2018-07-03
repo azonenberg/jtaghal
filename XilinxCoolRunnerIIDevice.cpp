@@ -285,14 +285,14 @@ XilinxCoolRunnerIIDeviceStatusRegister XilinxCoolRunnerIIDevice::GetStatusRegist
 bool XilinxCoolRunnerIIDevice::IsProgrammed()
 {
 	XilinxCoolRunnerIIDeviceStatusRegister reg = GetStatusRegister();
-	/*
-	printf("Padding zero: %d\n", reg.bits.padding_zero);
-	printf("isc_dis: %d\n", reg.bits.isc_dis);
-	printf("isc_en: %d\n", reg.bits.isc_en);
-	printf("sec: %d\n", reg.bits.sec);
-	printf("done: %d\n", reg.bits.done);
-	printf("Padding one: %d\n", reg.bits.padding_one);
-	*/
+
+	LogTrace("Padding zero: %d\n", reg.bits.padding_zero);
+	LogTrace("isc_dis: %d\n", reg.bits.isc_dis);
+	LogTrace("isc_en: %d\n", reg.bits.isc_en);
+	LogTrace("sec: %d\n", reg.bits.sec);
+	LogTrace("done: %d\n", reg.bits.done);
+	LogTrace("Padding one: %d\n", reg.bits.padding_one);
+
 	return reg.bits.done;
 }
 

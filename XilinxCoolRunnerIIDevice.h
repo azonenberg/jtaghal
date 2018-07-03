@@ -150,6 +150,9 @@ public:
 	///6-bit-wide JTAG instructions (from BSDL file)
 	enum instructions
 	{
+		//IDCODE
+		INST_IDCODE				= 0x01,
+
 		///Standard JTAG bypass
 		INST_BYPASS				= 0xFF,
 
@@ -184,7 +187,6 @@ public:
 			"INTEST         (00000010)," &
 			"SAMPLE         (00000011)," &
 			"EXTEST         (00000000)," &
-			"IDCODE         (00000001)," &
 			"USERCODE       (11111101)," &
 			"HIGHZ          (11111100)," &
 			"ISC_ENABLE_CLAMP (11101001)," &
