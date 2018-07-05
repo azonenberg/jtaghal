@@ -39,6 +39,7 @@
 #include "ARMDebugPort.h"
 #include "ARMDebugAccessPort.h"
 #include "ARMDebugMemAccessPort.h"
+#include "ARMCoreSightDevice.h"
 
 static const char* g_cswLenNames[]=
 {
@@ -71,13 +72,13 @@ void ARMDebugMemAccessPort::Initialize()
 	ARMDebugMemAPControlStatusWord csw = GetStatusRegister();
 	if(csw.bits.enable)
 	{
-		LogDebug("Searching for debug ROMs in AP %d (%s)...\n", m_apnum, (m_daptype == DAP_AHB) ? "AHB" : "APB");
+		LogTrace("Searching for debug ROMs in AP %d (%s)...\n", m_apnum, (m_daptype == DAP_AHB) ? "AHB" : "APB");
 		LogIndenter li;
 		FindRootRomTable();
 		if(m_hasDebugRom)
 			LoadROMTable(m_debugBaseAddress);
 		else
-			LogDebug("No debug ROM found\n");
+			LogTrace("No debug ROM found\n");
 	}
 
 	//Looks like the AHB DAP for Zynq is used for main system memory access
@@ -188,7 +189,7 @@ void ARMDebugMemAccessPort::FindRootRomTable()
 
 void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 {
-	LogDebug("Loading ROM table at address %08x\n", baseAddress);
+	LogTrace("Loading ROM table at address %08x\n", baseAddress);
 	LogIndenter li;
 
 	//Read ROM table entries until we get to an invalid one
@@ -262,7 +263,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 			//Additional ROM table
 			case CLASS_ROMTABLE:
 				{
-					LogDebug("Found extra ROM table at %08x, loading\n", address);
+					LogTrace("Found extra ROM table at %08x, loading\n", address);
 					LogIndenter li;
 					LoadROMTable(address);
 				}
@@ -316,7 +317,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 	}
 
 	unsigned int blockcount = (1 << reg.bits.log_4k_blocks);
-	LogDebug("Found debug component at %08x (rev %u.%u.%u, %u 4KB pages)\n",
+	LogTrace("Found debug component at %08x (rev %u.%u.%u, %u 4KB pages)\n",
 		base_address, reg.bits.revnum, reg.bits.cust_mod, reg.bits.revand, blockcount);
 	LogIndenter li;
 
@@ -328,65 +329,36 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 		//See Xilinx UG585 page 729 table 28-5
 		if(reg.bits.partnum == 0x001)
 		{
-			LogDebug("Xilinx Fabric Trace Monitor\n");
+			LogTrace("Found Xilinx Fabric Trace Monitor, not yet implemented\n");
 		}
 
 		//unknown, skip it
 		else
-			LogWarning("Unknown Xilinx device (part number 0x%x)\n", reg.bits.partnum);
+			LogWarning("Found unknown Xilinx CoreSight device (part number 0x%x)\n", reg.bits.partnum);
 
 	}
 
 	//Check IDCODE for ARM
 	else if( (reg.bits.jep106_cont == 0x04) && (reg.bits.jep106_id == 0x3b) )
 	{
+		//Handle fully supported devices first, then just make a generic CoreSight device for the rest
 		switch(reg.bits.partnum)
 		{
-			case 0x906:
-				LogDebug("CoreSight Cross Trigger Interface\n");
-				break;
-
-			case 0x907:
-				LogDebug("CoreSight Embedded Trace Buffer\n");
-				break;
-
-			case 0x908:
-				LogDebug("CoreSight Trace Funnel\n");
-				break;
-
-			case 0x912:
-				LogDebug("CoreSight Trace Port Interface Unit\n");
-				break;
-
-			//ID is 913, not 914. CoreSight Components TRM is wrong.
-			//See ARM #TAC650738
-			case 0x913:
-				LogDebug("CoreSight Instrumentation Trace Macrocell\n");
-				break;
-
-			case 0x914:
-				LogDebug("CoreSight Serial Wire Output\n");
-				break;
-
-			case 0x950:
-				LogDebug("Cortex-A9 Program Trace Macrocell\n");
-				break;
-
-			case 0x9A0:
-				LogDebug("Cortex-A9 Performance Monitoring Unit\n");
-				break;
-
+			//Cortex-A9
 			case 0xC09:
-				{
-					ARMCortexA9* cortex = new ARMCortexA9(this, base_address, reg.bits);
-					m_dp->AddTarget(cortex);
-					m_debugDevices.push_back(cortex);
-				}
-				break;
+			{
+				ARMCortexA9* cortex = new ARMCortexA9(this, base_address, reg.bits);
+				m_dp->AddTarget(cortex);
+				m_debugDevices.push_back(cortex);
+			}
+			break;
 
+			//Unknown
 			default:
-				LogWarning("Unknown ARM device (part number 0x%x)\n", reg.bits.partnum);
-				break;
+			{
+				ARMCoreSightDevice* dev = new ARMCoreSightDevice(this, base_address, reg.bits);
+				m_debugDevices.push_back(dev);
+			}
 		}
 	}
 

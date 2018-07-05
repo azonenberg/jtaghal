@@ -49,27 +49,23 @@ using namespace std;
 ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
 	: ARMAPBDevice(ap, address, idreg)
 {
-	LogDebug("Found ARM Cortex-A9 at %08x, probing...\n", address);
+	LogTrace("Found ARM Cortex-A9 at %08x, probing...\n", address);
 	LogIndenter li;
 
 	//Read the Debug ID register and extract flags
-	ARMv7DebugIDRegister did;
-	did.word = ReadRegisterByIndex(DBGDIDR);
-	m_breakpoints = did.bits.bpoints_minus_one + 1;
-	m_context_breakpoints = did.bits.context_bpoints_minus_one + 1;
-	m_watchpoints = did.bits.wpoints_minus_one + 1;
-	m_hasDevid = did.bits.has_dbgdevid;
-	m_hasSecExt = did.bits.sec_ext;
-	m_hasSecureHalt = did.bits.sec_ext && !did.bits.no_secure_halt;
-	m_revision = did.bits.revision;
-	m_variant = did.bits.variant;
-	if(did.bits.pcsr_legacy_addr)
+	m_deviceID.word = ReadRegisterByIndex(DBGDIDR);
+	m_breakpoints = m_deviceID.bits.bpoints_minus_one + 1;
+	m_context_breakpoints = m_deviceID.bits.context_bpoints_minus_one + 1;
+	m_watchpoints = m_deviceID.bits.wpoints_minus_one + 1;
+	m_hasDevid = m_deviceID.bits.has_dbgdevid;
+	m_hasSecExt = m_deviceID.bits.sec_ext;
+	m_hasSecureHalt = m_deviceID.bits.sec_ext && !m_deviceID.bits.no_secure_halt;
+	m_revision = m_deviceID.bits.revision;
+	m_variant = m_deviceID.bits.variant;
+	if(m_deviceID.bits.pcsr_legacy_addr)
 		m_pcsrIndex = DBGPCSR_LEGACY;
 	else
 		m_pcsrIndex = DBGPCSR;
-
-	//Print it out
-	PrintIDRegister(did);
 
 	//DBGDSMCR turn off MMU
 
@@ -78,6 +74,22 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 	//TODO: Write to DBGDSCCR to force write-through cache (C11.11.19)
 
 	//DBGDEVID[3:0] 2226
+}
+
+ARMCortexA9::~ARMCortexA9()
+{
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// General device info
+
+void ARMCortexA9::PrintInfo()
+{
+	LogVerbose("%s\n", GetDescription().c_str());
+	LogIndenter li;
+
+	PrintIDRegister(m_deviceID);
 
 	//Read DBGDSCR to get status stuff (TODO: make struct) for this
 	//uint32_t dbgdscr = ReadRegisterByIndex(DBGDSCR_EXT);
@@ -98,22 +110,13 @@ ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPe
 
 	//Read L0_SEL
 
-
 	//Read the PC and dump the instruction at that address
 	uint32_t pc = SampleProgramCounter();
-	LogDebug("PC = %08x\n", pc);
+	LogVerbose("PC = %08x\n", pc);
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
 
 	//LogDebug("    value = %08x\n", value);
 }
-
-ARMCortexA9::~ARMCortexA9()
-{
-
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General device info
 
 string ARMCortexA9::GetDescription()
 {
@@ -132,7 +135,7 @@ string ARMCortexA9::GetDescription()
 
 void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 {
-	LogDebug("CPU rev %u variant %u\n", did.bits.revision, did.bits.variant);
+	LogVerbose("CPU rev %u variant %u\n", did.bits.revision, did.bits.variant);
 
 	const char* arches[]=
 	{
@@ -154,23 +157,23 @@ void ARMCortexA9::PrintIDRegister(ARMv7DebugIDRegister did)
 		"reserved f"
 	};
 
-	LogDebug("Arch %s\n", arches[did.bits.debug_arch_version]);
+	LogVerbose("Arch %s\n", arches[did.bits.debug_arch_version]);
 
 
 	if(did.bits.sec_ext)
 	{
-		LogDebug("Security extensions\n");
+		LogVerbose("Security extensions\n");
 		if(did.bits.sec_ext && did.bits.no_secure_halt)
 			LogDebug("    (but no secure halt)\n");
 	}
 	if(did.bits.pcsr_legacy_addr)
-		LogDebug("PCSR is at legacy address\n");
+		LogVerbose("PCSR is at legacy address\n");
 	if(did.bits.has_dbgdevid)
-		LogDebug("Has debug device ID\n");
+		LogVerbose("Has debug device ID\n");
 	//TODO: arch version
-	LogDebug("%d breakpoints (%d with context matching)\n",
+	LogVerbose("%d breakpoints (%d with context matching)\n",
 		did.bits.bpoints_minus_one+1, did.bits.context_bpoints_minus_one+1);
-	LogDebug("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
+	LogVerbose("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

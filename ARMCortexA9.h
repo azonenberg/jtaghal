@@ -192,7 +192,7 @@ union ARMv7DebugStatusControlRegister
 } __attribute__ ((packed));
 
 /**
-	@brief Generic base class for all debuggable devices (MCUs etc)
+	@brief An ARM Cortex-A9 CPU core, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */
@@ -256,6 +256,7 @@ public:
 	// General device info
 
 	virtual std::string GetDescription();
+	virtual void PrintInfo();
 
 	///Sample program counter (for sample-based profiling)
 	uint32_t SampleProgramCounter()
@@ -278,6 +279,8 @@ protected:
 	unsigned int m_revision;
 	unsigned int m_variant;
 	//TODO: arch version
+
+	ARMv7DebugIDRegister m_deviceID;
 
 	///Device-dependent address of the program counter sample register (PCSR)
 	CORTEX_A9_DEBUG_REGISTERS m_pcsrIndex;

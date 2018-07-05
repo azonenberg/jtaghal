@@ -30,133 +30,20 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMDebugMemAccessPort
+	@brief Base class for ARM CoreSight components (other than CPU cores) on a debug APB bus
  */
+#ifndef ARMCoreSightDevice_h
+#define ARMCoreSightDevice_h
 
-#ifndef ARMDebugMemAccessPort_h
-#define ARMDebugMemAccessPort_h
-
-#include <stdlib.h>
-
-/**
-	@brief ARM debug port identification register (see ADIv5 Architecture Specification figure 6-3)
- */
-union ARMDebugMemAPControlStatusWord
-{
-	struct
-	{
-		///Size of the access to perform
-		unsigned int size:3;
-
-		///Reserved, should be zero
-		unsigned int reserved_zero_1:1;
-
-		///Address increment/pack mode
-		unsigned int auto_increment:2;
-
-		///Debug port enable (RO)
-		unsigned int enable:1;
-
-		///Transfer in progress
-		unsigned int busy:1;
-
-		///Operating mode (write as zero, read undefined)
-		unsigned int mode:4;
-
-		///Reserved, should be zero
-		unsigned int reserved_zero_2:11;
-
-		///Secure privileged debug flag (not sure what this is)
-		unsigned int secure_priv_debug:1;
-
-		///Bus access protection (implementation defined)
-		unsigned int bus_protect:6;
-
-		///Secure transfer (high=nonsecure)
-		unsigned int nonsecure_transfer:1;
-
-		//Reserved, should be zero
-		unsigned int reserved_zero_3 : 1;
-
-	} __attribute__ ((packed)) bits;
-
-	///The raw status register value
-	uint32_t word;
-} __attribute__ ((packed));
-
-#include "ARMDebugPeripheralIDRegister.h"
-
-class ARMDebugAccessPort;
-class ARMAPBDevice;
-
-/**
-	@brief A memory mapped debug interface
-
-	\ingroup libjtaghal
- */
-class ARMDebugMemAccessPort : public ARMDebugAccessPort
+class ARMCoreSightDevice : public ARMAPBDevice
 {
 public:
-	ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
-	virtual ~ARMDebugMemAccessPort();
-
-	//Called after all other Mem-APs are up
-	virtual void Initialize();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Memory access
-
-	uint32_t ReadWord(uint32_t addr);
-
-	void WriteWord(uint32_t addr, uint32_t value);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// General device info
-
-	enum AccessSize
-	{
-		ACCESS_BYTE		= 0,
-		ACCESS_HALFWORD = 1,
-		ACCESS_WORD		= 2,
-		ACCESS_INVALID	= 3,
-	};
-
-	enum ComponentClass
-	{
-		CLASS_ROMTABLE = 1,
-		CLASS_CORESIGHT	= 9
-	};
-
-	virtual void PrintStatusRegister();
+	ARMCoreSightDevice(
+		ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	virtual ~ARMCoreSightDevice();
 
 	virtual std::string GetDescription();
-
-	ARMDebugMemAPControlStatusWord GetStatusRegister();
-
-	virtual bool IsEnabled();
-
-	uint32_t GetDebugBaseAddress()
-	{ return m_debugBaseAddress; }
-
-	size_t GetDeviceCount()
-	{ return m_debugDevices.size(); }
-
-	ARMAPBDevice* GetDevice(size_t i)
-	{ return m_debugDevices[i]; }
-
-protected:
-
-	void FindRootRomTable();
-	void LoadROMTable(uint32_t baseAddress);
-
-	void ProcessDebugBlock(uint32_t base_address);
-
-	bool m_debugBusIsDedicated;
-	bool m_hasDebugRom;
-	uint32_t m_debugBaseAddress;
-
-	///The list of devices found on the AP
-	std::vector<ARMAPBDevice*> m_debugDevices;
+	virtual void PrintInfo();
 };
 
 #endif

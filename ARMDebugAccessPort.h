@@ -98,6 +98,9 @@ public:
 	dap_type GetBusType()
 	{ return m_daptype; }
 
+	unsigned int GetVersion()
+	{ return m_id.bits.revision; }
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 
@@ -108,6 +111,9 @@ public:
 
 	ARMDebugPort* GetDebugPort()
 	{ return m_dp; }
+
+	uint8_t GetAPNumber()
+	{ return m_apnum; }
 
 protected:
 	ARMDebugPort* m_dp;

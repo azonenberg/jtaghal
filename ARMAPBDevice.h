@@ -57,6 +57,7 @@ public:
 	// General device info
 
 	virtual std::string GetDescription() =0;
+	virtual void PrintInfo() =0;
 
 protected:
 

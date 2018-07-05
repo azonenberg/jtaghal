@@ -30,6 +30,7 @@ set(JTAGHAL_SOURCES
     PipeJtagInterface.cpp
 
     ARMAPBDevice.cpp
+    ARMCoreSightDevice.cpp
     ARMCortexA9.cpp
     ARMDebugAccessPort.cpp
     ARMDebugMemAccessPort.cpp

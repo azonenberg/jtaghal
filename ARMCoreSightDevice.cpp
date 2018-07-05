@@ -30,133 +30,56 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMDebugMemAccessPort
+	@brief Base class for ARM CoreSight components on a debug APB bus
  */
+#include "jtaghal.h"
+#include "ARMAPBDevice.h"
+#include "ARMCoreSightDevice.h"
 
-#ifndef ARMDebugMemAccessPort_h
-#define ARMDebugMemAccessPort_h
+using namespace std;
 
-#include <stdlib.h>
-
-/**
-	@brief ARM debug port identification register (see ADIv5 Architecture Specification figure 6-3)
- */
-union ARMDebugMemAPControlStatusWord
+ARMCoreSightDevice::ARMCoreSightDevice(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMAPBDevice(ap, address, idreg)
 {
-	struct
-	{
-		///Size of the access to perform
-		unsigned int size:3;
+}
 
-		///Reserved, should be zero
-		unsigned int reserved_zero_1:1;
-
-		///Address increment/pack mode
-		unsigned int auto_increment:2;
-
-		///Debug port enable (RO)
-		unsigned int enable:1;
-
-		///Transfer in progress
-		unsigned int busy:1;
-
-		///Operating mode (write as zero, read undefined)
-		unsigned int mode:4;
-
-		///Reserved, should be zero
-		unsigned int reserved_zero_2:11;
-
-		///Secure privileged debug flag (not sure what this is)
-		unsigned int secure_priv_debug:1;
-
-		///Bus access protection (implementation defined)
-		unsigned int bus_protect:6;
-
-		///Secure transfer (high=nonsecure)
-		unsigned int nonsecure_transfer:1;
-
-		//Reserved, should be zero
-		unsigned int reserved_zero_3 : 1;
-
-	} __attribute__ ((packed)) bits;
-
-	///The raw status register value
-	uint32_t word;
-} __attribute__ ((packed));
-
-#include "ARMDebugPeripheralIDRegister.h"
-
-class ARMDebugAccessPort;
-class ARMAPBDevice;
-
-/**
-	@brief A memory mapped debug interface
-
-	\ingroup libjtaghal
- */
-class ARMDebugMemAccessPort : public ARMDebugAccessPort
+ARMCoreSightDevice::~ARMCoreSightDevice()
 {
-public:
-	ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebugPortIDRegister id);
-	virtual ~ARMDebugMemAccessPort();
+}
 
-	//Called after all other Mem-APs are up
-	virtual void Initialize();
+void ARMCoreSightDevice::PrintInfo()
+{
+	LogVerbose("%s rev %d.%d.%d\n",
+		GetDescription().c_str(),
+		m_idreg.revnum, m_idreg.cust_mod, m_idreg.revand);
+}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Memory access
-
-	uint32_t ReadWord(uint32_t addr);
-
-	void WriteWord(uint32_t addr, uint32_t value);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// General device info
-
-	enum AccessSize
+string ARMCoreSightDevice::GetDescription()
+{
+	switch(m_idreg.partnum)
 	{
-		ACCESS_BYTE		= 0,
-		ACCESS_HALFWORD = 1,
-		ACCESS_WORD		= 2,
-		ACCESS_INVALID	= 3,
-	};
+		case 0x906:
+			return "CoreSight Cross Trigger Interface";
+		case 0x907:
+			return "CoreSight Embedded Trace Buffer";
+		case 0x908:
+			return "CoreSight Trace Funnel";
+		case 0x912:
+			return "CoreSight Trace Port Interface Unit";
 
-	enum ComponentClass
-	{
-		CLASS_ROMTABLE = 1,
-		CLASS_CORESIGHT	= 9
-	};
+		//ID is 913, not 914. CoreSight Components TRM is wrong.
+		//See ARM #TAC650738
+		case 0x913:
+			return "CoreSight Instrumentation Trace Macrocell";
+		case 0x914:
+			return "CoreSight Serial Wire Output";
+		case 0x950:
+			return "Cortex-A9 Program Trace Macrocell";
+		case 0x9A0:
+			return "Cortex-A9 Performance Monitoring Unit";
 
-	virtual void PrintStatusRegister();
-
-	virtual std::string GetDescription();
-
-	ARMDebugMemAPControlStatusWord GetStatusRegister();
-
-	virtual bool IsEnabled();
-
-	uint32_t GetDebugBaseAddress()
-	{ return m_debugBaseAddress; }
-
-	size_t GetDeviceCount()
-	{ return m_debugDevices.size(); }
-
-	ARMAPBDevice* GetDevice(size_t i)
-	{ return m_debugDevices[i]; }
-
-protected:
-
-	void FindRootRomTable();
-	void LoadROMTable(uint32_t baseAddress);
-
-	void ProcessDebugBlock(uint32_t base_address);
-
-	bool m_debugBusIsDedicated;
-	bool m_hasDebugRom;
-	uint32_t m_debugBaseAddress;
-
-	///The list of devices found on the AP
-	std::vector<ARMAPBDevice*> m_debugDevices;
-};
-
-#endif
+		default:
+			LogWarning("Unknown ARM device (part number 0x%x)\n", m_idreg.partnum);
+			return "unknown CoreSight device";
+	}
+}

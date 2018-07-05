@@ -36,6 +36,7 @@
 #include "jtaghal.h"
 #include "ARMDebugPort.h"
 #include "ARMDebugMemAccessPort.h"
+#include "ARMAPBDevice.h"
 
 using namespace std;
 
@@ -62,9 +63,9 @@ ARMDebugPort::ARMDebugPort(
 	EnableDebugging();
 
 	//Figure out how many APs we have
-	LogDebug("Found ARM JTAG-DP, probing...\n");
+	LogTrace("Found ARM JTAG-DP, probing...\n");
 	LogIndenter li;
-	LogDebug("Searching for APs...\n");
+	LogTrace("Searching for APs...\n");
 	uint8_t nap = 0;
 	for(; nap<255; nap++)
 	{
@@ -100,9 +101,9 @@ ARMDebugPort::ARMDebugPort(
 		//(this seems to be fpga config?)
 		if(!idr.bits.is_mem_ap)
 		{
-			LogDebug("Found JTAG-AP rev %d at index %d\n", idr.bits.revision, nap);
+			LogTrace("Found JTAG-AP rev %d at index %d\n", idr.bits.revision, nap);
 			LogIndenter li;
-			LogDebug("Not supported yet, ignoring\n");
+			LogTrace("Not supported yet, ignoring\n");
 			continue;
 		}
 
@@ -113,16 +114,16 @@ ARMDebugPort::ARMDebugPort(
 			m_aps[nap] = ap;
 
 			if(ap->GetBusType() == ARMDebugAccessPort::DAP_AHB)
-				LogDebug("Found AHB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
+				LogTrace("Found AHB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 			else if(ap->GetBusType() == ARMDebugAccessPort::DAP_APB)
-				LogDebug("Found APB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
+				LogTrace("Found APB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 
 			//If it's an AHB Mem-AP, and we don't have a default Mem-AP, this one is probably RAM.
 			//Use it as our default AP.
 			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_AHB) && (m_defaultMemAP == NULL) )
 			{
 				LogIndenter li;
-				LogDebug("Using as default RAM Mem-AP\n");
+				LogTrace("Using as default RAM Mem-AP\n");
 				m_defaultMemAP = ap;
 			}
 
@@ -131,14 +132,14 @@ ARMDebugPort::ARMDebugPort(
 			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_APB) && (m_defaultRegisterAP == NULL) )
 			{
 				LogIndenter li;
-				LogDebug("Using as default CoreSight Mem-AP\n");
+				LogTrace("Using as default CoreSight Mem-AP\n");
 				m_defaultRegisterAP = ap;
 			}
 		}
 	}
 
 	//Initialize each of the APs once they are all open
-	LogDebug("Initializing APs...\n");
+	LogTrace("Initializing APs...\n");
 	{
 		LogIndenter li;
 		for(auto it : m_aps)
@@ -281,7 +282,7 @@ std::string ARMDebugPort::GetDescription()
 	switch(m_partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
-		devname = "JTAG DAP";
+		devname = "JTAG-DP";
 		break;
 
 	default:
@@ -294,6 +295,37 @@ std::string ARMDebugPort::GetDescription()
 	snprintf(srev, 15, "%u", m_rev);
 
 	return string("ARM ") + devname + " rev " + srev;
+}
+
+void ARMDebugPort::PrintInfo()
+{
+	//Device descriptor
+	LogNotice("%2d: %s\n", (int)m_pos, GetDescription().c_str());
+	LogIndenter li;
+
+	//Print the system MEM-AP for now
+	if(m_defaultMemAP != NULL)
+	{
+		LogVerbose(
+			"System memory bus (AHB): MEM-AP rev %d (at index %d)\n",
+			m_defaultMemAP->GetVersion(),
+			m_defaultMemAP->GetAPNumber()
+			);
+	}
+
+	//Walk the APB MEM-AP and see what debug cores we have
+	if(m_defaultRegisterAP != NULL)
+	{
+		LogVerbose(
+			"CoreSight bus (APB):     MEM-AP rev %d (at index %d)\n",
+			m_defaultRegisterAP->GetVersion(),
+			m_defaultRegisterAP->GetAPNumber()
+			);
+
+		LogIndenter li;
+		for(size_t i=0; i<m_defaultRegisterAP->GetDeviceCount(); i++)
+			m_defaultRegisterAP->GetDevice(i)->PrintInfo();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
