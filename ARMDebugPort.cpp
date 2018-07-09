@@ -402,26 +402,23 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 	{
 		//Send the 3-bit A / RnW field to request the read
 		uint8_t addr_flags = ((addr & 0x0c) >> 1) | OP_READ;
-		//printf("        addr_flags = %x\n", addr_flags);
-		uint8_t ack_out;
-		m_iface->EnterShiftDR();
-		m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
+		uint8_t txd[5] = {0};
+		for(int i=0; i<3; i++)
+			PokeBit(txd, i, PeekBit(&addr_flags, i));
+		uint8_t rxd[5];
+		ScanDR(txd, rxd, 35);
+		uint8_t ack_out = 0;
+		for(int i=0; i<3; i++)
+			PokeBit(&ack_out, i, PeekBit(rxd, i));
 		if(ack_out != OK_OR_FAULT)
 			LogWarning("Don't know what to do with WAIT request from DAP\n");
 
-		//Send some dummy data
-		unsigned char unused[4] = {0};
-		unsigned char unused2[4] = {0};
-		m_iface->ShiftData(1, unused, unused2, 32);
-		m_iface->LeaveExit1DR();
-
-		//Send the same A / RnW field again to get the response data
-		m_iface->EnterShiftDR();
-		m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
-
-		//Send some dummy data and get the read value back
-		m_iface->ShiftData(1, unused, (unsigned char*)&data_out, 32);
-		m_iface->LeaveExit1DR();
+		//Send the read again to get the reply
+		ScanDR(txd, rxd, 35);
+		for(int i=0; i<3; i++)
+			PokeBit(&ack_out, i, PeekBit(rxd, i));
+		for(int i=0; i<32; i++)
+			PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
 
 		//If we got a success result, done
 		if(ack_out == OK_OR_FAULT)
@@ -498,17 +495,22 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	//Do the read
 	SetIR(INST_APACC);
 
-	//Send the 3-bit A / RnW field to request the write
+	//Concatenate the 3-bit A / RnW field to request the write with the data itself
 	uint8_t addr_flags = ((addr & 0x0c) >> 1) | OP_WRITE;
-	//printf("        addr_flags = %x\n", addr_flags);
-	uint8_t ack_out;
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
+	//LogTrace("        addr_flags = %x\n", addr_flags);
+	uint8_t* wdata_p = (uint8_t*)&wdata;
+	uint8_t txd[5];
+	for(int i=0; i<3; i++)
+		PokeBit(txd, i, PeekBit(&addr_flags, i));
+	for(int i=0; i<32; i++)
+		PokeBit(txd, i+3, PeekBit(wdata_p, i));
 
-	///Send the data being written
-	unsigned char unused[4] = {0};
-	m_iface->ShiftData(1, (unsigned char*)&wdata, unused, 32);
-	m_iface->LeaveExit1DR();
+	//Get the data back and extract the reply
+	unsigned char rxd[5];
+	ScanDR(txd, rxd, 35);
+	uint8_t ack_out = 0;
+	for(int i=0; i<3; i++)
+		PokeBit(&ack_out, i, PeekBit(rxd, i));
 
 	//If the original ACK-out was a "wait", we have to do something
 	if(ack_out == WAIT)
@@ -520,19 +522,19 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 
 	//Send a dummy read to get the response code
 	addr_flags = ((addr & 0x0c) >> 1) | OP_READ;
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
+	for(int i=0; i<3; i++)
+		PokeBit(txd, i, PeekBit(&addr_flags, i));
+	for(int i=0; i<32; i++)
+		PokeBit(txd, i+3, false);
+	ScanDR(txd, rxd, 35);
+	for(int i=0; i<3; i++)
+		PokeBit(&ack_out, i, PeekBit(rxd, i));
 	if(ack_out != OK_OR_FAULT)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
 			"");
 	}
-
-	//Send some dummy data
-	uint32_t data_out;
-	m_iface->ShiftData(1, unused, (unsigned char*)&data_out, 32);
-	m_iface->LeaveExit1DR();
 
 	//Verify the read was successful
 	ARMDebugPortStatusRegister stat = GetStatusRegister();
@@ -563,31 +565,26 @@ uint32_t ARMDebugPort::DPRegisterRead(DpReg addr)
 
 	//Send the 3-bit A / RnW field to request the read
 	uint8_t addr_flags = (addr << 1) | OP_READ;
-	uint8_t ack_out;
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
-	//ignore original ack out
-
-	//Send some dummy data
-	unsigned char unused[4] = {0};
-	unsigned char unused2[4] = {0};
-	m_iface->ShiftData(1, unused, unused2, 32);
-	m_iface->LeaveExit1DR();
+	uint8_t txd[5] = {0};
+	for(int i=0; i<3; i++)
+		PokeBit(txd, i, PeekBit(&addr_flags, i));
+	unsigned char rxd[5];
+	ScanDR(txd, rxd, 35);
 
 	//Send the same A / RnW field again to get the response data
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
+	ScanDR(txd, rxd, 35);
+	uint8_t ack_out = 0;
+	for(int i=0; i<3; i++)
+		PokeBit(&ack_out, i, PeekBit(rxd, i));
 	if(ack_out != OK_OR_FAULT)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
 			"");
 	}
-
-	//Send some dummy data
 	uint32_t data_out;
-	m_iface->ShiftData(1, unused, (unsigned char*)&data_out, 32);
-	m_iface->LeaveExit1DR();
+	for(int i=0; i<32; i++)
+		PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
 
 	return data_out;
 }
@@ -598,29 +595,29 @@ void ARMDebugPort::DPRegisterWrite(DpReg addr, uint32_t wdata)
 
 	//Send the 3-bit A / RnW field to request the write
 	uint8_t addr_flags = (addr << 1) | OP_WRITE;
-	uint8_t ack_out;
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
-	//ignore original ack out
-
-	//Send the data being written
-	unsigned char unused[4] = {0};
-	m_iface->ShiftData(1, (unsigned char*)&wdata, unused, 32);
-	m_iface->LeaveExit1DR();
+	uint8_t txd[5] = {0};
+	uint8_t* wdata_p = (uint8_t*)&wdata;
+	for(int i=0; i<3; i++)
+		PokeBit(txd, i, PeekBit(&addr_flags, i));
+	for(int i=0; i<32; i++)
+		PokeBit(txd, i+3, PeekBit(wdata_p, i));
+	unsigned char rxd[5];
+	ScanDR(txd, rxd, 35);
 
 	//Send a read request to get the response code
 	addr_flags = (addr << 1) | OP_READ;
-	m_iface->EnterShiftDR();
-	m_iface->ShiftData(0, &addr_flags, &ack_out, 3);
+	for(int i=0; i<3; i++)
+		PokeBit(txd, i, PeekBit(&addr_flags, i));
+	for(int i=0; i<32; i++)
+		PokeBit(txd, i+3, 0);
+	ScanDR(txd, rxd, 35);
+	uint8_t ack_out = 0;
+	for(int i=0; i<3; i++)
+		PokeBit(&ack_out, i, PeekBit(rxd, i));
 	if(ack_out != OK_OR_FAULT)
 	{
 		throw JtagExceptionWrapper(
 			"Don't know what to do with WAIT request from DAP",
 			"");
 	}
-
-	//Send some dummy data
-	unsigned char unused2[4] = {0};
-	m_iface->ShiftData(1, unused2, unused, 32);
-	m_iface->LeaveExit1DR();
 }
