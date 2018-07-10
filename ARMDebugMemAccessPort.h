@@ -121,10 +121,12 @@ public:
 		ACCESS_INVALID	= 3,
 	};
 
+	//ADI spec table 9-3
 	enum ComponentClass
 	{
-		CLASS_ROMTABLE = 1,
-		CLASS_CORESIGHT	= 9
+		CLASS_ROMTABLE 		= 0x1,
+		CLASS_CORESIGHT		= 0x9,
+		CLASS_GENERIC_IP	= 0xe
 	};
 
 	virtual void PrintStatusRegister();

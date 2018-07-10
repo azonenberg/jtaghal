@@ -64,6 +64,14 @@ ARMDebugMemAccessPort::ARMDebugMemAccessPort(ARMDebugPort* dp, uint8_t apnum, AR
 			"Invalid DAP type",
 			"");
 	}
+
+	//If the access size is not 32-bit, make it 32-bit
+	ARMDebugMemAPControlStatusWord csw = GetStatusRegister();
+	if(csw.bits.size != ACCESS_WORD)
+	{
+		csw.bits.size = ACCESS_WORD;
+		m_dp->APRegisterWrite(m_apnum, ARMDebugPort::REG_MEM_CSW, csw.word);
+	}
 }
 
 void ARMDebugMemAccessPort::Initialize()
@@ -220,17 +228,11 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 				"");
 		}
 
-		//TODO: support this
-		if(entry & 0x80000000)
-		{
-			throw JtagExceptionWrapper(
-				"Negative offsets from ROM table not implemented",
-				"");
-		}
-
 		//Calculate the actual address of this node
 		uint32_t offset = entry >> 12;
-		uint32_t address = (offset << 12) | baseAddress;
+		uint32_t address = (offset << 12) + baseAddress;
+		if(entry & 0x80000000)
+			address = baseAddress - (~(offset << 12) + 1);
 
 		//Walk this table entry
 		uint32_t compid_raw[4];
@@ -245,9 +247,9 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		//Verify the mandatory component ID bits are in the right spots
 		if( (compid & 0xffff0fff) != (0xb105000d) )
 		{
-			throw JtagExceptionWrapper(
-				"Invalid ROM table ID (wrong preamble)",
-				"");
+			LogError("Invalid ROM table ID (wrong preamble), got %08x and expected something close to 0xb105000d\n",
+				compid);
+			continue;
 		}
 
 		//Figure out what it means
@@ -258,6 +260,11 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 			//Process CoreSight blocks
 			case CLASS_CORESIGHT:
 				ProcessDebugBlock(address);
+				break;
+
+			//Process "generic IP" blocks (ignore them)
+			case CLASS_GENERIC_IP:
+				LogTrace("Found generic IP block at %08x, ignoring\n", address);
 				break;
 
 			//Additional ROM table
@@ -364,6 +371,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 			//Unknown
 			default:
 			{
+				LogDebug("Unknown CoreSight device\n");
 				ARMCoreSightDevice* dev = new ARMCoreSightDevice(this, base_address, reg.bits);
 				m_debugDevices.push_back(dev);
 			}
