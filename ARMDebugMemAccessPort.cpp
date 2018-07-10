@@ -265,6 +265,14 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 				{
 					LogTrace("Found extra ROM table at %08x, loading\n", address);
 					LogIndenter li;
+
+					//If the ROM table is a pointer to US, ignore it!
+					if(address == baseAddress)
+					{
+						LogTrace("Actually it's a pointer back to the same table we're in. Ignoring it.\n");
+						continue;
+					}
+
 					LoadROMTable(address);
 				}
 				break;
