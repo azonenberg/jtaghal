@@ -41,6 +41,10 @@ set(JTAGHAL_SOURCES
     MicrochipMicrocontroller.cpp
     MicrochipPIC32Device.cpp
 
+    STMicroDevice.cpp
+    STMicroMicrocontroller.cpp
+    STM32Device.cpp
+
     XilinxDevice.cpp
     XilinxCPLD.cpp
     XilinxCoolRunnerIIDevice.cpp

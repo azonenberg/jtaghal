@@ -127,11 +127,14 @@
 //Vendor classes
 #include "ARMDevice.h"
 #include "MicrochipDevice.h"
+#include "STMicroDevice.h"
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
 #include "ARMDebugPort.h"
 #include "MicrochipMicrocontroller.h"
+#include "STMicroMicrocontroller.h"
+#include "STM32Device.h"
 #include "XilinxCPLD.h"
 #include "XilinxCPLDBitstream.h"
 #include "XilinxCoolRunnerIIDevice.h"

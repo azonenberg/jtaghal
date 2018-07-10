@@ -148,7 +148,7 @@ struct MicrochipPIC32DeviceInfo
 };
 
 /**
-	@brief A Xilinx CoolRunner-II device
+	@brief A Microchip PIC32 microcontroller (MX, MZ, MM, etc)
 
 	\ingroup libjtaghal
  */

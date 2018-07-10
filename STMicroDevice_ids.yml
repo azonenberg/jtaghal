@@ -27,14 +27,12 @@
 #                                                                                                                      #
 ########################################################################################################################
 
-# Table of JEDEC vendor IDs
-JEDECVendorID:
+# Table of STMicro device IDs
+STMicroDeviceID:
     base: hex
-    width: 11
+    width: 16
 
     values:
-        VENDOR_ID_ARM:          23B
-        VENDOR_ID_MICROCHIP:    29
-        VENDOR_ID_PHILIPS:      15
-        VENDOR_ID_STMICRO:		20
-        VENDOR_ID_XILINX:       49
+
+        #STM32 parts
+        STM32F411E:					6431

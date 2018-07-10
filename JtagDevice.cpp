@@ -98,6 +98,9 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 	case VENDOR_ID_MICROCHIP:
 		return MicrochipDevice::CreateDevice(idcode, iface, pos);
 
+	case VENDOR_ID_STMICRO:
+		return STMicroDevice::CreateDevice(idcode, iface, pos);
+
 	case VENDOR_ID_XILINX:
 		return XilinxDevice::CreateDevice(idcode, iface, pos);
 
