@@ -48,19 +48,6 @@ STM32Device::STM32Device(
 {
 	m_irlength = 5;
 
-	//Look up properties
-	switch(devid)
-	{
-		case STM32F411E:
-			m_flashKB = 512;
-			m_ramKB = 128;
-			break;
-
-		default:
-			m_flashKB = 0;
-			m_ramKB = 0;
-	}
-
 	if(pos == 0)
 	{
 		throw JtagExceptionWrapper(
@@ -77,7 +64,40 @@ STM32Device::STM32Device(
 			"");
 	}
 
-	//What now?
+	uint32_t id = m_dap->ReadMemory(0xe0042000);
+	LogDebug("id = %08x\n", id);
+
+	uint32_t serial[3];
+	serial[0] = m_dap->ReadMemory(0x1fff7a10);	//xy
+	serial[1] = m_dap->ReadMemory(0x1fff7a14);	//lot, wafnum
+	serial[2] = m_dap->ReadMemory(0x1fff7a18);	//lot
+
+	m_waferX = serial[0] >> 16;
+	m_waferY = serial[0] & 0xffff;
+	m_waferNum = serial[1] & 0xff;
+	m_waferLot[0] = (serial[1] >> 24) & 0xff;
+	m_waferLot[1] = (serial[1] >> 16) & 0xff;
+	m_waferLot[2] = (serial[1] >> 8) & 0xff;
+	m_waferLot[3] = (serial[2] >> 24) & 0xff;
+	m_waferLot[4] = (serial[2] >> 16) & 0xff;
+	m_waferLot[5] = (serial[2] >> 8) & 0xff;
+	m_waferLot[6] = (serial[2] >> 0) & 0xff;
+	m_waferLot[7] = 0;
+	LogDebug("WaferX/Y %d %d, wafer %d of lot %s\n", m_waferX, m_waferY, m_waferNum, m_waferLot);
+
+	//Look up size of flash memory
+	m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+
+	//Look up RAM size (TODO can we get this from descriptors somehow?)
+	switch(devid)
+	{
+		case STM32F411E:
+			m_ramKB = 128;
+			break;
+
+		default:
+			m_ramKB = 0;
+	}
 }
 
 /**
@@ -133,6 +153,35 @@ bool STM32Device::IsProgrammed()
 void STM32Device::Erase()
 {
 	LogWarning("STM32Device::Erase() not implemented\n");
+
+	//TODO: What other STM32 devices is this valid for?
+	if(m_devicetype != STM32F411E)
+	{
+		throw JtagExceptionWrapper(
+			"STM32Device::Erase() not tested for any parts other than STM32F411E",
+			"");
+	}
+
+	//Flash SFR base address
+	uint32_t flash_sfr_base = 0x40023C00;
+/*
+	//Check CR
+	uint32_t cr = m_dap->ReadMemory(flash_sfr_base + 0x10);
+	LogDebug("Initial CR = %08x\n", cr);
+
+	//Unlock flash
+	m_dap->WriteMemory(flash_sfr_base + 0x4, 0x45670123);
+	m_dap->WriteMemory(flash_sfr_base + 0x4, 0xCDEF89AB);
+
+	//Check CR
+	cr = m_dap->ReadMemory(flash_sfr_base + 0x10);
+	LogDebug("Unlocked CR = %08x\n", cr);
+
+	//Wait for FLASH_CR.BSY to be cleared
+	//Set FLASH_CR.MER
+	//Set FLASH_CR.STRT
+	//Wait for FLASH_CR.BSY to be cleared
+	*/
 }
 
 void STM32Device::Program(FirmwareImage* /*image*/)

@@ -98,6 +98,12 @@ public:
 
 protected:
 	ARMDebugPort* m_dap;
+
+	//Serial number fields
+	uint32_t m_waferX;
+	uint32_t m_waferY;
+	int m_waferNum;
+	char m_waferLot[8];
 };
 
 #endif
