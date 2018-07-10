@@ -48,3 +48,37 @@ SerialNumberedDevice::~SerialNumberedDevice()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Pretty-printing
+
+string SerialNumberedDevice::GetPrettyPrintedSerialNumber()
+{
+	int len = GetSerialNumberLength();
+	int bitlen = GetSerialNumberLengthBits();
+	unsigned char* serial = new unsigned char[len];
+	memset(serial, 0, len);
+	GetSerialNumber(serial);
+
+	/*
+	string serial_binary;
+	for(int j=0; j<bitlen; j++)
+	{
+		if(PeekBit(serial, j))
+			serial_binary += "1";
+		else
+			serial_binary += "0";
+	}
+	*/
+
+	string serial_hex;
+	char tmp[3];
+	for(int j=0; j<len; j++)
+	{
+		snprintf(tmp, sizeof(tmp), "%02x", 0xff & serial[j]);
+		serial_hex += tmp;
+	}
+	delete[] serial;
+
+	//LogNotice("Device serial number is %s = 0x%s\n", serial_binary.c_str(), serial_hex.c_str());
+	return string("Serial number is 0x") + serial_hex;
+}

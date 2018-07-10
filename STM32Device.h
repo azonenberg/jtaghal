@@ -49,6 +49,7 @@
 class STM32Device
 	: public STMicroMicrocontroller
 	, public JtagDevice
+	, public SerialNumberedDevice
 {
 public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,6 +83,15 @@ public:
 	virtual void Program(FirmwareImage* image);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Serial numbering
+
+	virtual bool ReadingSerialRequiresReset();
+	virtual int GetSerialNumberLength();
+	virtual int GetSerialNumberLengthBits();
+	virtual void GetSerialNumber(unsigned char* data);
+	virtual std::string GetPrettyPrintedSerialNumber();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// No NoC interfaces
 
 	virtual bool HasRPCInterface();
@@ -104,6 +114,7 @@ protected:
 	uint32_t m_waferY;
 	int m_waferNum;
 	char m_waferLot[8];
+	uint8_t m_serialRaw[12];
 };
 
 #endif

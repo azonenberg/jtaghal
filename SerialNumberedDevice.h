@@ -55,21 +55,21 @@ public:
 	virtual bool ReadingSerialRequiresReset() = 0;
 
 	/**
-		@brief Gets the length of the FPGA's unique serial number, in bytes (rounded up to the nearest whole byte).
+		@brief Gets the length of the device's unique serial number, in bytes (rounded up to the nearest whole byte).
 
 		@return Serial number length
 	 */
 	virtual int GetSerialNumberLength() =0;
 
 	/**
-		@brief Gets the length of the FPGA's unique serial number, in bits.
+		@brief Gets the length of the device's unique serial number, in bits.
 
 		@return Serial number length
 	 */
 	virtual int GetSerialNumberLengthBits() =0;
 
 	/**
-		@brief Gets the FPGA's unique serial number.
+		@brief Gets the device's unique serial number.
 
 		Note that some architectures, such as Spartan-6, cannot read the serial number over JTAG without erasing the
 		FPGA configuration. If this is the case, calling this function will automatically erase the FPGA.
@@ -82,6 +82,16 @@ public:
 		GetSerialNumberLength().
 	 */
 	virtual void GetSerialNumber(unsigned char* data) =0;
+
+	/**
+		@brief Returns a pretty-printed serial number
+
+		Most serial numbers have no inherent meaning but some contain encoded lot numbers etc.
+
+		This function returns a human-readable version of the serial number, if such exists. Otherwise,
+		a hex encoding of GetSerialNumber() is returned.
+	 */
+	virtual std::string GetPrettyPrintedSerialNumber();
 };
 
 #endif

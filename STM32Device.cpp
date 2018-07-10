@@ -64,14 +64,14 @@ STM32Device::STM32Device(
 			"");
 	}
 
-	uint32_t id = m_dap->ReadMemory(0xe0042000);
-	LogDebug("id = %08x\n", id);
+	//uint32_t id = m_dap->ReadMemory(0xe0042000);
+	//LogDebug("id = %08x\n", id);
 
+	//Extract serial number fields
 	uint32_t serial[3];
-	serial[0] = m_dap->ReadMemory(0x1fff7a10);	//xy
-	serial[1] = m_dap->ReadMemory(0x1fff7a14);	//lot, wafnum
-	serial[2] = m_dap->ReadMemory(0x1fff7a18);	//lot
-
+	serial[0] = m_dap->ReadMemory(0x1fff7a10);
+	serial[1] = m_dap->ReadMemory(0x1fff7a14);
+	serial[2] = m_dap->ReadMemory(0x1fff7a18);
 	m_waferX = serial[0] >> 16;
 	m_waferY = serial[0] & 0xffff;
 	m_waferNum = serial[1] & 0xff;
@@ -83,7 +83,13 @@ STM32Device::STM32Device(
 	m_waferLot[5] = (serial[2] >> 8) & 0xff;
 	m_waferLot[6] = (serial[2] >> 0) & 0xff;
 	m_waferLot[7] = 0;
-	LogDebug("WaferX/Y %d %d, wafer %d of lot %s\n", m_waferX, m_waferY, m_waferNum, m_waferLot);
+	m_serialRaw[0] = m_waferX >> 8;
+	m_serialRaw[1] = m_waferX & 0xff;
+	m_serialRaw[2] = m_waferY >> 8;
+	m_serialRaw[3] = m_waferY & 0xff;
+	m_serialRaw[4] = m_waferNum;
+	for(int i=0; i<7; i++)
+		m_serialRaw[5+i] = m_waferLot[i];
 
 	//Look up size of flash memory
 	m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
@@ -112,6 +118,42 @@ JtagDevice* STM32Device::CreateDevice(
 {
 	//TODO: Sanity checks
 	return new STM32Device(devid, stepping, idcode, iface, pos);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Device property queries
+
+bool STM32Device::ReadingSerialRequiresReset()
+{
+	return false;
+}
+
+int STM32Device::GetSerialNumberLength()
+{
+	return 12;
+}
+
+int STM32Device::GetSerialNumberLengthBits()
+{
+	return 96;
+}
+
+void STM32Device::GetSerialNumber(unsigned char* data)
+{
+	for(int i=0; i<12; i++)
+		data[i] = m_serialRaw[i];
+}
+
+string STM32Device::GetPrettyPrintedSerialNumber()
+{
+	char tmp[256];
+	snprintf(tmp, sizeof(tmp),
+		"Die (%d, %d), wafer %d, lot %s",
+		m_waferX, m_waferY,
+		m_waferNum,
+		m_waferLot);
+
+	return string(tmp);
 }
 
 string STM32Device::GetDescription()
@@ -149,6 +191,9 @@ bool STM32Device::IsProgrammed()
 	LogWarning("STM32Device::IsProgrammed() not implemented\n");
 	return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Programming
 
 void STM32Device::Erase()
 {

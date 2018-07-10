@@ -401,33 +401,8 @@ void JtagDevice::PrintInfo()
 		if(!skipRead)
 		{
 			LogIndenter li;
-			int len = pserial->GetSerialNumberLength();
-			int bitlen = pserial->GetSerialNumberLengthBits();
-			unsigned char* serial = new unsigned char[len];
-			memset(serial, 0, len);
-			pserial->GetSerialNumber(serial);
-
-			LogNotice("Device has unique serial number (%d bits long)\n", bitlen);
-
-			string serial_binary;
-			for(int j=0; j<bitlen; j++)
-			{
-				if(PeekBit(serial, j))
-					serial_binary += "1";
-				else
-					serial_binary += "0";
-			}
-
-			string serial_hex;
-			char tmp[3];
-			for(int j=0; j<len; j++)
-			{
-				snprintf(tmp, sizeof(tmp), "%02x", 0xff & serial[j]);
-				serial_hex += tmp;
-			}
-			delete[] serial;
-
-			LogNotice("Device serial number is %s = 0x%s\n", serial_binary.c_str(), serial_hex.c_str());
+			LogNotice("Device has unique serial number (%d bits long)\n", pserial->GetSerialNumberLengthBits());
+			LogNotice("%s\n", pserial->GetPrettyPrintedSerialNumber().c_str() );
 		}
 	}
 }
