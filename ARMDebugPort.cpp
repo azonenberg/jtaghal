@@ -138,6 +138,10 @@ ARMDebugPort::ARMDebugPort(
 		}
 	}
 
+	//If we have an AHB Mem-AP but not a CoreSight APB Mem-AP, use the AHB bus for CoreSight stuff too
+	if(m_defaultMemAP && !m_defaultRegisterAP)
+		m_defaultRegisterAP = m_defaultMemAP;
+
 	//Initialize each of the APs once they are all open
 	LogTrace("Initializing APs...\n");
 	{
@@ -316,16 +320,22 @@ void ARMDebugPort::PrintInfo()
 	//Walk the APB MEM-AP and see what debug cores we have
 	if(m_defaultRegisterAP != NULL)
 	{
-		LogVerbose(
-			"CoreSight bus (APB):     MEM-AP rev %d (at index %d)\n",
-			m_defaultRegisterAP->GetVersion(),
-			m_defaultRegisterAP->GetAPNumber()
-			);
+		if(m_defaultRegisterAP != m_defaultMemAP)
+		{
+			LogVerbose(
+				"CoreSight bus (APB):     MEM-AP rev %d (at index %d)\n",
+				m_defaultRegisterAP->GetVersion(),
+				m_defaultRegisterAP->GetAPNumber()
+				);
+		}
+		else
+			LogVerbose("No dedicated CoreSight APB bus found, using system memory bus\n");
 
-		LogIndenter li;
-		for(size_t i=0; i<m_defaultRegisterAP->GetDeviceCount(); i++)
-			m_defaultRegisterAP->GetDevice(i)->PrintInfo();
 	}
+
+	LogIndenter li2;
+	for(size_t i=0; i<m_defaultRegisterAP->GetDeviceCount(); i++)
+		m_defaultRegisterAP->GetDevice(i)->PrintInfo();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
