@@ -352,51 +352,10 @@ void JtagDevice::PrintInfo()
 
 					else
 						LogNotice("User VID/PID not specified or unreadable\n");
-
-					if(pfpga->HasSerialNumber())
-					{
-						int bitlen = pfpga->GetSerialNumberLengthBits();
-						LogIndenter li;
-						LogNotice("Device has unique serial number (%d bits long)\n", bitlen);
-					}
 				}
 				else
 				{
 					LogNotice("Not a JTAG-capable FPGA\n");
-				}
-			}
-			else
-			{
-				if(pfpga->HasSerialNumber())
-				{
-					LogIndenter li;
-					int len = pfpga->GetSerialNumberLength();
-					int bitlen = pfpga->GetSerialNumberLengthBits();
-					unsigned char* serial = new unsigned char[len];
-					memset(serial, 0, len);
-					pfpga->GetSerialNumber(serial);
-
-					LogNotice("Device has unique serial number (%d bits long)\n", bitlen);
-
-					string serial_binary;
-					for(int j=0; j<bitlen; j++)
-					{
-						if(PeekBit(serial, j))
-							serial_binary += "1";
-						else
-							serial_binary += "0";
-					}
-
-					string serial_hex;
-					char tmp[3];
-					for(int j=0; j<len; j++)
-					{
-						snprintf(tmp, sizeof(tmp), "%02x", 0xff & serial[j]);
-						serial_hex += tmp;
-					}
-					delete[] serial;
-
-					LogNotice("Device serial number is %s = 0x%s\n", serial_binary.c_str(), serial_hex.c_str());
 				}
 			}
 		}
@@ -419,5 +378,56 @@ void JtagDevice::PrintInfo()
 		for(size_t i=0; i<ntargets; i++)
 			printf("        %zu: %s\n", i, pdebug->GetTarget(i)->GetDescription().c_str());
 		*/
+	}
+
+	//Does it have a serial number? If so, get more detailsvirtual
+	SerialNumberedDevice* pserial = dynamic_cast<SerialNumberedDevice*>(this);
+	if(pserial != NULL)
+	{
+		//If the device is programmable, check if it requires a reset before printing the serial number
+		bool skipRead = false;
+		if(pprog)
+		{
+			if(pserial->ReadingSerialRequiresReset() && pprog->IsProgrammed())
+			{
+				int bitlen = pserial->GetSerialNumberLengthBits();
+				LogIndenter li;
+				LogNotice("Device has unique serial number (%d bits long), but cannot read without a reset\n", bitlen);
+				skipRead = true;
+			}
+		}
+
+		//Read the serial number if we can do so without a reboot, or if it's blank
+		if(!skipRead)
+		{
+			LogIndenter li;
+			int len = pserial->GetSerialNumberLength();
+			int bitlen = pserial->GetSerialNumberLengthBits();
+			unsigned char* serial = new unsigned char[len];
+			memset(serial, 0, len);
+			pserial->GetSerialNumber(serial);
+
+			LogNotice("Device has unique serial number (%d bits long)\n", bitlen);
+
+			string serial_binary;
+			for(int j=0; j<bitlen; j++)
+			{
+				if(PeekBit(serial, j))
+					serial_binary += "1";
+				else
+					serial_binary += "0";
+			}
+
+			string serial_hex;
+			char tmp[3];
+			for(int j=0; j<len; j++)
+			{
+				snprintf(tmp, sizeof(tmp), "%02x", 0xff & serial[j]);
+				serial_hex += tmp;
+			}
+			delete[] serial;
+
+			LogNotice("Device serial number is %s = 0x%s\n", serial_binary.c_str(), serial_hex.c_str());
+		}
 	}
 }

@@ -109,6 +109,9 @@
 #include "PipeJtagInterface.h"
 //#include "NocJtagInterface.h"
 
+//Miscellaneous helper interfaces
+#include "SerialNumberedDevice.h"
+
 //Programmable device helpers
 #include "FirmwareImage.h"
 #include "ByteArrayFirmwareImage.h"

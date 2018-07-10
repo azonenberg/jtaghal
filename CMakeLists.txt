@@ -12,6 +12,8 @@ set(JTAGHAL_SOURCES
     CPLDBitstream.cpp
     FPGABitstream.cpp
 
+    SerialNumberedDevice.cpp
+
     DebuggableDevice.cpp
     ProgrammableDevice.cpp
     ProgrammableLogicDevice.cpp

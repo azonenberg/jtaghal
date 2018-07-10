@@ -263,7 +263,6 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// FPGA-specific device properties
 
-	virtual bool HasSerialNumber();
 	virtual int GetSerialNumberLength();
 	virtual int GetSerialNumberLengthBits();
 	virtual void GetSerialNumber(unsigned char* data);

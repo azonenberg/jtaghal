@@ -30,65 +30,21 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of XilinxFPGA
+	@brief Implementation of SerialNumberedDevice
  */
 
-#ifndef XilinxFPGA_h
-#define XilinxFPGA_h
+#include "jtaghal.h"
 
-/**
-	@brief Abstract base class for all Xilinx FPGAs
+using namespace std;
 
-	\ingroup libjtaghal
- */
-class XilinxFPGA	: public XilinxDevice
-					, public JtagFPGA
-					, public SerialNumberedDevice
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+SerialNumberedDevice::SerialNumberedDevice()
 {
-public:
-	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);
-	virtual ~XilinxFPGA();
+}
 
-protected:
-	//Static function for parsing bitstream headers (common to all Xilinx devices)
-	void ParseBitstreamCore(XilinxFPGABitstream* bitstream, const unsigned char* data, size_t len);\
+SerialNumberedDevice::~SerialNumberedDevice()
+{
+}
 
-	/**
-		@brief Parse a full bitstream image (specific to the derived FPGA family)
-
-		@throw JtagException if the bitstream is malformed or for the wrong device family
-
-		@param data			Pointer to the bitstream data
-		@param len			Length of the bitstream
-		@param bitstream	The bitstream object to load into
-		@param fpos			Position in the bitstream image to start parsing (after the end of headers)
-		@param bVerbose		Set to true for verbose debug output on bitstream internals
-	 */
-	virtual void ParseBitstreamInternals(
-		const unsigned char* data,
-		size_t len,
-		XilinxFPGABitstream* bitstream,
-		size_t fpos) =0;
-
-	virtual void PrintStatusRegister() =0;
-	virtual bool ReadingSerialRequiresReset();
-
-public:
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
-	virtual void DumpIndirect(int buswidth, std::string fname);
-
-	/**
-		@brief Reboots the FPGA and loads from external memory, if possible
-	 */
-	virtual void Reboot() =0;
-
-	virtual uint16_t LoadIndirectProgrammingImage(int buswidth, std::string image_fname = "");
-};
-
-#endif

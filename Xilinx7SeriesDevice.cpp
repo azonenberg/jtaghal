@@ -182,11 +182,6 @@ string Xilinx7SeriesDevice::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FPGA-specific device properties
 
-bool Xilinx7SeriesDevice::HasSerialNumber()
-{
-	return true;
-}
-
 int Xilinx7SeriesDevice::GetSerialNumberLength()
 {
 	return 8;

@@ -30,65 +30,59 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of XilinxFPGA
+	@brief Declaration of SerialNumberedDevice
  */
 
-#ifndef XilinxFPGA_h
-#define XilinxFPGA_h
+#ifndef SerialNumberedDevice_h
+#define SerialNumberedDevice_h
 
 /**
-	@brief Abstract base class for all Xilinx FPGAs
+	@brief Abstract base class for all devices that have a unique die serial number
 
 	\ingroup libjtaghal
  */
-class XilinxFPGA	: public XilinxDevice
-					, public JtagFPGA
-					, public SerialNumberedDevice
+class SerialNumberedDevice
 {
 public:
-	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);
-	virtual ~XilinxFPGA();
-
-protected:
-	//Static function for parsing bitstream headers (common to all Xilinx devices)
-	void ParseBitstreamCore(XilinxFPGABitstream* bitstream, const unsigned char* data, size_t len);\
+	SerialNumberedDevice();
+	virtual ~SerialNumberedDevice();
 
 	/**
-		@brief Parse a full bitstream image (specific to the derived FPGA family)
+		@brief True if reading this serial number requires a device reset.
 
-		@throw JtagException if the bitstream is malformed or for the wrong device family
-
-		@param data			Pointer to the bitstream data
-		@param len			Length of the bitstream
-		@param bitstream	The bitstream object to load into
-		@param fpos			Position in the bitstream image to start parsing (after the end of headers)
-		@param bVerbose		Set to true for verbose debug output on bitstream internals
+		Applications may choose not to display the serial number to avoid disrupting the running code.
 	 */
-	virtual void ParseBitstreamInternals(
-		const unsigned char* data,
-		size_t len,
-		XilinxFPGABitstream* bitstream,
-		size_t fpos) =0;
-
-	virtual void PrintStatusRegister() =0;
-	virtual bool ReadingSerialRequiresReset();
-
-public:
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
-	virtual void DumpIndirect(int buswidth, std::string fname);
+	virtual bool ReadingSerialRequiresReset() = 0;
 
 	/**
-		@brief Reboots the FPGA and loads from external memory, if possible
-	 */
-	virtual void Reboot() =0;
+		@brief Gets the length of the FPGA's unique serial number, in bytes (rounded up to the nearest whole byte).
 
-	virtual uint16_t LoadIndirectProgrammingImage(int buswidth, std::string image_fname = "");
+		@return Serial number length
+	 */
+	virtual int GetSerialNumberLength() =0;
+
+	/**
+		@brief Gets the length of the FPGA's unique serial number, in bits.
+
+		@return Serial number length
+	 */
+	virtual int GetSerialNumberLengthBits() =0;
+
+	/**
+		@brief Gets the FPGA's unique serial number.
+
+		Note that some architectures, such as Spartan-6, cannot read the serial number over JTAG without erasing the
+		FPGA configuration. If this is the case, calling this function will automatically erase the FPGA.
+
+		Call ReadingSerialRequiresReset() to see if this is the case.
+
+		@throw JtagException if an error occurs during the read operation
+
+		@param data Buffer to store the serial number into. Must be at least as large as the size given by
+		GetSerialNumberLength().
+	 */
+	virtual void GetSerialNumber(unsigned char* data) =0;
 };
 
 #endif
+

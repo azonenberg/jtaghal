@@ -172,11 +172,6 @@ string XilinxUltrascaleDevice::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FPGA-specific device properties
 
-bool XilinxUltrascaleDevice::HasSerialNumber()
-{
-	return true;
-}
-
 int XilinxUltrascaleDevice::GetSerialNumberLength()
 {
 	return 12;

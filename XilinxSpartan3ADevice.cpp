@@ -123,11 +123,6 @@ string XilinxSpartan3ADevice::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FPGA-specific device properties
 
-bool XilinxSpartan3ADevice::HasSerialNumber()
-{
-	return true;
-}
-
 int XilinxSpartan3ADevice::GetSerialNumberLength()
 {
 	return 8;
