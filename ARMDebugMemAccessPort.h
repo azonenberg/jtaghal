@@ -151,7 +151,7 @@ protected:
 	void FindRootRomTable();
 	void LoadROMTable(uint32_t baseAddress);
 
-	void ProcessDebugBlock(uint32_t base_address);
+	void ProcessDebugBlock(uint32_t base_address, uint32_t id_base, ARMDebugPeripheralIDRegister reg);
 
 	bool m_debugBusIsDedicated;
 	bool m_hasDebugRom;

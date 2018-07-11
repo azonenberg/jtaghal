@@ -58,6 +58,10 @@ string ARMCoreSightDevice::GetDescription()
 {
 	switch(m_idreg.partnum)
 	{
+		case 0x003:
+			return "Cortex-M3/M4 Data Watchpoint/Trace";
+		case 0x00c:
+			return "Cortex-M4 System Control Space";
 		case 0x906:
 			return "CoreSight Cross Trigger Interface";
 		case 0x907:
@@ -73,6 +77,8 @@ string ARMCoreSightDevice::GetDescription()
 			return "CoreSight Instrumentation Trace Macrocell";
 		case 0x914:
 			return "CoreSight Serial Wire Output";
+		case 0x925:
+			return "Cortex-M4 Embedded Trace Macrocell";
 		case 0x950:
 			return "Cortex-A9 Program Trace Macrocell";
 		case 0x9A0:

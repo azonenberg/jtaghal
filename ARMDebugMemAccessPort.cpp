@@ -207,6 +207,8 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		uint32_t entry = ReadWord(baseAddress + i*4);
 		if(entry == 0)
 			break;
+		LogTrace("i=%d, entry=%08x\n", i, entry);
+		LogIndenter li;
 
 		//If we hit 959 and it's not a terminator, something is wrong - should not be this many entries
 		if(i == 959)
@@ -229,27 +231,68 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		}
 
 		//Calculate the actual address of this node
-		uint32_t offset = entry >> 12;
-		uint32_t address = (offset << 12) + baseAddress;
+		int offset = entry >> 12;
 		if(entry & 0x80000000)
-			address = baseAddress - (~(offset << 12) + 1);
+			offset = -( (offset ^ 0xfffff) + 1);
+		uint32_t address = (offset << 12) + baseAddress;
 
 		//Walk this table entry
 		uint32_t compid_raw[4];
 		for(int i=0; i<4; i++)
 			compid_raw[i] = ReadWord(address + 0xff0 + 4*i);
 		uint32_t compid =
-			(compid_raw[3] << 24) |
-			(compid_raw[2] << 16) |
-			(compid_raw[1] << 8) |
-			compid_raw[0];
+			((compid_raw[3] & 0xff) << 24) |
+			((compid_raw[2] & 0xff) << 16) |
+			((compid_raw[1] & 0xff) << 8) |
+			(compid_raw[0] & 0xff);
+		LogTrace("address = %08x\n", address);
+		LogTrace("ID registers = %08x %08x %08x %08x\n", compid_raw[0], compid_raw[1], compid_raw[2], compid_raw[3]);
+
+		//Look up the peripheral ID
+		uint64_t periphid_raw[8];
+		for(int i=0; i<4; i++)
+			periphid_raw[i] = ReadWord(address + 0xfe0 + 4*i);
+		for(int i=0; i<4; i++)
+			periphid_raw[i+4] = ReadWord(address + 0xfd0 + 4*i);
+		ARMDebugPeripheralIDRegister idr;
+		idr.word =
+			(periphid_raw[7] << 56) |
+			(periphid_raw[6] << 48) |
+			(periphid_raw[5] << 40) |
+			(periphid_raw[4] << 32) |
+			(periphid_raw[3] << 24) |
+			(periphid_raw[2] << 16) |
+			(periphid_raw[1] << 8)  |
+			(periphid_raw[0] << 0);
+		/*{
+			LogTrace("Peripheral ID:\n");
+			LogIndenter li;
+			LogTrace("Reserved: %x\n", idr.bits.reserved_zero);
+			LogTrace("Log 4K: %d\n", idr.bits.log_4k_blocks);
+			LogTrace("Continuation: %d\n", idr.bits.jep106_cont);
+			LogTrace("Rev: %d\n", idr.bits.revand);
+			LogTrace("Mod: %d\n", idr.bits.cust_mod);
+			LogTrace("Prev: %d\n", idr.bits.revnum);
+			LogTrace("JEP106: used=%x, %x\n", idr.bits.jep106_used, idr.bits.jep106_id);
+			LogTrace("Part: %x\n", idr.bits.partnum);
+		}*/
+
+		unsigned int num_extra_pages = 1 << idr.bits.log_4k_blocks;
 
 		//Verify the mandatory component ID bits are in the right spots
 		if( (compid & 0xffff0fff) != (0xb105000d) )
 		{
-			LogError("Invalid ROM table ID (wrong preamble), got %08x and expected something close to 0xb105000d\n",
-				compid);
+			LogTrace("Invalid component ID for peripheral at %08x\n", address);
+			LogTrace("  Wrong ID register values - Got %08x and expected something close to 0xb105000d\n", compid);
 			continue;
+		}
+
+		//If the peripheral has >1 page, back off to the START (the rom table points to the LAST page)
+		uint32_t id_base = address;
+		if(idr.bits.log_4k_blocks != 0)
+		{
+			address -= (num_extra_pages - 1) * 0x1000;
+			LogTrace("Updated base address %08x\n", address);
 		}
 
 		//Figure out what it means
@@ -257,14 +300,10 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 
 		switch(ccls)
 		{
-			//Process CoreSight blocks
+			//Process CoreSight and "generic IP" blocks
 			case CLASS_CORESIGHT:
-				ProcessDebugBlock(address);
-				break;
-
-			//Process "generic IP" blocks (ignore them)
 			case CLASS_GENERIC_IP:
-				LogTrace("Found generic IP block at %08x, ignoring\n", address);
+				ProcessDebugBlock(address, id_base, idr);
 				break;
 
 			//Additional ROM table
@@ -276,7 +315,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 					//If the ROM table is a pointer to US, ignore it!
 					if(address == baseAddress)
 					{
-						LogTrace("Actually it's a pointer back to the same table we're in. Ignoring it.\n");
+						LogTrace("ROM table pointer goes back to us! Possible ROM bug\n");
 						continue;
 					}
 
@@ -286,10 +325,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 
 			//Don't know what to do with anything else
 			default:
-				LogWarning("Found unknown component class %x, skipping\n", ccls);
-				throw JtagExceptionWrapper(
-					"Unknown debug component class",
-					"");
+				LogTrace("Found unknown component class %x, skipping\n", ccls);
 				break;
 		}
 	}
@@ -298,30 +334,11 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 /**
 	@brief Reads the ROM table for a debug block to figure out what's going on
  */
-void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
+void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id_base, ARMDebugPeripheralIDRegister reg)
 {
-	//Read the rest of the ROM table header
-	uint64_t periphid_raw[8];
-	for(int i=0; i<4; i++)
-		periphid_raw[i] = ReadWord(base_address + 0xfe0 + 4*i);
-	for(int i=0; i<4; i++)
-		periphid_raw[i+4] = ReadWord(base_address + 0xfd0 + 4*i);
-	uint32_t memtype = ReadWord(base_address + 0xfcc);
-
 	//See if the mem is dedicated or not
+	uint32_t memtype = ReadWord(id_base + 0xfcc);
 	m_debugBusIsDedicated = (memtype & 1) ? false : true;
-
-	//Merge everything into a single peripheral ID register
-	ARMDebugPeripheralIDRegister reg;
-	reg.word =
-		(periphid_raw[7] << 56) |
-		(periphid_raw[6] << 48) |
-		(periphid_raw[5] << 40) |
-		(periphid_raw[4] << 32) |
-		(periphid_raw[3] << 24) |
-		(periphid_raw[2] << 16) |
-		(periphid_raw[1] << 8)  |
-		(periphid_raw[0] << 0);
 
 	//TODO: handle legacy ASCII identity code
 	if(!reg.bits.jep106_used)
@@ -371,7 +388,6 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address)
 			//Unknown
 			default:
 			{
-				LogDebug("Unknown CoreSight device\n");
 				ARMCoreSightDevice* dev = new ARMCoreSightDevice(this, base_address, reg.bits);
 				m_debugDevices.push_back(dev);
 			}
