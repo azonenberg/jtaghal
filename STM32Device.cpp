@@ -94,6 +94,10 @@ STM32Device::STM32Device(
 	//Look up size of flash memory
 	m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
 
+	//TODO: How portable are these addresses?
+	m_flashSfrBase		= 0x40023C00;
+	m_flashMemoryBase	= 0x08000000;
+
 	//Look up RAM size (TODO can we get this from descriptors somehow?)
 	switch(devid)
 	{
@@ -188,16 +192,68 @@ bool STM32Device::HasDMAInterface()
 
 bool STM32Device::IsProgrammed()
 {
-	LogWarning("STM32Device::IsProgrammed() not implemented\n");
-	return true;
+	//If the first word of the interrupt vector table is blank, the device is not programmed
+	//because no code can execute.
+	//This is a lot faster than a full chip-wide blank check.
+	return (m_dap->ReadMemory(m_flashMemoryBase) != 0xffffffff);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Programming
 
+void STM32Device::UnlockFlash()
+{
+	LogTrace("Unlocking Flash memory...\n");
+	LogIndenter li;
+
+	//Check CR
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x10);
+	LogTrace("Initial CR = %08x\n", cr);
+	if(cr & 0x80000000)
+	{
+		LogTrace("Flash is curently locked\n");
+
+		//Unlock flash
+		m_dap->WriteMemory(m_flashSfrBase + 0x4, 0x45670123);
+		m_dap->WriteMemory(m_flashSfrBase + 0x4, 0xCDEF89AB);
+
+		//Check CR
+		cr = m_dap->ReadMemory(m_flashSfrBase + 0x10);
+		LogTrace("Unlocked CR = %08x\n", cr);
+		if(cr & 0x80000000)
+		{
+			throw JtagExceptionWrapper(
+				"STM32Device::Erase() got CR still locked after unlock sequence!!!",
+				"");
+		}
+	}
+	else
+		LogTrace("Flash is already unlocked, no action required\n");
+}
+
+void STM32Device::PollUntilFlashNotBusy()
+{
+	LogTrace("Waiting for Flash to be ready...\n");
+	LogIndenter li;
+
+	//Poll FLASH_SR.BSY until it's clear
+	uint32_t sr = m_dap->ReadMemory(m_flashSfrBase + 0x0c);
+	//LogTrace("SR = %08x\n", sr);
+	int interval = 1;
+	while(sr & 0x00010000)
+	{
+		//LogTrace("SR = %08x\n", sr);
+		usleep(100 * interval);
+		sr = m_dap->ReadMemory(m_flashSfrBase + 0x0c);
+
+		//Exponential back-off on polling interval
+		interval *= 10;
+	}
+}
+
 void STM32Device::Erase()
 {
-	LogWarning("STM32Device::Erase() not implemented\n");
+	LogTrace("Erasing...\n");
 
 	//TODO: What other STM32 devices is this valid for?
 	if(m_devicetype != STM32F411E)
@@ -207,26 +263,65 @@ void STM32Device::Erase()
 			"");
 	}
 
-	//Flash SFR base address
-	uint32_t flash_sfr_base = 0x40023C00;
-/*
-	//Check CR
-	uint32_t cr = m_dap->ReadMemory(flash_sfr_base + 0x10);
-	LogDebug("Initial CR = %08x\n", cr);
+	//Look up FLASH_OPTCR
+	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	LogTrace("FLASH_OPTCR = %08x\n", optcr);
 
-	//Unlock flash
-	m_dap->WriteMemory(flash_sfr_base + 0x4, 0x45670123);
-	m_dap->WriteMemory(flash_sfr_base + 0x4, 0xCDEF89AB);
+	//Unlock flash and make sure it's ready
+	UnlockFlash();
+	PollUntilFlashNotBusy();
 
-	//Check CR
-	cr = m_dap->ReadMemory(flash_sfr_base + 0x10);
-	LogDebug("Unlocked CR = %08x\n", cr);
+	//Do a full-chip erase with x32 parallelism
+	//bit9:8 = 10 = x64
+	//bit2 = mass erase
+	//bit16 = go do it
+	LogTrace("Mass erase...\n");
+	m_dap->WriteMemory(m_flashSfrBase + 0x10, 0x10204);
 
-	//Wait for FLASH_CR.BSY to be cleared
-	//Set FLASH_CR.MER
-	//Set FLASH_CR.STRT
-	//Wait for FLASH_CR.BSY to be cleared
-	*/
+	//Wait for it to finish the erase operation
+	PollUntilFlashNotBusy();
+
+	//Make sure we really erased it
+	if(!BlankCheck())
+	{
+		throw JtagExceptionWrapper(
+			"STM32Device::Erase() failed somehow. We did everything we could to erase but it's not blank!",
+			"");
+	}
+}
+
+bool STM32Device::BlankCheck()
+{
+	LogTrace("Blank checking...\n");
+	LogIndenter li;
+
+	bool quitImmediately = true;
+
+	uint32_t flashBytes = m_flashKB * 1024;
+	uint32_t addrMax = m_flashMemoryBase + flashBytes;
+	uint32_t addr = m_flashMemoryBase;
+	LogTrace("Checking address range from 0x%08x to 0x%08x...\n", addr, addrMax);
+	bool blank = true;
+	for(; addr<addrMax; addr += 4)
+	{
+		if( (addr & 0xffff) == 0)
+		{
+			float bytesDone = (addr - m_flashMemoryBase) * 1.0f / flashBytes;
+			LogTrace("%08x (%.1f %%)\n", addr, bytesDone * 100.0f);
+		}
+
+		uint32_t rdata = m_dap->ReadMemory(addr);
+		if(rdata != 0xffffffff)
+		{
+			LogNotice("Device is NOT blank. Found data 0x%08x at flash address 0x%08x\n",
+				rdata, addr);
+			if(quitImmediately)
+				return false;
+			blank = false;
+		}
+	}
+
+	return blank;
 }
 
 void STM32Device::Program(FirmwareImage* /*image*/)

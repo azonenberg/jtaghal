@@ -82,6 +82,12 @@ public:
 
 	virtual void Program(FirmwareImage* image);
 
+protected:
+	void UnlockFlash();
+	void PollUntilFlashNotBusy();
+	bool BlankCheck();
+
+public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Serial numbering
 
@@ -115,6 +121,9 @@ protected:
 	int m_waferNum;
 	char m_waferLot[8];
 	uint8_t m_serialRaw[12];
+
+	uint32_t m_flashSfrBase;
+	uint32_t m_flashMemoryBase;
 };
 
 #endif
