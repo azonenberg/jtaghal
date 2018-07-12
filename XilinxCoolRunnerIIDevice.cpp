@@ -252,16 +252,6 @@ std::string XilinxCoolRunnerIIDevice::GetDescription()
 	return string("Xilinx ") + GetDeviceName() + " in " + GetDevicePackage() + " package, stepping " + srev;
 }
 
-bool XilinxCoolRunnerIIDevice::HasRPCInterface()
-{
-	return false;
-}
-
-bool XilinxCoolRunnerIIDevice::HasDMAInterface()
-{
-	return false;
-}
-
 /**
 	@brief Returns the device status register
  */

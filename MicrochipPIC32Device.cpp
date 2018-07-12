@@ -286,16 +286,6 @@ std::string MicrochipPIC32Device::GetDescription()
 	return string(srev);
 }
 
-bool MicrochipPIC32Device::HasRPCInterface()
-{
-	return false;
-}
-
-bool MicrochipPIC32Device::HasDMAInterface()
-{
-	return false;
-}
-
 EjtagImplementationCodeRegister MicrochipPIC32Device::GetImpCode()
 {
 	//TODO: dont do this unless in MTAP mode!
