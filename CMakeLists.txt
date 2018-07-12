@@ -13,6 +13,7 @@ set(JTAGHAL_SOURCES
     FPGABitstream.cpp
 
     SerialNumberedDevice.cpp
+    LockableDevice.cpp
 
     DebuggableDevice.cpp
     ProgrammableDevice.cpp

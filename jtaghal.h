@@ -111,6 +111,7 @@
 
 //Miscellaneous helper interfaces
 #include "SerialNumberedDevice.h"
+#include "LockableDevice.h"
 
 //Programmable device helpers
 #include "FirmwareImage.h"

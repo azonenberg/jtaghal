@@ -108,6 +108,8 @@ STM32Device::STM32Device(
 		default:
 			m_ramKB = 0;
 	}
+
+	m_locksProbed = false;
 }
 
 /**
@@ -180,22 +182,71 @@ string STM32Device::GetDescription()
 	return string(srev);
 }
 
-bool STM32Device::HasRPCInterface()
-{
-	return false;
-}
-
-bool STM32Device::HasDMAInterface()
-{
-	return false;
-}
-
 bool STM32Device::IsProgrammed()
 {
+	//If we're read locked, we're obviously programmed in some way
+	ProbeLocksNondestructive();
+	if(m_protectionLevel != 0)
+		return true;
+
 	//If the first word of the interrupt vector table is blank, the device is not programmed
 	//because no code can execute.
 	//This is a lot faster than a full chip-wide blank check.
 	return (m_dap->ReadMemory(m_flashMemoryBase) != 0xffffffff);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Lock bit access
+
+void STM32Device::ProbeLocksNondestructive()
+{
+	//Don't poke more than once
+	if(m_locksProbed)
+		return;
+
+	LogTrace("Running non-destructive lock status tests\n");
+
+	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	uint32_t rdp = (optcr >> 8) & 0xff;
+
+	//TODO: query write protection
+
+	//Not locked?
+	if(rdp == 0xaa)
+		m_protectionLevel = 0;
+
+	//Full locked? we should never see this because it disables JTAG
+	else if(rdp == 0xcc)
+		m_protectionLevel = 2;
+
+	//Level 1 lock
+	else
+		m_protectionLevel = 1;
+
+	m_locksProbed = true;
+}
+
+void STM32Device::ProbeLocksDestructive()
+{
+	//no destructive tests implemented yet
+	return ProbeLocksNondestructive();
+}
+
+UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access)
+{
+	//Not yet implemented
+	return UncertainBoolean(false, UncertainBoolean::USELESS);
+}
+
+UncertainBoolean STM32Device::IsDeviceReadLocked()
+{
+	ProbeLocksNondestructive();
+	return UncertainBoolean( (m_protectionLevel != 0), UncertainBoolean::CERTAIN );
+}
+
+void STM32Device::SetReadLock()
+{
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -30,107 +30,112 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of STM32Device
+	@brief Declaration of LockableDevice
  */
 
-#ifndef STM32Device_h
-#define STM32Device_h
-
-#include "STMicroMicrocontroller.h"
-
-#include <list>
-#include <string>
+#ifndef LockableDevice_h
+#define LockableDevice_h
 
 /**
-	@brief A STM32 microcontroller
+	@brief A boolean value with an attached level of uncertainty
+ */
+class UncertainBoolean
+{
+public:
+
+	enum CertaintyLevel
+	{
+		USELESS,		//The value is useless and should be ignored.
+						//The measurement may not have been possible to perform.
+		INCONSISTENT,	//The value changed or was unreliable.
+						//For example, multiple values may have been seen across an address range.
+		CERTAIN			//Absolutely certain. There are no plausible scenarios in which this value might be wrong
+	};
+
+	UncertainBoolean(bool b, CertaintyLevel level)
+		: m_value(b)
+		, m_certainty(level)
+	{
+	}
+
+	CertaintyLevel GetCertainty()
+	{ return m_certainty; }
+
+	bool GetValue()
+	{ return m_value; }
+
+	const char* GetCertaintyAsText()
+	{
+		switch(m_certainty)
+		{
+			case USELESS:
+				return "completely unsure";
+
+			case INCONSISTENT:
+				return "inconsistent results";
+
+			case CERTAIN:
+				return "high confidence";
+		}
+	}
+
+protected:
+	bool			m_value;
+	CertaintyLevel	m_certainty;
+};
+
+/**
+	@brief Generic base class for all devices which have some kind of read/write protection
+
+	Note that sometimes due to protections, it's not possible to get definite answers to all queries.
 
 	\ingroup libjtaghal
  */
-class STM32Device
-	: public STMicroMicrocontroller
-	, public JtagDevice
-	, public SerialNumberedDevice
-	, public LockableDevice
+class LockableDevice
 {
 public:
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Construction / destruction
-	STM32Device(
-		unsigned int devid,
-		unsigned int stepping,
-		unsigned int idcode,
-		JtagInterface* iface,
-		size_t pos);
-	virtual ~STM32Device();
+	LockableDevice();
+	virtual ~LockableDevice();
 
-	static JtagDevice* CreateDevice(
-		unsigned int devid,
-		unsigned int stepping,
-		unsigned int idcode,
-		JtagInterface* iface,
-		size_t pos);
+	/**
+		@brief Levels of access being requested (may be ORed together)
+	 */
+	enum AccessLevel
+	{
+		ACCESS_EXECUTE	= 1,
+		ACCESS_WRITE	= 2,
+		ACCESS_READ		= 4
+	};
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// General device info
+	/**
+		@brief Queries lock status in a non-destructive fashion (contents of the chip are untouched)
+	 */
+	virtual void ProbeLocksNondestructive() =0;
 
-	virtual std::string GetDescription();
+	/**
+		@brief Queries lock status in a more invasive fashion. Gives more accurate data but may involve write
+		transactions to memory.
+	 */
+	virtual void ProbeLocksDestructive() =0;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// MCU stuff
+	/**
+		@brief Checks if a given physical address range has a given protection applied.
+	 */
+	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access) =0;
 
-	virtual bool IsProgrammed();
-	virtual void Erase();
+	/**
+		@brief Checks if the device is globally read protected or not
+	 */
+	virtual UncertainBoolean IsDeviceReadLocked() =0;
 
-	virtual void Program(FirmwareImage* image);
+	/**
+		@brief Sets a global read-protection lock on the entire device.
 
-protected:
-	void UnlockFlash();
-	void PollUntilFlashNotBusy();
-	bool BlankCheck();
-
-public:
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Serial numbering
-
-	virtual bool ReadingSerialRequiresReset();
-	virtual int GetSerialNumberLength();
-	virtual int GetSerialNumberLengthBits();
-	virtual void GetSerialNumber(unsigned char* data);
-	virtual std::string GetPrettyPrintedSerialNumber();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LockableDevice
-
-	virtual void ProbeLocksNondestructive();
-	virtual void ProbeLocksDestructive();
-	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access);
-	virtual UncertainBoolean IsDeviceReadLocked();
-	virtual void SetReadLock();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Helpers for chain manipulation
-public:
-	void SetIR(unsigned char irval)
-	{ JtagDevice::SetIR(&irval, m_irlength); }
-
-	unsigned int m_flashKB;
-	unsigned int m_ramKB;
-
-protected:
-	ARMDebugPort* m_dap;
-
-	//Serial number fields
-	uint32_t m_waferX;
-	uint32_t m_waferY;
-	int m_waferNum;
-	char m_waferLot[8];
-	uint8_t m_serialRaw[12];
-
-	uint32_t m_flashSfrBase;
-	uint32_t m_flashMemoryBase;
-
-	bool m_locksProbed;
-	int m_protectionLevel;
+		This function only performs reversible locks that can be cleared with a bulk erase. Thus, it should not
+		be able to brick the chip entirely.
+	 */
+	virtual void SetReadLock() =0;
 };
 
 #endif
+

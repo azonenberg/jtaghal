@@ -303,11 +303,14 @@ void JtagDevice::PrintInfo()
 	if(pprog != NULL)
 	{
 		LogNotice("Device is programmable\n");
+		{
+			LogIndenter li;
 
-		if(pprog->IsProgrammed())
-			LogNotice("Device is configured\n");
-		else
-			LogNotice("Device is blank\n");
+			if(pprog->IsProgrammed())
+				LogNotice("Device is configured\n");
+			else
+				LogNotice("Device is blank\n");
+		}
 
 		//Is it an FPGA? If so, get FPGA-specific information
 		//Get the serial number only if the device is blank since some FPGAs (most Xilinx f.ex)
@@ -316,6 +319,7 @@ void JtagDevice::PrintInfo()
 		if(pfpga != NULL)
 		{
 			LogNotice("Device is an FPGA\n");
+			LogIndenter li;
 			if(pprog->IsProgrammed())
 			{
 				JtagFPGA* jf = dynamic_cast<JtagFPGA*>(pfpga);
@@ -380,7 +384,7 @@ void JtagDevice::PrintInfo()
 		*/
 	}
 
-	//Does it have a serial number? If so, get more detailsvirtual
+	//Does it have a serial number? If so, get more details
 	SerialNumberedDevice* pserial = dynamic_cast<SerialNumberedDevice*>(this);
 	if(pserial != NULL)
 	{
@@ -391,7 +395,6 @@ void JtagDevice::PrintInfo()
 			if(pserial->ReadingSerialRequiresReset() && pprog->IsProgrammed())
 			{
 				int bitlen = pserial->GetSerialNumberLengthBits();
-				LogIndenter li;
 				LogNotice("Device has unique serial number (%d bits long), but cannot read without a reset\n", bitlen);
 				skipRead = true;
 			}
@@ -400,9 +403,23 @@ void JtagDevice::PrintInfo()
 		//Read the serial number if we can do so without a reboot, or if it's blank
 		if(!skipRead)
 		{
-			LogIndenter li;
 			LogNotice("Device has unique serial number (%d bits long)\n", pserial->GetSerialNumberLengthBits());
+			LogIndenter li;
 			LogNotice("%s\n", pserial->GetPrettyPrintedSerialNumber().c_str() );
 		}
+	}
+
+	//Does it have read protection? If so, get more details
+	LockableDevice* plock = dynamic_cast<LockableDevice*>(this);
+	if(plock != NULL)
+	{
+		LogNotice("Device has security bits\n");
+		LogIndenter li;
+
+		UncertainBoolean locked = plock->IsDeviceReadLocked();
+		if(locked.GetValue())
+			LogNotice("Device is read locked (%s)\n", locked.GetCertaintyAsText());
+		else
+			LogNotice("Device is not read locked (%s)\n", locked.GetCertaintyAsText());
 	}
 }

@@ -30,107 +30,20 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of STM32Device
+	@brief Implementation of LockableDevice
  */
 
-#ifndef STM32Device_h
-#define STM32Device_h
+#include "jtaghal.h"
+#include "LockableDevice.h"
 
-#include "STMicroMicrocontroller.h"
+using namespace std;
 
-#include <list>
-#include <string>
-
-/**
-	@brief A STM32 microcontroller
-
-	\ingroup libjtaghal
- */
-class STM32Device
-	: public STMicroMicrocontroller
-	, public JtagDevice
-	, public SerialNumberedDevice
-	, public LockableDevice
+LockableDevice::LockableDevice()
 {
-public:
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Construction / destruction
-	STM32Device(
-		unsigned int devid,
-		unsigned int stepping,
-		unsigned int idcode,
-		JtagInterface* iface,
-		size_t pos);
-	virtual ~STM32Device();
 
-	static JtagDevice* CreateDevice(
-		unsigned int devid,
-		unsigned int stepping,
-		unsigned int idcode,
-		JtagInterface* iface,
-		size_t pos);
+}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// General device info
+LockableDevice::~LockableDevice()
+{
 
-	virtual std::string GetDescription();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// MCU stuff
-
-	virtual bool IsProgrammed();
-	virtual void Erase();
-
-	virtual void Program(FirmwareImage* image);
-
-protected:
-	void UnlockFlash();
-	void PollUntilFlashNotBusy();
-	bool BlankCheck();
-
-public:
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Serial numbering
-
-	virtual bool ReadingSerialRequiresReset();
-	virtual int GetSerialNumberLength();
-	virtual int GetSerialNumberLengthBits();
-	virtual void GetSerialNumber(unsigned char* data);
-	virtual std::string GetPrettyPrintedSerialNumber();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LockableDevice
-
-	virtual void ProbeLocksNondestructive();
-	virtual void ProbeLocksDestructive();
-	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access);
-	virtual UncertainBoolean IsDeviceReadLocked();
-	virtual void SetReadLock();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Helpers for chain manipulation
-public:
-	void SetIR(unsigned char irval)
-	{ JtagDevice::SetIR(&irval, m_irlength); }
-
-	unsigned int m_flashKB;
-	unsigned int m_ramKB;
-
-protected:
-	ARMDebugPort* m_dap;
-
-	//Serial number fields
-	uint32_t m_waferX;
-	uint32_t m_waferY;
-	int m_waferNum;
-	char m_waferLot[8];
-	uint8_t m_serialRaw[12];
-
-	uint32_t m_flashSfrBase;
-	uint32_t m_flashMemoryBase;
-
-	bool m_locksProbed;
-	int m_protectionLevel;
-};
-
-#endif
+}
