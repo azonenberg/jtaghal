@@ -141,6 +141,13 @@ public:
 		be able to brick the chip entirely.
 	 */
 	virtual void SetReadLock() =0;
+
+	/**
+		@brief Clears the global read-protection lock, if set in a non-permanent fashion.
+
+		In most parts, this will trigger a bulk flash erase.
+	 */
+	virtual void ClearReadLock() =0;
 };
 
 #endif

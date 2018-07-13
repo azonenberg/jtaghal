@@ -136,6 +136,7 @@ STM32Device::STM32Device(
 	//TODO: How portable are these addresses?
 	m_flashSfrBase		= 0x40023C00;
 	m_flashMemoryBase	= 0x08000000;
+	m_sramMemoryBase	= 0x20000000;
 
 	//Look up RAM size (TODO can we get this from descriptors somehow?)
 	switch(devid)
@@ -252,20 +253,28 @@ void STM32Device::ProbeLocksNondestructive()
 		LogTrace("OPTCR = %08x\n", optcr);
 		LogTrace("OPTCR.RDP = 0x%02x\n", rdp);
 
-		//TODO: query write protection
-
-		//Not locked?
-		if(rdp == 0xaa)
+		//If OPTCR is all 1s we probably just bulk-erased everything.
+		//Treat this as unlocked.
+		if(optcr == 0xffffffff)
 			m_protectionLevel = 0;
 
-		//Full locked? we should never see this because it disables JTAG
-		else if(rdp == 0xcc)
-			m_protectionLevel = 2;
-
-		//Level 1 lock
-		//Unlikely to see this except right after programming the lock bit, since RDP disables access to OPTCR
 		else
-			m_protectionLevel = 1;
+		{
+			//TODO: query write protection
+
+			//Not locked?
+			if(rdp == 0xaa)
+				m_protectionLevel = 0;
+
+			//Full locked? we should never see this because it disables JTAG
+			else if(rdp == 0xcc)
+				m_protectionLevel = 2;
+
+			//Level 1 lock
+			//Unlikely to see this except right after programming the lock bit, since RDP disables access to OPTCR
+			else
+				m_protectionLevel = 1;
+		}
 	}
 	catch(const JtagException& e)
 	{
@@ -333,6 +342,26 @@ void STM32Device::SetReadLock()
 	m_dap->WriteMemory(m_flashSfrBase + 0x14, cr);
 }
 
+void STM32Device::ClearReadLock()
+{
+	/*
+	UnlockFlash();
+	UnlockFlashOptions();
+
+	LogTrace("Clearing read lock...\n");
+	LogIndenter li;
+
+	//Read OPTCR
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	LogTrace("Old OPTCR = %08x\n", cr);
+	cr &= 0xffff00ff;*/
+
+	//Try poking something into RAM
+	m_dap->WriteMemory(m_sramMemoryBase, 0xfeedface);
+	uint32_t v = m_dap->ReadMemory(m_sramMemoryBase);
+	LogDebug("v = 0x%08x\n", v);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Programming
 
@@ -342,8 +371,16 @@ void STM32Device::UnlockFlashOptions()
 	LogIndenter li;
 
 	//Check CR
-	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
-	//LogTrace("Initial OPTCR = %08x\n", cr);
+	uint32_t cr = 0x00000001;
+	try
+	{
+		cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	}
+	catch(JtagException& e)
+	{
+		LogWarning("Couldn't read intial OPTCR, guessing value of %08x\n", cr);
+	}
+	LogTrace("Initial OPTCR = %08x\n", cr);
 	if(cr & 0x00000001)
 	{
 		LogTrace("Option register is curently locked, unlocking...\n");
@@ -353,8 +390,16 @@ void STM32Device::UnlockFlashOptions()
 		m_dap->WriteMemory(m_flashSfrBase + 0x8, 0x4C5D6E7F);
 
 		//Check CR
-		cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
-		//LogTrace("Unlocked OPTCR = %08x\n", cr);
+		try
+		{
+			cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+		}
+		catch(JtagException& e)
+		{
+			cr = 0x00000000;
+			LogWarning("Couldn't read unlocked OPTCR, guessing value of %08x\n", cr);
+		}
+		LogTrace("Unlocked OPTCR = %08x\n", cr);
 		if(cr & 0x00000001)
 		{
 			throw JtagExceptionWrapper(

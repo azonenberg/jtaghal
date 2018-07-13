@@ -107,6 +107,7 @@ public:
 	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access);
 	virtual UncertainBoolean IsDeviceReadLocked();
 	virtual void SetReadLock();
+	virtual void ClearReadLock();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation
@@ -129,6 +130,7 @@ protected:
 
 	uint32_t m_flashSfrBase;
 	uint32_t m_flashMemoryBase;
+	uint32_t m_sramMemoryBase;
 
 	bool m_locksProbed;
 	int m_protectionLevel;
