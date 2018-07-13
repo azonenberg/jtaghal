@@ -67,32 +67,71 @@ STM32Device::STM32Device(
 	//uint32_t id = m_dap->ReadMemory(0xe0042000);
 	//LogDebug("id = %08x\n", id);
 
+	//Check read lock status
+	m_locksProbed = false;
+	STM32Device::ProbeLocksNondestructive();
+
 	//Extract serial number fields
-	uint32_t serial[3];
-	serial[0] = m_dap->ReadMemory(0x1fff7a10);
-	serial[1] = m_dap->ReadMemory(0x1fff7a14);
-	serial[2] = m_dap->ReadMemory(0x1fff7a18);
-	m_waferX = serial[0] >> 16;
-	m_waferY = serial[0] & 0xffff;
-	m_waferNum = serial[1] & 0xff;
-	m_waferLot[0] = (serial[1] >> 24) & 0xff;
-	m_waferLot[1] = (serial[1] >> 16) & 0xff;
-	m_waferLot[2] = (serial[1] >> 8) & 0xff;
-	m_waferLot[3] = (serial[2] >> 24) & 0xff;
-	m_waferLot[4] = (serial[2] >> 16) & 0xff;
-	m_waferLot[5] = (serial[2] >> 8) & 0xff;
-	m_waferLot[6] = (serial[2] >> 0) & 0xff;
-	m_waferLot[7] = 0;
-	m_serialRaw[0] = m_waferX >> 8;
-	m_serialRaw[1] = m_waferX & 0xff;
-	m_serialRaw[2] = m_waferY >> 8;
-	m_serialRaw[3] = m_waferY & 0xff;
-	m_serialRaw[4] = m_waferNum;
-	for(int i=0; i<7; i++)
-		m_serialRaw[5+i] = m_waferLot[i];
+	try
+	{
+		uint32_t serial[3];
+		serial[0] = m_dap->ReadMemory(0x1fff7a10);
+		serial[1] = m_dap->ReadMemory(0x1fff7a14);
+		serial[2] = m_dap->ReadMemory(0x1fff7a18);
+		m_waferX = serial[0] >> 16;
+		m_waferY = serial[0] & 0xffff;
+		m_waferNum = serial[1] & 0xff;
+		m_waferLot[0] = (serial[1] >> 24) & 0xff;
+		m_waferLot[1] = (serial[1] >> 16) & 0xff;
+		m_waferLot[2] = (serial[1] >> 8) & 0xff;
+		m_waferLot[3] = (serial[2] >> 24) & 0xff;
+		m_waferLot[4] = (serial[2] >> 16) & 0xff;
+		m_waferLot[5] = (serial[2] >> 8) & 0xff;
+		m_waferLot[6] = (serial[2] >> 0) & 0xff;
+		m_waferLot[7] = 0;
+		m_serialRaw[0] = m_waferX >> 8;
+		m_serialRaw[1] = m_waferX & 0xff;
+		m_serialRaw[2] = m_waferY >> 8;
+		m_serialRaw[3] = m_waferY & 0xff;
+		m_serialRaw[4] = m_waferNum;
+		for(int i=0; i<7; i++)
+			m_serialRaw[5+i] = m_waferLot[i];
+	}
+	catch(const JtagException& e)
+	{
+		//If we can't read the serial number, that probably means the chip is locked.
+		//Write zeroes rather than leaving it uninitialized.
+		m_waferX = 0;
+		m_waferY = 0;
+		m_waferNum = 0;
+		strncpy(m_waferLot, "???????", sizeof(m_waferLot));
+		for(int i=0; i<12; i++)
+			m_serialRaw[i] = 0;
+
+		//Display a warning if the chip is NOT locked,  but we couldn't read the serial number anyway
+		if(!IsDeviceReadLocked().GetValue())
+			LogWarning("STM32Device: Unable to read serial number even though read protection doesn't seem to be set\n");
+
+		else
+			LogNotice("STM32Device: Cannot determine serial number because read protection is set\n");
+	}
 
 	//Look up size of flash memory
-	m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+	try
+	{
+		m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+	}
+	catch(const JtagException& e)
+	{
+		//If we fail, set flash size to zero so we don't try doing anything with it
+		m_flashKB = 0;
+
+		if(!IsDeviceReadLocked().GetValue())
+			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
+
+		else
+			LogNotice("STM32Device: Cannot determine flash size because read protection is set\n");
+	}
 
 	//TODO: How portable are these addresses?
 	m_flashSfrBase		= 0x40023C00;
@@ -108,8 +147,6 @@ STM32Device::STM32Device(
 		default:
 			m_ramKB = 0;
 	}
-
-	m_locksProbed = false;
 }
 
 /**
@@ -205,23 +242,38 @@ void STM32Device::ProbeLocksNondestructive()
 		return;
 
 	LogTrace("Running non-destructive lock status tests\n");
+	LogIndenter li;
 
-	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
-	uint32_t rdp = (optcr >> 8) & 0xff;
+	try
+	{
+		uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+		uint32_t rdp = (optcr >> 8) & 0xff;
 
-	//TODO: query write protection
+		LogTrace("OPTCR = %08x\n", optcr);
+		LogTrace("OPTCR.RDP = 0x%02x\n", rdp);
 
-	//Not locked?
-	if(rdp == 0xaa)
-		m_protectionLevel = 0;
+		//TODO: query write protection
 
-	//Full locked? we should never see this because it disables JTAG
-	else if(rdp == 0xcc)
-		m_protectionLevel = 2;
+		//Not locked?
+		if(rdp == 0xaa)
+			m_protectionLevel = 0;
 
-	//Level 1 lock
-	else
+		//Full locked? we should never see this because it disables JTAG
+		else if(rdp == 0xcc)
+			m_protectionLevel = 2;
+
+		//Level 1 lock
+		//Unlikely to see this except right after programming the lock bit, since RDP disables access to OPTCR
+		else
+			m_protectionLevel = 1;
+	}
+	catch(const JtagException& e)
+	{
+		//If wqe get here, reading one or more of the SFRs failed.
+		//This is a probable indicator of level 1 read protection since we have limited JTAG access
+		//but can still get ID codes etc (which rules out level 2).
 		m_protectionLevel = 1;
+	}
 
 	m_locksProbed = true;
 }
@@ -241,16 +293,78 @@ UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t start, uint32_t end, un
 UncertainBoolean STM32Device::IsDeviceReadLocked()
 {
 	ProbeLocksNondestructive();
-	return UncertainBoolean( (m_protectionLevel != 0), UncertainBoolean::CERTAIN );
+
+	switch(m_protectionLevel)
+	{
+		case 2:
+			return UncertainBoolean( true, UncertainBoolean::CERTAIN );
+
+		case 0:
+			return UncertainBoolean( false, UncertainBoolean::CERTAIN );
+
+		case 1:
+		default:
+			return UncertainBoolean( true, UncertainBoolean::VERY_LIKELY );
+	}
 }
 
 void STM32Device::SetReadLock()
 {
+	UnlockFlashOptions();
 
+	LogTrace("Setting read lock...\n");
+	LogIndenter li;
+
+	//Read OPTCR
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	LogTrace("Old OPTCR = %08x\n", cr);
+	cr &= 0xffff00ff;
+	cr |= 0x5500;		//CC = level 2 lock
+						//AA = no lock
+						//anything else = level 1 lock
+
+	//Actually commit the write to the option register
+	//If we don't do this, the SRAM register is changed but it won't persist across reboots. Pretty useless!
+	cr |= 0x2;
+
+	LogTrace("Setting OPTCR = %08x\n", cr);
+
+	//Write it back
+	m_dap->WriteMemory(m_flashSfrBase + 0x14, cr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Programming
+
+void STM32Device::UnlockFlashOptions()
+{
+	LogTrace("Unlocking Flash option register...\n");
+	LogIndenter li;
+
+	//Check CR
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	//LogTrace("Initial OPTCR = %08x\n", cr);
+	if(cr & 0x00000001)
+	{
+		LogTrace("Option register is curently locked, unlocking...\n");
+
+		//Unlock flash
+		m_dap->WriteMemory(m_flashSfrBase + 0x8, 0x08192A3B);
+		m_dap->WriteMemory(m_flashSfrBase + 0x8, 0x4C5D6E7F);
+
+		//Check CR
+		cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+		//LogTrace("Unlocked OPTCR = %08x\n", cr);
+		if(cr & 0x00000001)
+		{
+			throw JtagExceptionWrapper(
+				"STM32Device::UnlockFlashOptions() got OPTCR still locked after unlock sequence!!!",
+				"");
+		}
+	}
+	else
+		LogTrace("Option register is already unlocked, no action required\n");
+}
 
 void STM32Device::UnlockFlash()
 {
@@ -274,7 +388,7 @@ void STM32Device::UnlockFlash()
 		if(cr & 0x80000000)
 		{
 			throw JtagExceptionWrapper(
-				"STM32Device::Erase() got CR still locked after unlock sequence!!!",
+				"STM32Device::UnlockFlash() got CR still locked after unlock sequence!!!",
 				"");
 		}
 	}

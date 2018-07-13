@@ -363,21 +363,20 @@ void JtagDevice::PrintInfo()
 				}
 			}
 		}
-		/*
+
 		//Is it a CPLD? If so, get CPLD-specific information
 		CPLD* pcpld = dynamic_cast<CPLD*>(this);
 		if(pcpld != NULL)
-			printf("    Device is a CPLD\n");
-		*/
+			printf("Device is a CPLD\n");
 	}
 
 	//Is it debuggable? If so, get some more details
 	DebuggerInterface* pdebug = dynamic_cast<DebuggerInterface*>(this);
 	if(pdebug != NULL)
 	{
+		LogNotice("Device is a debug interface\n");
 		/*
 		size_t ntargets = pdebug->GetNumTargets();
-		printf("    Device is a debug interface\n");
 		printf("    %zu targets present\n", ntargets);
 		for(size_t i=0; i<ntargets; i++)
 			printf("        %zu: %s\n", i, pdebug->GetTarget(i)->GetDescription().c_str());

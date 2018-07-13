@@ -49,6 +49,9 @@ public:
 						//The measurement may not have been possible to perform.
 		INCONSISTENT,	//The value changed or was unreliable.
 						//For example, multiple values may have been seen across an address range.
+
+		VERY_LIKELY,	//Very likely but not 100% certain.
+
 		CERTAIN			//Absolutely certain. There are no plausible scenarios in which this value might be wrong
 	};
 
@@ -74,8 +77,11 @@ public:
 			case INCONSISTENT:
 				return "inconsistent results";
 
-			case CERTAIN:
+			case VERY_LIKELY:
 				return "high confidence";
+
+			case CERTAIN:
+				return "extremely high confidence";
 		}
 	}
 

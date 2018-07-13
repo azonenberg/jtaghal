@@ -457,7 +457,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 	if(stat.bits.sticky_err)
 	{
 		LogError("Something went wrong (sticky error bit set when reading AP %d register %d)\n", ap, addr);
-		PrintStatusRegister(stat, false);
+		//PrintStatusRegister(stat, false);
 
 		DebugAbort();
 		ClearStatusRegisterErrors();
