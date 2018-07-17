@@ -1111,9 +1111,9 @@ void XilinxUltrascaleDevice::AnalyzeSVF(string path)
 		//Shift INSTRUCTION REGISTER
 		else if(opcode == "SIR")
 		{
-			int nclocks;
+			unsigned int nclocks;
 			unsigned int ir;
-			if(2 != sscanf(line.c_str(), "SIR %d TDI (%x)", &nclocks, &ir))	//TODO: handle TDO/mask
+			if(2 != sscanf(line.c_str(), "SIR %u TDI (%x)", &nclocks, &ir))	//TODO: handle TDO/mask
 			{
 				throw JtagExceptionWrapper(
 					"XilinxUltrascaleDevice::AnalyzeSVF: Malformed Shift-IR line\n",
