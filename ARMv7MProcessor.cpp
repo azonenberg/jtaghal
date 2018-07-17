@@ -151,10 +151,91 @@ bool ARMv7MProcessor::HaltedDueToUnrecoverableException()
 	return false;
 }
 
+const char* ARMv7MProcessor::GetRegisterName(ARM_V7M_CPU_REGISTERS reg)
+{
+	switch(reg)
+	{
+		case R0:
+			return "R0";
+		case R1:
+			return "R1";
+		case R2:
+			return "R2";
+		case R3:
+			return "R3";
+		case R4:
+			return "R4";
+		case R5:
+			return "R5";
+		case R6:
+			return "R6";
+		case R7:
+			return "R7";
+		case R8:
+			return "R8";
+		case R9:
+			return "R9";
+		case R10:
+			return "R10";
+		case R11:
+			return "R11";
+		case R12:
+			return "R12";
+		case SP:
+			return "SP";
+		case LR:
+			return "LR";
+		case DBGRA:
+			return "DBGRA";
+		case XPSR:
+			return "xPSR";
+		case MSP:
+			return "MSP";
+		case PSP:
+			return "PSP";
+		case CTRL:
+			return "CTRL";
+	}
+	return "(invalid)";
+}
+
 uint32_t ARMv7MProcessor::ReadCPURegister(ARM_V7M_CPU_REGISTERS reg)
 {
-	//TODO
-	return 0;
+	//Request the read
+	WriteRegisterByIndex(DCRSR, (0x0000 << 16) | reg);	//0000 = read, 0001 = write
+
+	//Poll DHCSR.S_REGRDY until we're done
+	while(true)
+	{
+		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
+		if(dhcsr & 0x00010000)
+			break;
+		usleep(100);
+	}
+
+	//Read the actual data
+	return ReadRegisterByIndex(DCRDR);
+}
+
+void ARMv7MProcessor::DumpRegisters()
+{
+	ARM_V7M_CPU_REGISTERS all_regs[] =
+	{
+		R0, R1, R2, R3,  R4,  R5, R6,
+		R7, R8, R9, R10, R11, R12,
+		SP,
+		LR,
+		DBGRA,
+		XPSR,
+		MSP,
+		PSP,
+		CTRL
+	};
+
+	LogNotice("Dumping registers...\n");
+	LogIndenter li;
+	for(auto reg : all_regs)
+		LogNotice("%8s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
 }
 
 /**
@@ -176,12 +257,16 @@ void ARMv7MProcessor::EnterDebugState()
 	while(true)
 	{
 		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
-		if(dhcsr & 0x00010000)
+		if(dhcsr & 0x00020000)
 			break;
-		LogTrace("DHCSR = %08x\n", dhcsr);
+		//LogTrace("DHCSR = %08x\n", dhcsr);
 		usleep(1000);
 	}
+
+	//DEBUG
+	DumpRegisters();
 }
+
 
 void ARMv7MProcessor::ExitDebugState()
 {

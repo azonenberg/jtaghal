@@ -126,7 +126,7 @@ void ARMCortexM4::PrintInfo()
 	//LogVerbose("PC = %08x\n", pc);
 
 	//DEBUG
-	//EnterDebugState();
+	EnterDebugState();
 
 	/*
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);

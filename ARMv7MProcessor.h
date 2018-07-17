@@ -94,6 +94,7 @@ public:
 		CPACR		= 0x0362,	//Coprocessor Access Control Register
 		DHCSR		= 0x037c,	//Debug Halting Control/Status Register
 		DCRSR		= 0x037d,	//Debug Core Register Selector
+		DCRDR		= 0x037e,	//Debug Core Register Data Register
 		DEMCR		= 0x037f,	//Debug Exception Monitor Control Register
 		STIR		= 0x03c0	//Software Triggered Interrupt Register
 	};
@@ -140,6 +141,7 @@ public:
 	// CPU register access
 
 	uint32_t ReadCPURegister(ARM_V7M_CPU_REGISTERS reg);
+	const char* GetRegisterName(ARM_V7M_CPU_REGISTERS reg);
 
 protected:
 	//void PrintIDRegister(ARMv7MDebugIDRegister did);
@@ -149,6 +151,8 @@ protected:
 
 	void EnterDebugState();
 	void ExitDebugState();
+
+	void DumpRegisters();
 
 	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
