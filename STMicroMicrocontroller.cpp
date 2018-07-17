@@ -38,7 +38,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-STMicroMicrocontroller::STMicroMicrocontroller(unsigned int devicetype, unsigned int stepping, unsigned int idcode, JtagInterface* iface, size_t pos)
+STMicroMicrocontroller::STMicroMicrocontroller(
+	unsigned int devicetype,
+	unsigned int stepping,
+	unsigned int /*idcode*/,
+	JtagInterface* /*iface*/,
+	size_t /*pos*/)
 	: STMicroDevice(devicetype, stepping)
 {
 
