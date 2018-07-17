@@ -277,7 +277,7 @@ void DigilentJtagInterface::ShiftData(bool last_tms, const unsigned char* send_d
 	//Add TMS values
 	int bytecount = ceil(count / 4.0f);						//TODO: optimize this? Slow
 	unsigned char* data = new unsigned char[bytecount];
-	for(int i=0; i<count; i++)
+	for(size_t i=0; i<count; i++)
 	{
 		PokeBit(data, 2*i, PeekBit(send_data, i));
 		if(i != (count-1))
