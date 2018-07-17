@@ -145,7 +145,7 @@ void PipeJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data,
 	fprintf(m_writepipe, "%02x\n", last_tms);
 
 	//Message length (in BITS, not bytes)
-	fprintf(m_writepipe, "%08x\n", count);
+	fprintf(m_writepipe, "%08zx\n", count);
 
 	//Actual message data (one byte per line)
 	for(int i=0; i<bytesize; i++)
