@@ -68,3 +68,13 @@ uint32_t ARMAPBDevice::ReadRegisterByIndex(uint32_t index)
 {
 	return ReadRegisterByOffset(index*4);
 }
+
+void ARMAPBDevice::WriteRegisterByIndex(uint32_t index, uint32_t value)
+{
+	WriteRegisterByOffset(index*4, value);
+}
+
+void ARMAPBDevice::WriteRegisterByOffset(uint32_t offset, uint32_t value)
+{
+	m_ap->WriteWord(m_address + offset, value);
+}

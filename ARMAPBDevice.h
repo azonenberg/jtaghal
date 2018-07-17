@@ -67,6 +67,12 @@ protected:
 	///reads a register given the index into a 32-bit register space
 	uint32_t ReadRegisterByIndex(uint32_t index);
 
+	///writes a register given the index into a 32-bit register space
+	void WriteRegisterByIndex(uint32_t index, uint32_t value);
+
+	///writes a register given the offset from our base address
+	void WriteRegisterByOffset(uint32_t offset, uint32_t value);
+
 	///The Mem-AP
 	ARMDebugMemAccessPort* m_ap;
 
