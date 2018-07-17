@@ -127,7 +127,12 @@ unsigned int JtagDevice::GetIDCode()
 
 void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
 {
-	if( (m_irlength < 32) && (0 == memcmp(data, &m_cachedIR, count)))
+	//ceil of bytes, but faster
+	int bytecount = (count >> 3);
+	if(count & 7)
+		bytecount ++;
+
+	if( (m_irlength < 32) && (0 == memcmp(data, &m_cachedIR, bytecount)))
 	{
 		//do nothing, cache hit
 		return;
@@ -136,7 +141,7 @@ void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
 	else
 		m_iface->SetIRDeferred((int)m_pos, data, count);
 
-	memcpy(m_cachedIR, data, ceil(count / 8.0f));
+	memcpy(m_cachedIR, data, bytecount);
 }
 
 /**
@@ -146,6 +151,11 @@ void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
  */
 void JtagDevice::SetIR(const unsigned char* data, int count)
 {
+	//ceil of bytes, but faster
+	int bytecount = (count >> 3);
+	if(count & 7)
+		bytecount ++;
+
 	if(count > 32)
 	{
 		throw JtagExceptionWrapper(
@@ -153,7 +163,7 @@ void JtagDevice::SetIR(const unsigned char* data, int count)
 			"");
 	}
 
-	if( (0 == memcmp(data, &m_cachedIR, count)) )
+	if( (0 == memcmp(data, &m_cachedIR, bytecount)) )
 	{
 		//do nothing, cache hit
 		return;
@@ -162,7 +172,7 @@ void JtagDevice::SetIR(const unsigned char* data, int count)
 	else
 		m_iface->SetIR((int)m_pos, data, count);
 
-	memcpy(m_cachedIR, data, ceil(count / 8.0f));
+	memcpy(m_cachedIR, data, bytecount);
 }
 
 /**
@@ -182,6 +192,12 @@ void JtagDevice::Commit()
  */
 void JtagDevice::SetIR(const unsigned char* data, unsigned char* data_out, int count)
 {
+	//ceil of bytes, but faster
+	int bytecount = (count >> 3);
+	if(count & 7)
+		bytecount ++;
+
+
 	if(count > 32)
 	{
 		throw JtagExceptionWrapper(
@@ -190,7 +206,7 @@ void JtagDevice::SetIR(const unsigned char* data, unsigned char* data_out, int c
 	}
 
 	m_iface->SetIR((int)m_pos, data, data_out, count);
-	memcpy(m_cachedIR, data, ceil(count / 8.0f));
+	memcpy(m_cachedIR, data, bytecount);
 }
 
 /**
