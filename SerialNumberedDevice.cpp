@@ -54,12 +54,12 @@ SerialNumberedDevice::~SerialNumberedDevice()
 string SerialNumberedDevice::GetPrettyPrintedSerialNumber()
 {
 	int len = GetSerialNumberLength();
-	int bitlen = GetSerialNumberLengthBits();
 	unsigned char* serial = new unsigned char[len];
 	memset(serial, 0, len);
 	GetSerialNumber(serial);
 
 	/*
+	int bitlen = GetSerialNumberLengthBits();
 	string serial_binary;
 	for(int j=0; j<bitlen; j++)
 	{
