@@ -71,9 +71,6 @@ public:
 	{
 		switch(m_certainty)
 		{
-			case USELESS:
-				return "completely unsure";
-
 			case INCONSISTENT:
 				return "inconsistent results";
 
@@ -82,6 +79,10 @@ public:
 
 			case CERTAIN:
 				return "extremely high confidence";
+
+			case USELESS:
+			default:
+				return "completely unsure";
 		}
 	}
 
