@@ -59,7 +59,7 @@ string ARMCoreSightDevice::GetDescription()
 	switch(m_idreg.partnum)
 	{
 		case 0x003:
-			return "Cortex-M3/M4 Data Watchpoint/Trace";
+			return "Cortex-M4 Flash Patch/Breakpoint";
 		case 0x00c:
 			return "Cortex-M4 System Control Space";
 		case 0x906:

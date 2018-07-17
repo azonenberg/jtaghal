@@ -462,12 +462,9 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		DebugAbort();
 		ClearStatusRegisterErrors();
 
-		//
-
 		throw JtagExceptionWrapper(
 			"Failed to read AP register",
 			"");
-		exit(1);
 	}
 
 	return data_out;

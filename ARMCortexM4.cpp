@@ -49,8 +49,7 @@ using namespace std;
 ARMCortexM4::ARMCortexM4(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
 	: ARMv7MProcessor(ap, address, idreg)
 {
-	LogTrace("Found ARM Cortex-M4 at %08x, probing...\n", address);
-	LogIndenter li;
+	//LogTrace("Found ARM Cortex-M4 at %08x, probing...\n", address);
 
 	/*
 	//DBGDSMCR turn off MMU
@@ -75,6 +74,13 @@ void ARMCortexM4::PrintInfo()
 {
 	LogVerbose("%s\n", GetDescription().c_str());
 	LogIndenter li;
+
+	if(HaltedDueToUnrecoverableException())
+		LogVerbose("Core is halted due to unrecoverable exception\n");
+
+	//LogTrace("asdf\n");
+
+
 	/*
 	PrintIDRegister(m_deviceID);
 

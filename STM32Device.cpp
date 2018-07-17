@@ -67,6 +67,39 @@ STM32Device::STM32Device(
 	//uint32_t id = m_dap->ReadMemory(0xe0042000);
 	//LogDebug("id = %08x\n", id);
 
+	//TODO: How portable are these addresses?
+	m_flashSfrBase		= 0x40023C00;
+	m_flashMemoryBase	= 0x08000000;
+	m_sramMemoryBase	= 0x20000000;
+
+	//Look up size of flash memory
+	try
+	{
+		m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+	}
+	catch(const JtagException& e)
+	{
+		//If we fail, set flash size to zero so we don't try doing anything with it
+		m_flashKB = 0;
+
+		if(!IsDeviceReadLocked().GetValue())
+			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
+
+		else
+			LogNotice("STM32Device: Cannot determine flash size because read protection is set\n");
+	}
+
+	//Look up RAM size (TODO can we get this from descriptors somehow?)
+	switch(devid)
+	{
+		case STM32F411E:
+			m_ramKB = 128;
+			break;
+
+		default:
+			m_ramKB = 0;
+	}
+
 	//Check read lock status
 	m_locksProbed = false;
 	STM32Device::ProbeLocksNondestructive();
@@ -114,39 +147,6 @@ STM32Device::STM32Device(
 
 		else
 			LogNotice("STM32Device: Cannot determine serial number because read protection is set\n");
-	}
-
-	//Look up size of flash memory
-	try
-	{
-		m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
-	}
-	catch(const JtagException& e)
-	{
-		//If we fail, set flash size to zero so we don't try doing anything with it
-		m_flashKB = 0;
-
-		if(!IsDeviceReadLocked().GetValue())
-			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
-
-		else
-			LogNotice("STM32Device: Cannot determine flash size because read protection is set\n");
-	}
-
-	//TODO: How portable are these addresses?
-	m_flashSfrBase		= 0x40023C00;
-	m_flashMemoryBase	= 0x08000000;
-	m_sramMemoryBase	= 0x20000000;
-
-	//Look up RAM size (TODO can we get this from descriptors somehow?)
-	switch(devid)
-	{
-		case STM32F411E:
-			m_ramKB = 128;
-			break;
-
-		default:
-			m_ramKB = 0;
 	}
 }
 
@@ -235,6 +235,11 @@ bool STM32Device::IsProgrammed()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Lock bit access
+
+void STM32Device::PrintLockProbeDetails()
+{
+
+}
 
 void STM32Device::ProbeLocksNondestructive()
 {

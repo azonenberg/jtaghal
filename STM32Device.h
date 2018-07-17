@@ -108,6 +108,7 @@ public:
 	virtual UncertainBoolean IsDeviceReadLocked();
 	virtual void SetReadLock();
 	virtual void ClearReadLock();
+	virtual void PrintLockProbeDetails();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for chain manipulation

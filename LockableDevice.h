@@ -136,6 +136,11 @@ public:
 	virtual UncertainBoolean IsDeviceReadLocked() =0;
 
 	/**
+		@brief Prints detailed information regarding the state of the read lock
+	 */
+	virtual void PrintLockProbeDetails() =0;
+
+	/**
 		@brief Sets a global read-protection lock on the entire device.
 
 		This function only performs reversible locks that can be cleared with a bulk erase. Thus, it should not

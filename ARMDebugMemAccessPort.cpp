@@ -35,7 +35,6 @@
 
 #include "jtaghal.h"
 #include "ARMAPBDevice.h"
-#include "ARMCortexA9.h"
 #include "ARMDebugPort.h"
 #include "ARMDebugAccessPort.h"
 #include "ARMDebugMemAccessPort.h"
@@ -207,8 +206,6 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		uint32_t entry = ReadWord(baseAddress + i*4);
 		if(entry == 0)
 			break;
-		LogTrace("i=%d, entry=%08x\n", i, entry);
-		LogIndenter li;
 
 		//If we hit 959 and it's not a terminator, something is wrong - should not be this many entries
 		if(i == 959)
@@ -238,17 +235,18 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 
 		//Walk this table entry
 		uint32_t compid_raw[4];
-		for(int i=0; i<4; i++)
-			compid_raw[i] = ReadWord(address + 0xff0 + 4*i);
+		for(int j=0; j<4; j++)
+			compid_raw[j] = ReadWord(address + 0xff0 + 4*j);
 		uint32_t compid =
 			((compid_raw[3] & 0xff) << 24) |
 			((compid_raw[2] & 0xff) << 16) |
 			((compid_raw[1] & 0xff) << 8) |
 			(compid_raw[0] & 0xff);
-		LogTrace("address = %08x\n", address);
-		LogTrace("ID registers = %08x %08x %08x %08x\n", compid_raw[0], compid_raw[1], compid_raw[2], compid_raw[3]);
 
-		//Look up the peripheral ID
+		LogTrace("address = %08x\n", address);
+		LogIndenter li;
+
+		//Look up peripheral ID
 		uint64_t periphid_raw[8];
 		for(int i=0; i<4; i++)
 			periphid_raw[i] = ReadWord(address + 0xfe0 + 4*i);
@@ -264,6 +262,18 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 			(periphid_raw[2] << 16) |
 			(periphid_raw[1] << 8)  |
 			(periphid_raw[0] << 0);
+
+		//Debug prints
+		if(i > 0)
+		{
+			for(int j=0; j<12; j++)
+			{
+				uint32_t base = address + 0xfd0 + 4*j;
+				uint32_t val = ReadWord(base);
+				LogTrace("0x%08x => 0x%08x\n", base, val);
+			}
+		}
+
 		/*{
 			LogTrace("Peripheral ID:\n");
 			LogIndenter li;
@@ -376,6 +386,15 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 		//Handle fully supported devices first, then just make a generic CoreSight device for the rest
 		switch(reg.bits.partnum)
 		{
+			//Cortex-M4 SCS
+			case 0x00c:
+			{
+				ARMCortexM4* cortex = new ARMCortexM4(this, base_address, reg.bits);
+				m_dp->AddTarget(cortex);
+				m_debugDevices.push_back(cortex);
+			}
+			break;
+
 			//Cortex-A9
 			case 0xC09:
 			{

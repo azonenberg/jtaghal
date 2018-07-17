@@ -49,7 +49,7 @@ using namespace std;
 ARMv7MProcessor::ARMv7MProcessor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
 	: ARMAPBDevice(ap, address, idreg)
 {
-	LogTrace("Found ARMv7-M processor at %08x, probing...\n", address);
+	//LogTrace("Found ARMv7-M processor at %08x, probing...\n", address);
 
 	/*
 	//Read the Debug ID register and extract flags
@@ -141,28 +141,46 @@ uint32_t ARMv7MProcessor::ReadMemory(uint32_t addr)
 // Debugging
 
 /**
+	@brief Checks if the CPU is halted due to a fatal error
+ */
+bool ARMv7MProcessor::HaltedDueToUnrecoverableException()
+{
+	uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
+	if( (dhcsr >> 19) & 1)
+		return true;
+	return false;
+}
+
+uint32_t ARMv7MProcessor::ReadCPURegister(ARM_V7M_CPU_REGISTERS reg)
+{
+	//TODO
+	return 0;
+}
+
+/**
 	@brief Halts the CPU and enters debug state
 
-	See ARMv7M-A/R arch ref manual XXX
+	See ARMv7-M arch manual C1-6
  */
 void ARMv7MProcessor::EnterDebugState()
 {
-	/*
-	//Request a halt by writing to DBGDRCR.HRQ
 	LogTrace("Halting CPU to enter debug state...\n");
 	LogIndenter li;
-	WriteRegisterByIndex(DBGDRCR, 0x00000001);
 
-	//Poll DBGDSCR.HALTED until it gets to 1
+	//Set C_DEBUGEN and C_HALT on consecutive writes
+	//TODO: can we do both at once?
+	WriteRegisterByIndex(DHCSR, 0xa05f0001);
+	WriteRegisterByIndex(DHCSR, 0xa05f0003);
+
+	//Poll DHCSR.S_HALT until the CPU stops
 	while(true)
 	{
-		uint32_t v = ReadRegisterByIndex(DBGDSCR_EXT);
-		LogTrace("DBGDSCR = %08x\n", v);
-		if(v & 1)
+		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
+		if(dhcsr & 0x00010000)
 			break;
+		LogTrace("DHCSR = %08x\n", dhcsr);
 		usleep(1000);
 	}
-	*/
 }
 
 void ARMv7MProcessor::ExitDebugState()
