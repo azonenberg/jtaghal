@@ -406,7 +406,6 @@ void JtagInterface::SetIRDeferred(unsigned int device, const unsigned char* data
 		size_t leading_bits = 0;
 		for(size_t i=0; i<device; i++)
 			leading_bits += m_devices[i]->GetIRLength();
-		size_t trailing_bits = m_irtotal - (count + leading_bits);
 
 		//Patch in the IR data we're sending
 		for(size_t i=0; i<count; i++)
@@ -460,7 +459,6 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 		size_t leading_bits = 0;
 		for(size_t i=0; i<device; i++)
 			leading_bits += m_devices[i]->GetIRLength();
-		size_t trailing_bits = m_irtotal - (count + leading_bits);
 
 		//Patch in the IR data we're sending
 		for(size_t i=0; i<count; i++)
@@ -526,7 +524,6 @@ void JtagInterface::ScanDR(unsigned int device, const unsigned char* send_data, 
 		//This is the number of devices with LOWER indexes than us.
 		//Coincidentally, this is also our device index :)
 		size_t leading_bits = device;
-		size_t trailing_bits = m_devicecount - (device + 1);
 
 		//Patch in the DR data we're sending
 		for(size_t i=0; i<count; i++)
