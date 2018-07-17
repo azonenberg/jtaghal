@@ -30,33 +30,77 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMCortexA9
+	@brief Declaration of ARMv7MProcessor
  */
 
-#ifndef ARMCortexA9_h
-#define ARMCortexA9_h
+#ifndef ARMv7MProcessor_h
+#define ARMv7MProcessor_h
+
+class DebuggableDevice;
+class ARMAPBDevice;
 
 /**
-	@brief An ARM Cortex-A9 CPU core, as seen over a CoreSight APB bus
+	@brief An ARM Cortex-M CPU core supporting the ARMv7-M architecture, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */
-class ARMCortexA9 	: public ARMv7Processor
+class ARMv7MProcessor 	: public DebuggableDevice
+						, public ARMAPBDevice
 {
 public:
-	ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
-	virtual ~ARMCortexA9();
+	ARMv7MProcessor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	virtual ~ARMv7MProcessor();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Registers
+
+	//register numbers, multiply by 4 to get address
+	enum ARM_V7M_DEBUG_REGISTERS
+	{
+		//DBGDIDR			= 0,
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 
-	virtual std::string GetDescription();
-	virtual void PrintInfo();
+	virtual std::string GetDescription() =0;
+	virtual void PrintInfo() =0;
 
-	///Sample program counter (for sample-based profiling)
-	uint32_t SampleProgramCounter()
-	{ return ReadRegisterByIndex(m_pcsrIndex); }
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Memory access via the default (AHB) MEM-AP
+
+	virtual uint32_t ReadMemory(uint32_t addr);
+
+protected:
+	//void PrintIDRegister(ARMv7MDebugIDRegister did);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debugger control
+
+	void EnterDebugState();
+	void ExitDebugState();
+
+	/*
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ID register state etc
+
+	unsigned int m_breakpoints;
+	unsigned int m_context_breakpoints;
+	unsigned int m_watchpoints;
+	bool m_hasDevid;
+	bool m_hasSecExt;
+	bool m_hasSecureHalt;
+	unsigned int m_revision;
+	unsigned int m_variant;
+	//TODO: arch version
+
+	ARMv7MDebugIDRegister m_deviceID;
+
+	///Device-dependent address of the program counter sample register (PCSR)
+	ARM_V7_DEBUG_REGISTERS m_pcsrIndex;
+	*/
 };
 
 #endif
+
 

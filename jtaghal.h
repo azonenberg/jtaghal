@@ -121,6 +121,7 @@
 #include "FPGABitstream.h"
 
 //Device classes
+#include "DebuggableDevice.h"
 #include "ProgrammableDevice.h"
 #include "ProgrammableLogicDevice.h"
 #include "CPLD.h"
@@ -136,6 +137,11 @@
 
 //Vendor device classes (and support stuff)
 #include "ARMDebugPort.h"
+#include "ARMAPBDevice.h"
+#include "ARMv7Processor.h"
+#include "ARMv7MProcessor.h"
+#include "ARMCortexA9.h"
+#include "ARMCortexM4.h"
 #include "MicrochipMicrocontroller.h"
 #include "STMicroMicrocontroller.h"
 #include "STM32Device.h"

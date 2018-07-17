@@ -30,22 +30,22 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMCortexA9
+	@brief Declaration of ARMCortexM4
  */
 
-#ifndef ARMCortexA9_h
-#define ARMCortexA9_h
+#ifndef ARMCortexM4_h
+#define ARMCortexM4_h
 
 /**
-	@brief An ARM Cortex-A9 CPU core, as seen over a CoreSight APB bus
+	@brief An ARM Cortex-M4 CPU core, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */
-class ARMCortexA9 	: public ARMv7Processor
+class ARMCortexM4 	: public ARMv7MProcessor
 {
 public:
-	ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
-	virtual ~ARMCortexA9();
+	ARMCortexM4(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	virtual ~ARMCortexM4();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
@@ -54,8 +54,8 @@ public:
 	virtual void PrintInfo();
 
 	///Sample program counter (for sample-based profiling)
-	uint32_t SampleProgramCounter()
-	{ return ReadRegisterByIndex(m_pcsrIndex); }
+	//uint32_t SampleProgramCounter()
+	//{ return ReadRegisterByIndex(m_pcsrIndex); }
 };
 
 #endif

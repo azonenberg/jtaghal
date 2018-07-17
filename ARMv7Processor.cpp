@@ -30,7 +30,7 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of ARMCortexA9
+	@brief Implementation of ARMv7Processor
  */
 
 #include "jtaghal.h"
@@ -39,20 +39,45 @@
 #include "ARMDebugPort.h"
 #include "ARMDebugAccessPort.h"
 #include "ARMDebugMemAccessPort.h"
-#include "ARMCortexA9.h"
+#include "ARMv7Processor.h"
 
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMv7Processor(ap, address, idreg)
+ARMv7Processor::ARMv7Processor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMAPBDevice(ap, address, idreg)
 {
+	LogTrace("Found ARMv7 processor at %08x, probing...\n", address);
 
+	//Read the Debug ID register and extract flags
+	m_deviceID.word = ReadRegisterByIndex(DBGDIDR);
+	m_breakpoints = m_deviceID.bits.bpoints_minus_one + 1;
+	m_context_breakpoints = m_deviceID.bits.context_bpoints_minus_one + 1;
+	m_watchpoints = m_deviceID.bits.wpoints_minus_one + 1;
+	m_hasDevid = m_deviceID.bits.has_dbgdevid;
+	m_hasSecExt = m_deviceID.bits.sec_ext;
+	m_hasSecureHalt = m_deviceID.bits.sec_ext && !m_deviceID.bits.no_secure_halt;
+	m_revision = m_deviceID.bits.revision;
+	m_variant = m_deviceID.bits.variant;
+	if(m_deviceID.bits.pcsr_legacy_addr)
+		m_pcsrIndex = DBGPCSR_LEGACY;
+	else
+		m_pcsrIndex = DBGPCSR;
+
+	//Verify the CPU is powered up
+	uint32_t powerdown_status = ReadRegisterByIndex(DBGPRSR);
+	LogTrace("DBGPRSR = %08x\n", powerdown_status);
+	if(!powerdown_status & 1)
+	{
+		WriteRegisterByIndex(DBGPRCR, 0x00000008);	//Power up the CPU
+		powerdown_status = ReadRegisterByIndex(DBGPRSR);
+		LogTrace("DBGPRSR = %08x\n", powerdown_status);
+	}
 }
 
-ARMCortexA9::~ARMCortexA9()
+ARMv7Processor::~ARMv7Processor()
 {
 
 }
@@ -60,69 +85,97 @@ ARMCortexA9::~ARMCortexA9()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // General device info
 
-void ARMCortexA9::PrintInfo()
+void ARMv7Processor::PrintIDRegister(ARMv7DebugIDRegister did)
 {
-	LogVerbose("%s\n", GetDescription().c_str());
-	LogIndenter li;
+	LogVerbose("CPU rev %u variant %u\n", did.bits.revision, did.bits.variant);
 
-	PrintIDRegister(m_deviceID);
-
-	//Read DBGDSCR to get status stuff (TODO: make struct) for this
-	//uint32_t dbgdscr = ReadRegisterByIndex(DBGDSCR_EXT);
-	//LogDebug("DBGDSCR = %x\n", dbgdscr);
-
-	//Pins of interest are MIO bank 1, pins 50/51
-
-	//Read MCTRL
-
-	//Read PSS_IDCODE from the zynq
-	//uint32_t pss_idcode = ReadMemory(0xF8000530);
-	//LogDebug("pss_idcode = %08x\n", pss_idcode);
-
-	//Read MCTRL
-	uint32_t mctrl = ReadMemory(0xF8007080);
-	LogDebug("mctrl = %08x\n", mctrl);
-
-	//Set MIO7 (MIO LED) to output
-	m_ap->GetDebugPort()->WriteMemory(0xf800071c, 0x00000600);	//sclr.MIO_PIN_07
-	m_ap->GetDebugPort()->WriteMemory(0xe000a204, 0x00000080);	//gpio.XGPIOPS_DIRM_OFFSET
-	m_ap->GetDebugPort()->WriteMemory(0xe000a208, 0x00000080);	//gpio.XGPIOPS_OUTEN_OFFSET
-	for(int i=0; i<10; i++)
+	const char* arches[]=
 	{
-		LogDebug("toggle\n");
-		m_ap->GetDebugPort()->WriteMemory(0xe000a040, 0x00000080);	//gpio.XGPIOPS_DATA_OFFSET
-		usleep(500 * 1000);
-		m_ap->GetDebugPort()->WriteMemory(0xe000a040, 0x00000000);	//gpio.XGPIOPS_DATA_OFFSET
-		usleep(500 * 1000);
+		"reserved 0",
+		"ARMv6, v6 debug arch",
+		"ARMv6, v6.1 debug arch",
+		"ARMv7, v7 debug, full CP14",
+		"ARMv7, v7 debug, only baseline cp14",
+		"ARMv7, v7.1 debug",
+		"reserved 6",
+		"reserved 7",
+		"reserved 8",
+		"reserved 9",
+		"reserved a",
+		"reserved b",
+		"reserved c",
+		"reserved d",
+		"reserved e",
+		"reserved f"
+	};
+
+	LogVerbose("Arch %s\n", arches[did.bits.debug_arch_version]);
+
+
+	if(did.bits.sec_ext)
+	{
+		LogVerbose("Security extensions\n");
+		if(did.bits.sec_ext && did.bits.no_secure_halt)
+			LogDebug("    (but no secure halt)\n");
 	}
-
-	//MIO LED @ MIO7
-	//MIO inputs at MIO50, 51
-	//GPIO controller is at 0xe000a000
-	//Input data (DATA_RO) is at +0x60 - 6c
-	//
-
-	//Read L0_SEL
-
-	//Read the PC and dump the instruction at that address
-	uint32_t pc = SampleProgramCounter();
-	LogVerbose("PC = %08x\n", pc);
-	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
-
-	//LogDebug("    value = %08x\n", value);
+	if(did.bits.pcsr_legacy_addr)
+		LogVerbose("PCSR is at legacy address\n");
+	if(did.bits.has_dbgdevid)
+		LogVerbose("Has debug device ID\n");
+	//TODO: arch version
+	LogVerbose("%d breakpoints (%d with context matching)\n",
+		did.bits.bpoints_minus_one+1, did.bits.context_bpoints_minus_one+1);
+	LogVerbose("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 
-string ARMCortexA9::GetDescription()
-{
-	char tmp[128];
-	snprintf(
-		tmp,
-		sizeof(tmp),
-		"ARM Cortex-A9 rev %d mod %d stepping %d",
-		m_idreg.revnum,
-		m_idreg.cust_mod,
-		m_idreg.revand
-		);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System memory access
 
-	return string(tmp);
+uint32_t ARMv7Processor::ReadMemory(uint32_t addr)
+{
+	return m_ap->GetDebugPort()->ReadMemory(addr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debugging
+
+/**
+	@brief Halts the CPU and enters debug state
+
+	See ARMv7-A/R arch ref manual, C11-2236
+ */
+void ARMv7Processor::EnterDebugState()
+{
+	//Request a halt by writing to DBGDRCR.HRQ
+	LogTrace("Halting CPU to enter debug state...\n");
+	LogIndenter li;
+	WriteRegisterByIndex(DBGDRCR, 0x00000001);
+
+	//Poll DBGDSCR.HALTED until it gets to 1
+	while(true)
+	{
+		uint32_t v = ReadRegisterByIndex(DBGDSCR_EXT);
+		LogTrace("DBGDSCR = %08x\n", v);
+		if(v & 1)
+			break;
+		usleep(1000);
+	}
+}
+
+void ARMv7Processor::ExitDebugState()
+{
+	//Request a resume by writing to DBGDRCR.RRQ
+	LogTrace("Restarting CPU...\n");
+	LogIndenter li;
+	WriteRegisterByIndex(DBGDRCR, 0x00000002);
+
+	//Poll DBGDSCR.RESTARTED unti it gets to 1
+	while(true)
+	{
+		uint32_t v = ReadRegisterByIndex(DBGDSCR_EXT);
+		LogTrace("DBGDSCR = %08x\n", v);
+		if(v & 2)
+			break;
+		usleep(1000);
+	}
 }
