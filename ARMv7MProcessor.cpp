@@ -262,9 +262,6 @@ void ARMv7MProcessor::EnterDebugState()
 		//LogTrace("DHCSR = %08x\n", dhcsr);
 		usleep(1000);
 	}
-
-	//DEBUG
-	DumpRegisters();
 }
 
 

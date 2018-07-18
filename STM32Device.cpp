@@ -86,7 +86,7 @@ STM32Device::STM32Device(
 			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
 
 		else
-			LogNotice("STM32Device: Cannot determine flash size because read protection is set\n");
+			LogVerbose("STM32Device: Cannot determine flash size because read protection is set\n");
 	}
 
 	//Look up RAM size (TODO can we get this from descriptors somehow?)
@@ -146,7 +146,7 @@ STM32Device::STM32Device(
 			LogWarning("STM32Device: Unable to read serial number even though read protection doesn't seem to be set\n");
 
 		else
-			LogNotice("STM32Device: Cannot determine serial number because read protection is set\n");
+			LogVerbose("STM32Device: Cannot determine serial number because read protection is set\n");
 	}
 }
 
@@ -236,9 +236,88 @@ bool STM32Device::IsProgrammed()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Lock bit access
 
+//TODO: cache this somewhere
+ARMv7MProcessor* STM32Device::GetCPU()
+{
+	for(size_t i=0; i<m_dap->GetNumTargets(); i++)
+	{
+		auto t = dynamic_cast<ARMv7MProcessor*>(m_dap->GetTarget(i));
+		if(t)
+			return t;
+	}
+	return NULL;
+}
+
 void STM32Device::PrintLockProbeDetails()
 {
+	auto cpu = GetCPU();
 
+	LogNotice("[+] Able to enumerate JTAG chain and see device IDs\n");
+
+	if(!cpu)
+		LogNotice("[-] Unable to find CPU on ARM DAP. Can't do most other probes\n");
+	else
+	{
+		LogNotice("[+] Detected CPU on ARM DAP: %s\n", cpu->GetDescription().c_str());
+
+		try
+		{
+			cpu->ReadCPURegister(ARMv7MProcessor::R0);
+			LogNotice("[+] Able to read CPU registers\n");
+		}
+		catch(const JtagException& e)
+		{
+			LogNotice("[-] Unable to read CPU registers\n");
+		}
+
+		try
+		{
+			cpu->ReadMemory(m_flashMemoryBase);
+			LogNotice("[+] Able to read Flash memory. Dumping first few words as proof\n");
+			LogIndenter li;
+			for(int i=0; i<4; i++)
+			{
+				uint32_t addr = m_flashMemoryBase + 16*i;
+				LogNotice("0x%08x: %08x %08x %08x %08x\n",
+					addr,
+					cpu->ReadMemory(addr),
+					cpu->ReadMemory(addr + 0x4),
+					cpu->ReadMemory(addr + 0x8),
+					cpu->ReadMemory(addr + 0xc)
+					);
+			}
+
+		}
+		catch(const JtagException& e)
+		{
+			LogNotice("[-] Unable to read Flash memory\n");
+		}
+
+		try
+		{
+			cpu->ReadMemory(m_sramMemoryBase);
+			LogNotice("[+] Able to read SRAM memory. Dumping first few words as proof\n");
+			LogIndenter li;
+			for(int i=0; i<4; i++)
+			{
+				uint32_t addr = m_sramMemoryBase + 16*i;
+				LogNotice("0x%08x: %08x %08x %08x %08x\n",
+					addr,
+					cpu->ReadMemory(addr),
+					cpu->ReadMemory(addr + 0x4),
+					cpu->ReadMemory(addr + 0x8),
+					cpu->ReadMemory(addr + 0xc)
+					);
+			}
+
+		}
+		catch(const JtagException& e)
+		{
+			LogNotice("[-] Unable to read SRAM memory\n");
+		}
+	}
+
+	LogNotice("STM32 read protection level appears to be: level %d\n", m_protectionLevel);
 }
 
 void STM32Device::ProbeLocksNondestructive()
@@ -298,7 +377,7 @@ void STM32Device::ProbeLocksDestructive()
 	return ProbeLocksNondestructive();
 }
 
-UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access)
+UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t /*start*/, uint32_t /*end*/, unsigned int /*access*/)
 {
 	//Not yet implemented
 	return UncertainBoolean(false, UncertainBoolean::USELESS);
