@@ -66,6 +66,12 @@ public:
 
 public:
 	//JTAG interface helpers
+	void SetIR(const unsigned char* data)
+	{ SetIR(data, m_irlength); }
+
+	void SetIRDeferred(const unsigned char* data)
+	{ SetIRDeferred(data, m_irlength); }
+
 	void SetIR(const unsigned char* data, int count);
 	void SetIRDeferred(const unsigned char* data, int count);
 	void SetIR(const unsigned char* data, unsigned char* data_out, int count);

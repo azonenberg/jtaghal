@@ -55,38 +55,74 @@ ARM7TDMISProcessor::ARM7TDMISProcessor(
 	: ARMDevice(idcode, iface, pos)
 	, m_rev(rev)
 {
-	//LogTrace("Found ARM7TDMI-S processor at %08x, probing...\n", address);
+	m_irlength = 4;
+	m_selectedChain = 255;
 
-	/*
-	//Read the Debug ID register and extract flags
-	m_deviceID.word = ReadRegisterByIndex(DBGDIDR);
-	m_breakpoints = m_deviceID.bits.bpoints_minus_one + 1;
-	m_context_breakpoints = m_deviceID.bits.context_bpoints_minus_one + 1;
-	m_watchpoints = m_deviceID.bits.wpoints_minus_one + 1;
-	m_hasDevid = m_deviceID.bits.has_dbgdevid;
-	m_hasSecExt = m_deviceID.bits.sec_ext;
-	m_hasSecureHalt = m_deviceID.bits.sec_ext && !m_deviceID.bits.no_secure_halt;
-	m_revision = m_deviceID.bits.revision;
-	m_variant = m_deviceID.bits.variant;
-	if(m_deviceID.bits.pcsr_legacy_addr)
-		m_pcsrIndex = DBGPCSR_LEGACY;
-	else
-		m_pcsrIndex = DBGPCSR;
-
-	//Verify the CPU is powered up
-	uint32_t powerdown_status = ReadRegisterByIndex(DBGPRSR);
-	LogTrace("DBGPRSR = %08x\n", powerdown_status);
-	if(!powerdown_status & 1)
-	{
-		WriteRegisterByIndex(DBGPRCR, 0x00000008);	//Power up the CPU
-		powerdown_status = ReadRegisterByIndex(DBGPRSR);
-		LogTrace("DBGPRSR = %08x\n", powerdown_status);
-	}*/
+	//WriteIceRegister(DEBUG_CTRL, 0x3f);
+	//uint32_t ret = ReadIceRegister(DEBUG_CTRL);
 }
 
 ARM7TDMISProcessor::~ARM7TDMISProcessor()
 {
 
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scan chain selection
+
+void ARM7TDMISProcessor::SelectScanChain(uint8_t n)
+{
+	//Don't select the chain again if it's alreadty active
+	if(m_selectedChain == n)
+		return;
+
+	uint8_t inst = SCAN_N;
+	SetIR(&inst);
+	ScanDR(&n, NULL, 4);
+
+	m_selectedChain = n;
+}
+
+void ARM7TDMISProcessor::WriteIceRegister(uint8_t reg, uint32_t value)
+{
+	//Prepare to send data to the correct chain
+	SelectIceRTChain();
+	uint8_t inst = INTEST;
+	SetIR(&inst);
+
+	uint8_t wdata[5] =
+	{
+		static_cast<uint8_t>((value >> 0) & 0xff),
+		static_cast<uint8_t>((value >> 8) & 0xff),
+		static_cast<uint8_t>((value >> 16) & 0xff),
+		static_cast<uint8_t>((value >> 24) & 0xff),
+		static_cast<uint8_t>(0x20 | reg)
+	};
+
+	ScanDR(wdata, NULL, 38);
+}
+
+uint32_t ARM7TDMISProcessor::ReadIceRegister(uint8_t reg)
+{
+	//Prepare to send data to the correct chain
+	SelectIceRTChain();
+	uint8_t inst = INTEST;
+	SetIR(&inst);
+
+	uint8_t wdata[5] =
+	{
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		reg
+	};
+
+	uint8_t rdata[5] = {0};
+	ScanDR(wdata, NULL, 38);
+	ScanDR(wdata, rdata, 38);
+
+	return (rdata[3] << 24) | (rdata[2] << 16) | (rdata[1] << 8) | rdata[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +212,7 @@ void ARM7TDMISProcessor::PrintIDRegister(ARM7TDMISDebugIDRegister did)
 		"reserved 7",
 		"reserved 8",
 		"reserved 9",
-		"reserved a",
+		"reserved a"
 		"reserved b",
 		"reserved c",
 		"reserved d",
