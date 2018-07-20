@@ -80,12 +80,13 @@ JtagDevice::~JtagDevice()
 JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//Rightmost bit is always a zero, ignore it
-	unsigned int idcode_s = idcode >> 1;
+	unsigned int idcode_s = (idcode >> 1) & 0x7ff;
 
 	//Switch on the ID code and create the appropriate device
-	switch(idcode_s & 0x7FF)
+	switch(idcode_s)
 	{
 	case VENDOR_ID_ARM:
+	case VENDOR_ID_ARM_OLD:
 		return ARMDevice::CreateDevice(idcode, iface, pos);
 		break;
 
@@ -106,7 +107,7 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 
 	default:
 		//TODO: Throw exception instead?
-		LogError("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s & 0x7FF, idcode);
+		LogError("[JtagDevice] WARNING: Manufacturer ID 0x%x not recognized (%08x)\n", idcode_s, idcode);
 		return NULL;
 	}
 

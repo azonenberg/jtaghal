@@ -81,6 +81,17 @@ ARMDebugAccessPort::ARMDebugAccessPort(ARMDebugPort* dp, uint8_t apnum, ARMDebug
 
 		break;
 
+	case ARMDebugAccessPort::DAP_AXI:
+
+		if(!id.bits.is_mem_ap)
+		{
+			throw JtagExceptionWrapper(
+				"AXI bus must be a MEM-AP",
+				"");
+		}
+
+		break;
+
 	default:
 		throw JtagExceptionWrapper(
 			"Unknown bus type",

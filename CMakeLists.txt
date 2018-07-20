@@ -36,6 +36,8 @@ set(JTAGHAL_SOURCES
     ARMCoreSightDevice.cpp
     ARMv7Processor.cpp
     ARMv7MProcessor.cpp
+    ARMv8Processor.cpp
+    ARMCortexA57.cpp
     ARMCortexA9.cpp
     ARMCortexM4.cpp
     ARMDebugAccessPort.cpp

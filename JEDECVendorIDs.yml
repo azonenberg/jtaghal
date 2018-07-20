@@ -34,6 +34,7 @@ JEDECVendorID:
 
     values:
         VENDOR_ID_ARM:          23B
+        VENDOR_ID_ARM_OLD:		787
         VENDOR_ID_MICROCHIP:    29
         VENDOR_ID_PHILIPS:      15
         VENDOR_ID_STMICRO:		20

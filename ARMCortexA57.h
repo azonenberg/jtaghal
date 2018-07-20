@@ -30,72 +30,33 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Base class for ARM CoreSight components on a debug APB bus
+	@brief Declaration of ARMCortexA57
  */
-#include "jtaghal.h"
-#include "ARMAPBDevice.h"
-#include "ARMCoreSightDevice.h"
 
-using namespace std;
+#ifndef ARMCortexA57_h
+#define ARMCortexA57_h
 
-ARMCoreSightDevice::ARMCoreSightDevice(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMAPBDevice(ap, address, idreg)
+/**
+	@brief An ARM Cortex-A57 CPU core, as seen over a CoreSight APB bus
+
+	\ingroup libjtaghal
+ */
+class ARMCortexA57 	: public ARMv8Processor
 {
-}
+public:
+	ARMCortexA57(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	virtual ~ARMCortexA57();
 
-ARMCoreSightDevice::~ARMCoreSightDevice()
-{
-}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// General device info
 
-void ARMCoreSightDevice::PrintInfo()
-{
-	LogVerbose("%s rev %d.%d.%d\n",
-		GetDescription().c_str(),
-		m_idreg.revnum, m_idreg.cust_mod, m_idreg.revand);
-}
+	virtual std::string GetDescription();
+	virtual void PrintInfo();
 
-string ARMCoreSightDevice::GetDescription()
-{
-	switch(m_idreg.partnum)
-	{
-		case 0x003:
-			return "Cortex-M4 Flash Patch/Breakpoint";
-		case 0x00c:
-			return "Cortex-M4 System Control Space";
-		case 0x906:
-			return "CoreSight Cross Trigger Interface";
-		case 0x907:
-			return "CoreSight Embedded Trace Buffer";
-		case 0x908:
-			return "CoreSight Trace Funnel";
-		case 0x909:
-			return "CoreSight Advanced Trace Bus Replicator";
-		case 0x912:
-			return "CoreSight Trace Port Interface Unit";
+	///Sample program counter (for sample-based profiling)
+	//uint32_t SampleProgramCounter()
+	//{ return ReadRegisterByIndex(m_pcsrIndex); }
+};
 
-		//ID is 913, not 914. CoreSight Components TRM is wrong.
-		//See ARM #TAC650738
-		case 0x913:
-			return "CoreSight Instrumentation Trace Macrocell";
-		case 0x914:
-			return "CoreSight Serial Wire Output";
-		case 0x925:
-			return "Cortex-M4 Embedded Trace Macrocell";
-		case 0x950:
-			return "Cortex-A9 Program Trace Macrocell";
-		case 0x95e:
-			return "Cortex-A57 Embedded Trace Macrocell";
-		case 0x961:
-			return "CoreSight Trace Memory Controller";
-		case 0x962:
-			return "CoreSight System Trace Macrocell";
-		case 0x9A0:
-			return "Cortex-A9 Performance Monitoring Unit";
-		case 0x9D7:
-			return "Cortex-A57 Performance Monitoring Unit";
+#endif
 
-		default:
-			LogWarning("Unknown ARM device (part number 0x%x)\n", m_idreg.partnum);
-			return "unknown CoreSight device";
-	}
-}

@@ -395,6 +395,15 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 			}
 			break;
 
+			//Cortex-A57
+			case 0xd07:
+			{
+				ARMCortexA57* cortex = new ARMCortexA57(this, base_address, reg.bits);
+				m_dp->AddTarget(cortex);
+				m_debugDevices.push_back(cortex);
+			}
+			break;
+
 			//Cortex-A9
 			case 0xC09:
 			{

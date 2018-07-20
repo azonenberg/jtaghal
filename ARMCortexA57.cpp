@@ -30,72 +30,100 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Base class for ARM CoreSight components on a debug APB bus
+	@brief Implementation of ARMCortexA57
  */
+
 #include "jtaghal.h"
+#include "DebuggableDevice.h"
 #include "ARMAPBDevice.h"
-#include "ARMCoreSightDevice.h"
+#include "ARMDebugPort.h"
+#include "ARMDebugAccessPort.h"
+#include "ARMDebugMemAccessPort.h"
+#include "ARMCortexA57.h"
 
 using namespace std;
 
-ARMCoreSightDevice::ARMCoreSightDevice(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMAPBDevice(ap, address, idreg)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+ARMCortexA57::ARMCortexA57(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMv8Processor(ap, address, idreg)
 {
+
 }
 
-ARMCoreSightDevice::~ARMCoreSightDevice()
+ARMCortexA57::~ARMCortexA57()
 {
+
 }
 
-void ARMCoreSightDevice::PrintInfo()
-{
-	LogVerbose("%s rev %d.%d.%d\n",
-		GetDescription().c_str(),
-		m_idreg.revnum, m_idreg.cust_mod, m_idreg.revand);
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// General device info
 
-string ARMCoreSightDevice::GetDescription()
+void ARMCortexA57::PrintInfo()
 {
-	switch(m_idreg.partnum)
+	LogVerbose("%s\n", GetDescription().c_str());
+	LogIndenter li;
+	/*
+	PrintIDRegister(m_deviceID);
+
+	//Read DBGDSCR to get status stuff (TODO: make struct) for this
+	//uint32_t dbgdscr = ReadRegisterByIndex(DBGDSCR_EXT);
+	//LogDebug("DBGDSCR = %x\n", dbgdscr);
+
+	//Pins of interest are MIO bank 1, pins 50/51
+
+	//Read MCTRL
+
+	//Read PSS_IDCODE from the zynq
+	//uint32_t pss_idcode = ReadMemory(0xF8000530);
+	//LogDebug("pss_idcode = %08x\n", pss_idcode);
+
+	//Read MCTRL
+	uint32_t mctrl = ReadMemory(0xF8007080);
+	LogDebug("mctrl = %08x\n", mctrl);
+
+	//Set MIO7 (MIO LED) to output
+	m_ap->GetDebugPort()->WriteMemory(0xf800071c, 0x00000600);	//sclr.MIO_PIN_07
+	m_ap->GetDebugPort()->WriteMemory(0xe000a204, 0x00000080);	//gpio.XGPIOPS_DIRM_OFFSET
+	m_ap->GetDebugPort()->WriteMemory(0xe000a208, 0x00000080);	//gpio.XGPIOPS_OUTEN_OFFSET
+	for(int i=0; i<10; i++)
 	{
-		case 0x003:
-			return "Cortex-M4 Flash Patch/Breakpoint";
-		case 0x00c:
-			return "Cortex-M4 System Control Space";
-		case 0x906:
-			return "CoreSight Cross Trigger Interface";
-		case 0x907:
-			return "CoreSight Embedded Trace Buffer";
-		case 0x908:
-			return "CoreSight Trace Funnel";
-		case 0x909:
-			return "CoreSight Advanced Trace Bus Replicator";
-		case 0x912:
-			return "CoreSight Trace Port Interface Unit";
-
-		//ID is 913, not 914. CoreSight Components TRM is wrong.
-		//See ARM #TAC650738
-		case 0x913:
-			return "CoreSight Instrumentation Trace Macrocell";
-		case 0x914:
-			return "CoreSight Serial Wire Output";
-		case 0x925:
-			return "Cortex-M4 Embedded Trace Macrocell";
-		case 0x950:
-			return "Cortex-A9 Program Trace Macrocell";
-		case 0x95e:
-			return "Cortex-A57 Embedded Trace Macrocell";
-		case 0x961:
-			return "CoreSight Trace Memory Controller";
-		case 0x962:
-			return "CoreSight System Trace Macrocell";
-		case 0x9A0:
-			return "Cortex-A9 Performance Monitoring Unit";
-		case 0x9D7:
-			return "Cortex-A57 Performance Monitoring Unit";
-
-		default:
-			LogWarning("Unknown ARM device (part number 0x%x)\n", m_idreg.partnum);
-			return "unknown CoreSight device";
+		LogDebug("toggle\n");
+		m_ap->GetDebugPort()->WriteMemory(0xe000a040, 0x00000080);	//gpio.XGPIOPS_DATA_OFFSET
+		usleep(500 * 1000);
+		m_ap->GetDebugPort()->WriteMemory(0xe000a040, 0x00000000);	//gpio.XGPIOPS_DATA_OFFSET
+		usleep(500 * 1000);
 	}
+
+	//MIO LED @ MIO7
+	//MIO inputs at MIO50, 51
+	//GPIO controller is at 0xe000a000
+	//Input data (DATA_RO) is at +0x60 - 6c
+	//
+
+	//Read L0_SEL
+
+	//Read the PC and dump the instruction at that address
+	uint32_t pc = SampleProgramCounter();
+	LogVerbose("PC = %08x\n", pc);
+	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
+
+	//LogDebug("    value = %08x\n", value);
+	*/
+}
+
+string ARMCortexA57::GetDescription()
+{
+	char tmp[128];
+	snprintf(
+		tmp,
+		sizeof(tmp),
+		"ARM Cortex-A57 rev %d mod %d stepping %d",
+		m_idreg.revnum,
+		m_idreg.cust_mod,
+		m_idreg.revand
+		);
+
+	return string(tmp);
 }

@@ -80,14 +80,7 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 
 	//Rightmost bit is always a zero, ignore it
 	idcode >>= 1;
-
-	//Sanity check manufacturer ID
-	if( (idcode & 0x7FF) != VENDOR_ID_ARM)
-	{
-		throw JtagExceptionWrapper(
-			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
-			"");
-	}
+	unsigned int vendor = (idcode & 0x7ff);
 	idcode >>= 11;
 
 	//Next 16 bits are part number
@@ -96,6 +89,19 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 
 	//Revision
 	unsigned int rev = idcode & 0xF;
+
+	//Special processing needed for old vendor ID
+	if(vendor == VENDOR_ID_ARM_OLD)
+	{
+		LogNotice("Found old ARM core\n");
+		return NULL;
+	}
+	else if(vendor != VENDOR_ID_ARM)
+	{
+		throw JtagExceptionWrapper(
+			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
+			"");
+	}
 
 	//Create the device
 	switch(partnum)

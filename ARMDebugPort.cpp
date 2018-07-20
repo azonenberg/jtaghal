@@ -117,10 +117,21 @@ ARMDebugPort::ARMDebugPort(
 				LogTrace("Found AHB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 			else if(ap->GetBusType() == ARMDebugAccessPort::DAP_APB)
 				LogTrace("Found APB MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
+			else if(ap->GetBusType() == ARMDebugAccessPort::DAP_AXI)
+				LogTrace("Found AXI MEM-AP rev %d at index %d\n", idr.bits.revision, nap);
 
 			//If it's an AHB Mem-AP, and we don't have a default Mem-AP, this one is probably RAM.
 			//Use it as our default AP.
 			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_AHB) && (m_defaultMemAP == NULL) )
+			{
+				LogIndenter li;
+				LogTrace("Using as default RAM Mem-AP\n");
+				m_defaultMemAP = ap;
+			}
+
+			//If it's an AXI Mem-AP, and we don't have a default Mem-AP, this one is probably RAM.
+			//Use it as our default AP.
+			if( (ap->GetBusType() == ARMDebugAccessPort::DAP_AXI) && (m_defaultMemAP == NULL) )
 			{
 				LogIndenter li;
 				LogTrace("Using as default RAM Mem-AP\n");

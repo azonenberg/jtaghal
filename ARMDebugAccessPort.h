@@ -92,6 +92,7 @@ public:
 		DAP_JTAG = 0,
 		DAP_AHB = 1,
 		DAP_APB = 2,
+		DAP_AXI = 4,
 		DAP_INVALID
 	};
 
