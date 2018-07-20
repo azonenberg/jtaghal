@@ -93,8 +93,17 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	//Special processing needed for old vendor ID
 	if(vendor == VENDOR_ID_ARM_OLD)
 	{
-		LogNotice("Found old ARM core\n");
-		return NULL;
+		switch(partnum)
+		{
+			case IDCODE_ARM_7TDMI_S:
+				return new ARM7TDMISProcessor(partnum, rev, idcode_raw, iface, pos);
+
+			default:
+				throw JtagExceptionWrapper(
+				"Unknown part number - probably not yet supported",
+				"");
+		}
+
 	}
 	else if(vendor != VENDOR_ID_ARM)
 	{

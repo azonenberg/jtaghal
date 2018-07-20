@@ -144,6 +144,7 @@
 #include "ARMCortexA57.h"
 #include "ARMCortexA9.h"
 #include "ARMCortexM4.h"
+#include "ARM7TDMISProcessor.h"
 #include "MicrochipMicrocontroller.h"
 #include "STMicroMicrocontroller.h"
 #include "STM32Device.h"

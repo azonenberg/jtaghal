@@ -37,7 +37,12 @@
 #define ARMDevice_h
 
 ///JTAG part number for ARM JTAG DAP
-#define IDCODE_ARM_DAP_JTAG	0xBA00
+enum ARM_IDCODES
+{
+	IDCODE_ARM_DAP_JTAG	= 0xBA00,
+
+	IDCODE_ARM_7TDMI_S	= 0xF1F0
+};
 
 /**
 	@brief Abstract base class for all ARM Ltd devices (typically ARM DAPs)

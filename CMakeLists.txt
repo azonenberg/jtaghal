@@ -40,6 +40,7 @@ set(JTAGHAL_SOURCES
     ARMCortexA57.cpp
     ARMCortexA9.cpp
     ARMCortexM4.cpp
+    ARM7TDMISProcessor.cpp
     ARMDebugAccessPort.cpp
     ARMDebugMemAccessPort.cpp
     ARMDebugPort.cpp
