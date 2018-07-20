@@ -207,53 +207,19 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Registers
-	/*
+
 	//register numbers, multiply by 4 to get address
-	//TODO: Move most of this stuff up to an ARMv8Processor class
-	enum ARM_V7_DEBUG_REGISTERS
+	enum ARM_V8_DEBUG_REGISTERS
 	{
-		DBGDIDR			= 0,
-		DBGDSCR_INT		= 1,
-		DBGDTRRX_INT	= 5,
-		DBGDTRTX_INT	= 5,
-		DBGWFAR			= 6,
-		DBGVCR			= 7,
-		DBGECR			= 9,
-		DBGDSCCR		= 10,
-		DBGDSMCR		= 11,
-		DBGDTRRX_EXT	= 32,
-		DBGITR			= 33,
-		DBGPCSR_LEGACY	= 33,
-		DBGDSCR_EXT		= 34,
-		DBGDTRTX_EXT	= 35,
-		DBGDRCR			= 36,
-		DBGEACR			= 37,
-		DBGPCSR			= 40,
-		DBGCIDSR		= 41,
-		DBGVIDSR		= 42,
-		DBGBVR_BASE		= 64,	//multiple breakpoint values
-		DBGBCR_BASE		= 80,	//multiple breakpoint controls
-		DBGWVR_BASE		= 96,	//multiple watchpoint values
-		DBGWCR_BASE		= 112,	//multiple watchpoint controls
-		DBGDRAR			= 128,
-		DBGBXVR_BASE	= 144,	//multiple extended breakpoint values
-		DBGOSLAR		= 192,
-		DBGOSLSR		= 193,
-		DBGOSSRR		= 194,
-		DBGOSDLR		= 195,
-		DBGPRCR			= 196,
-		DBGPRSR			= 197,
-		DBGDSAR			= 256,
-		DBGPRID_BASE	= 832,	//processor ID address range
-		DBGITCTRL		= 960,
-		DBGCLAIMSET		= 1000,
-		DBGCLAIMCLR		= 1001,
-		DBGLAR			= 1004,
-		DBGLSR			= 1005,
-		DBGAUTHSTATUS	= 1006,
-		DBGDEVID		= 1010
+		DBGDTRRX_EL0		= 0x020,
+		DBGDTRTX_EL0		= 0x023,
+		MIDR_EL1			= 0x340,
+
+		DBGAUTHSTATUS_EL1	= 0x3ee,
+		DBGCLAIMSET_EL1		= 0x3e8,
+		DBGCLAIMCLR_EL1		= 0x3e9
 	};
-	*/
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 

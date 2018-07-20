@@ -50,6 +50,12 @@ ARMv8Processor::ARMv8Processor(ARMDebugMemAccessPort* ap, uint32_t address, ARMD
 	: ARMAPBDevice(ap, address, idreg)
 {
 	LogTrace("Found ARMv8 processor at %08x, probing...\n", address);
+
+	/*
+	auto idr = ReadRegisterByIndex(MIDR_EL1);
+	LogDebug("MIDR_EL1 = %08x\n", idr);
+	*/
+
 /*
 	//Read the Debug ID register and extract flags
 	m_deviceID.word = ReadRegisterByIndex(DBGDIDR);
