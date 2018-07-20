@@ -231,7 +231,7 @@ void JtagInterface::InitializeChain()
 		if(PeekBit(temp, m_irtotal))
 			break;
 	}
-	//LogDebug("Found %zu total IR bits\n", m_irtotal);
+	LogTrace("Found %zu total IR bits\n", m_irtotal);
 
 	//Shift zeros into everyone's DR
 	EnterShiftDR();
@@ -258,32 +258,37 @@ void JtagInterface::InitializeChain()
 			break;
 		}
 	}
-	//LogDebug("Found %d total devices\n", (int) m_devicecount);
+	LogTrace("Found %d total devices\n", (int) m_devicecount);
 
 	//Now we know how many devices we have! Reset the TAP
 	ResetToIdle();
 
-	//Shift out the ID codes and reset the scan chain
+	//Shift out the ID codes and reset the scan chain.
 	EnterShiftDR();
 	for(size_t i=0; i<m_devicecount; i++)
+		m_idcodes.push_back(0x0);
+	ShiftData(false, lots_of_zeros, (unsigned char*)&m_idcodes[0], 32*m_devicecount);
+
+	//Crunch things
+	size_t idcode_bits = 0;
+	for(size_t i=0; i<m_devicecount; i++)
 	{
-		unsigned int idcode;
-		ShiftData(false, lots_of_zeros, (unsigned char*)&idcode, 32);
-		m_idcodes.push_back(idcode);
+		uint32_t idcode = 0;
+		for(size_t j=0; j<32; j++)
+			PokeBit((uint8_t*)&idcode, j, PeekBit((uint8_t*)&m_idcodes[0], idcode_bits+j));
 
-		//LogNotice("IDCODE = %08x\n", idcode);
-
-		//ID code should always begin with a one
-		//If we get a zero it's a bypass register
-		//TODO: Support devices not implementing IDCODE
+		//Skip chips with bad IDCODEs
 		if(!(idcode & 0x1))
 		{
-			LogError("Invalid IDCODE %08x at index %zu.\n", idcode, i);
-			throw JtagExceptionWrapper(
-				"Devices without IDCODE are not supported.",
-				"");
+			LogWarning("Invalid IDCODE %08x at index %zu, ignoring...\n", idcode, i);
+			idcode_bits ++;
+			continue;
 		}
+
+		idcode_bits += 32;
+		m_idcodes[i] = idcode;
 	}
+
 	ResetToIdle();
 
 	//Crack ID codes
