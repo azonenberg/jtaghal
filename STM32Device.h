@@ -104,11 +104,17 @@ public:
 
 	virtual void ProbeLocksNondestructive();
 	virtual void ProbeLocksDestructive();
-	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access);
+	virtual UncertainBoolean CheckMemoryAccess(uint32_t ptr, unsigned int access);
 	virtual UncertainBoolean IsDeviceReadLocked();
 	virtual void SetReadLock();
 	virtual void ClearReadLock();
 	virtual void PrintLockProbeDetails();
+
+	int GetProtectionLevel()
+	{
+		ProbeLocksNondestructive();
+		return m_protectionLevel;
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Find our CPU

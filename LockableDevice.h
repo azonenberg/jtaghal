@@ -126,9 +126,9 @@ public:
 	virtual void ProbeLocksDestructive() =0;
 
 	/**
-		@brief Checks if a given physical address range has a given protection applied.
+		@brief Checks if a given physical address has a given protection applied.
 	 */
-	virtual UncertainBoolean CheckMemoryAccess(uint32_t start, uint32_t end, unsigned int access) =0;
+	virtual UncertainBoolean CheckMemoryAccess(uint32_t ptr, unsigned int access) =0;
 
 	/**
 		@brief Checks if the device is globally read protected or not

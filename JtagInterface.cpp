@@ -174,11 +174,14 @@ void JtagInterface::LeaveExit1DR()
  */
 void JtagInterface::PrintChainFaultMessage()
 {
-	LogNotice("Failed to initialize the JTAG chain. Possible causes:\n");
-	LogNotice("* Target is not powered\n");
-	LogNotice("* Target has JTAG disabled\n");
-	LogNotice("* Target is connected incorrectly\n");
-	LogNotice("* JTAG adapter is not working correctly\n");
+	LogNotice("Failed to initialize the JTAG chain. Recommended actions:\n");
+	LogNotice("\n");
+	LogNotice("1) Confirm that the target board is powered on.\n");
+	LogNotice("2) Check the connection from the JTAG adapter to the target board to see if anything is loose\n");
+	LogNotice("3) Make sure that TDI, TDO, TMS, TCK, power, and ground are connected to the right pins\n");
+	LogNotice("4) Test the JTAG adapter on a known-good board to make sure it's working.\n");
+	LogNotice("\n");
+	LogNotice("If you still see this message, the target board may be malfunctioning or have JTAG disabled by security bits.\n");
 }
 
 /**
@@ -190,8 +193,6 @@ void JtagInterface::PrintChainFaultMessage()
  */
 void JtagInterface::InitializeChain()
 {
-	LogIndenter li;
-
 	unsigned char lots_of_ones[128];
 	memset(lots_of_ones, 0xff, sizeof(lots_of_ones));
 	unsigned char lots_of_zeros[128];

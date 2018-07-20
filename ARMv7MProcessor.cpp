@@ -232,10 +232,9 @@ void ARMv7MProcessor::DumpRegisters()
 		CTRL
 	};
 
-	LogNotice("Dumping registers...\n");
 	LogIndenter li;
 	for(auto reg : all_regs)
-		LogNotice("%8s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
+		LogNotice("%10s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
 }
 
 /**

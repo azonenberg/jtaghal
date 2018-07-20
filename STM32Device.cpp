@@ -252,33 +252,40 @@ void STM32Device::PrintLockProbeDetails()
 {
 	auto cpu = GetCPU();
 
-	LogNotice("[+] Able to enumerate JTAG chain and see device IDs\n");
-
-	if(!cpu)
-		LogNotice("[-] Unable to find CPU on ARM DAP. Can't do most other probes\n");
-	else
+	const char* table[]=
 	{
-		LogNotice("[+] Detected CPU on ARM DAP: %s\n", cpu->GetDescription().c_str());
+		"completely unlocked",
+		"boundary scan enabled, memory access and debug disabled",
+		"JTAG completely disabled"
+	};
+	LogNotice("STM32 read protection level appears to be: %d (%s)\nDetails:\n", m_protectionLevel, table[m_protectionLevel]);
+
+	{
+		LogIndenter li;
+
+		if(!cpu)
+			return;
 
 		try
 		{
 			cpu->ReadCPURegister(ARMv7MProcessor::R0);
-			LogNotice("[+] Able to read CPU registers\n");
+			LogNotice("CPU registers:  unlocked\n");
+			cpu->DumpRegisters();
 		}
 		catch(const JtagException& e)
 		{
-			LogNotice("[-] Unable to read CPU registers\n");
+			LogNotice("CPU registers:  locked\n");
 		}
 
 		try
 		{
 			cpu->ReadMemory(m_flashMemoryBase);
-			LogNotice("[+] Able to read Flash memory. Dumping first few words as proof\n");
+			LogNotice("Flash:          unlocked, dumping first few bytes\n");
 			LogIndenter li;
 			for(int i=0; i<4; i++)
 			{
 				uint32_t addr = m_flashMemoryBase + 16*i;
-				LogNotice("0x%08x: %08x %08x %08x %08x\n",
+				LogVerbose("0x%08x: %08x %08x %08x %08x\n",
 					addr,
 					cpu->ReadMemory(addr),
 					cpu->ReadMemory(addr + 0x4),
@@ -290,18 +297,18 @@ void STM32Device::PrintLockProbeDetails()
 		}
 		catch(const JtagException& e)
 		{
-			LogNotice("[-] Unable to read Flash memory\n");
+			LogNotice("Flash:          locked\n");
 		}
 
 		try
 		{
 			cpu->ReadMemory(m_sramMemoryBase);
-			LogNotice("[+] Able to read SRAM memory. Dumping first few words as proof\n");
+			LogNotice("SRAM:           unlocked, dumping first few bytes\n");
 			LogIndenter li;
 			for(int i=0; i<4; i++)
 			{
 				uint32_t addr = m_sramMemoryBase + 16*i;
-				LogNotice("0x%08x: %08x %08x %08x %08x\n",
+				LogVerbose("0x%08x: %08x %08x %08x %08x\n",
 					addr,
 					cpu->ReadMemory(addr),
 					cpu->ReadMemory(addr + 0x4),
@@ -313,11 +320,9 @@ void STM32Device::PrintLockProbeDetails()
 		}
 		catch(const JtagException& e)
 		{
-			LogNotice("[-] Unable to read SRAM memory\n");
+			LogNotice("SRAM:           locked\n");
 		}
 	}
-
-	LogNotice("STM32 read protection level appears to be: level %d\n", m_protectionLevel);
 }
 
 void STM32Device::ProbeLocksNondestructive()
@@ -377,10 +382,31 @@ void STM32Device::ProbeLocksDestructive()
 	return ProbeLocksNondestructive();
 }
 
-UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t /*start*/, uint32_t /*end*/, unsigned int /*access*/)
+UncertainBoolean STM32Device::CheckMemoryAccess(uint32_t ptr, unsigned int access)
 {
-	//Not yet implemented
-	return UncertainBoolean(false, UncertainBoolean::USELESS);
+	if(access != ACCESS_READ)
+	{
+		throw JtagExceptionWrapper(
+			"STM32Device write/execute testing not supported",
+			"");
+	}
+
+	try
+	{
+		//If we get a value other than 0 or FF, it's definitely good
+		uint32_t retval = m_dap->ReadMemory(ptr);
+		if( (retval != 0x00000000) && (retval != 0xffffffff) )
+			return UncertainBoolean(true, UncertainBoolean::CERTAIN);
+
+		//These values might be returned by some protection schemes if the chip is locked
+		//so give a slightly lower confidence
+		else
+			return UncertainBoolean(true, UncertainBoolean::VERY_LIKELY);
+	}
+	catch(const JtagException& e)
+	{
+		return UncertainBoolean(false, UncertainBoolean::VERY_LIKELY);
+	}
 }
 
 UncertainBoolean STM32Device::IsDeviceReadLocked()
