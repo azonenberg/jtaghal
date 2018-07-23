@@ -61,9 +61,6 @@ JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, si
 , m_iface(iface)
 , m_pos(pos)
 {
-	//should be set by derived class
-	m_irlength = 0;
-
 	memset(m_cachedIR, 0xFF, sizeof(m_cachedIR));
 }
 
