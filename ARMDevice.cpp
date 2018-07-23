@@ -90,8 +90,8 @@ JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, s
 	//Revision
 	unsigned int rev = idcode & 0xF;
 
-	//Special processing needed for old vendor ID
-	if(vendor == VENDOR_ID_ARM_OLD)
+	//Special processing needed for dummy/test vendor ID
+	if(vendor == VENDOR_ID_ARM_TEST)
 	{
 		switch(partnum)
 		{

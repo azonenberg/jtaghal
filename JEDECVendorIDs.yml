@@ -34,8 +34,9 @@ JEDECVendorID:
 
     values:
         VENDOR_ID_ARM:          23B
-        VENDOR_ID_ARM_OLD:		787
-        VENDOR_ID_MICROCHIP:    29
-        VENDOR_ID_PHILIPS:      15
-        VENDOR_ID_STMICRO:		20
-        VENDOR_ID_XILINX:       49
+        VENDOR_ID_ARM_TEST:		787
+        VENDOR_ID_FREESCALE:	00e
+        VENDOR_ID_MICROCHIP:    029
+        VENDOR_ID_PHILIPS:      015
+        VENDOR_ID_STMICRO:		020
+        VENDOR_ID_XILINX:       049
