@@ -37,7 +37,7 @@
 #define FreescaleDevice_h
 
 /**
-	@brief Abstract base class for all Freescale devices (typically MCUs)
+	@brief Abstract base class for all Freescale devices (typically MCUs or parts thereof)
 
 	\ingroup libjtaghal
  */

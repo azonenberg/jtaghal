@@ -45,20 +45,12 @@ STM32Device::STM32Device(
 	unsigned int idcode, JtagInterface* iface, size_t pos)
  : STMicroMicrocontroller(devid, stepping, idcode, iface, pos)
  , JtagDevice(idcode, iface, pos, 5)
+ , m_deviceID(devid)
 {
 	if(pos == 0)
 	{
 		throw JtagExceptionWrapper(
 			"STM32Device boundary scan TAP must not be the first device in the scan chain. Where's the ARM DAP?",
-			"");
-	}
-
-	//Get a pointer to our ARM DAP. This should always be one scan chain position before us.
-	m_dap = dynamic_cast<ARMDebugPort*>(iface->GetDevice(pos-1));
-	if(m_dap == NULL)
-	{
-		throw JtagExceptionWrapper(
-			"STM32Device expects an ARM DAP one chain position prior",
 			"");
 	}
 
@@ -69,6 +61,21 @@ STM32Device::STM32Device(
 	m_flashSfrBase		= 0x40023C00;
 	m_flashMemoryBase	= 0x08000000;
 	m_sramMemoryBase	= 0x20000000;
+
+	m_locksProbed = false;
+
+}
+
+void STM32Device::PostInitProbes()
+{
+	//Get a pointer to our ARM DAP. This should always be one scan chain position before us.
+	m_dap = dynamic_cast<ARMDebugPort*>(m_iface->GetDevice(m_pos-1));
+	if(m_dap == NULL)
+	{
+		throw JtagExceptionWrapper(
+			"STM32Device expects an ARM DAP one chain position prior",
+			"");
+	}
 
 	//Look up size of flash memory
 	try
@@ -88,7 +95,7 @@ STM32Device::STM32Device(
 	}
 
 	//Look up RAM size (TODO can we get this from descriptors somehow?)
-	switch(devid)
+	switch(m_deviceID)
 	{
 		case STM32F411E:
 			m_ramKB = 128;
@@ -98,12 +105,6 @@ STM32Device::STM32Device(
 			m_ramKB = 0;
 	}
 
-	m_locksProbed = false;
-
-}
-
-void STM32Device::PostInitProbes()
-{
 	//Check read lock status
 	STM32Device::ProbeLocksNondestructive();
 

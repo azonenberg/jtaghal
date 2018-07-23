@@ -50,6 +50,7 @@ set(JTAGHAL_SOURCES
     FreescaleDevice.cpp
     FreescaleMicrocontroller.cpp
     FreescaleIMXDevice.cpp
+    FreescaleIMXSmartDMA.cpp
 
     MicrochipDevice.cpp
     MicrochipMicrocontroller.cpp

@@ -129,11 +129,13 @@ public:
 	void SetIR(unsigned char irval)
 	{ JtagDevice::SetIR(&irval, m_irlength); }
 
-	unsigned int m_flashKB;
-	unsigned int m_ramKB;
-
 protected:
 	ARMDebugPort* m_dap;
+
+	unsigned int m_deviceID;
+
+	unsigned int m_flashKB;
+	unsigned int m_ramKB;
 
 	//Serial number fields
 	uint32_t m_waferX;

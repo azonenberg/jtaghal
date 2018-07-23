@@ -222,6 +222,9 @@ protected:
 	//Helpers for initialization
 	void CreateDummyDevices();
 
+public:
+	void SwapOutDummy(size_t pos, JtagDevice* realdev);
+
 protected:
 
 	///@brief Number of devices in the scan chain

@@ -30,135 +30,53 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of FreescaleIMXDevice
+	@brief Declaration of FreescaleIMXSmartDMA
  */
 
-#include "jtaghal.h"
-#include "FreescaleIMXDevice.h"
-#include "memory.h"
+#ifndef FreescaleIMXSmartDMA_h
+#define FreescaleIMXSmartDMA_h
 
-using namespace std;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
-
-FreescaleIMXDevice::FreescaleIMXDevice(
-	unsigned int devid, unsigned int stepping,
-	unsigned int idcode, JtagInterface* iface, size_t pos)
- : FreescaleMicrocontroller(idcode, iface, pos, 5)
- , m_stepping(stepping)
-{
-	if(pos < 2)
-	{
-		throw JtagExceptionWrapper(
-			"FreescaleIMXDevice boundary scan TAP must not be the first or second device in the scan chain. Where's the ARM DAP or SDMA?",
-			"");
-	}
-
-	//We are the System JTAG Controller (reference manual section 56.2.3)
-	switch(devid)
-	{
-	case IMX_6_SOLO:
-		m_devid = IMX_6_SOLO;
-		break;
-
-	case IMX_6_DUAL_LITE:
-		m_devid = IMX_6_DUAL_LITE;
-		break;
-
-	default:
-		throw JtagExceptionWrapper(
-			"Invalid i.mx IDCODE",
-			"");
-		break;
-	}
-
-	//tie off pointers until PostInitProbes()
-	m_dap = NULL;
-	m_sdma = NULL;
-}
+#include <list>
+#include <string>
 
 /**
-	@brief Destructor
+	@brief The SDMA in a Freescale i.mx SoC (Chapter 55 of i.mx6 reference manual)
+
+	\ingroup libjtaghal
  */
-FreescaleIMXDevice::~FreescaleIMXDevice()
+class FreescaleIMXSmartDMA
+	: public FreescaleDevice
 {
-}
+public:
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Construction / destruction
+	FreescaleIMXSmartDMA(
+		unsigned int devid,
+		unsigned int stepping,
+		unsigned int idcode,
+		JtagInterface* iface,
+		size_t pos);
+	virtual ~FreescaleIMXSmartDMA();
 
-void FreescaleIMXDevice::PostInitProbes()
-{
-	//Get a pointer to our ARM DAP. This should always be one scan chain position before us.
-	m_dap = dynamic_cast<ARMDebugPort*>(m_iface->GetDevice(m_pos-2));
-	if(m_dap == NULL)
-	{
-		throw JtagExceptionWrapper(
-			"FreescaleIMXDevice expects an ARM DAP two chain positions prior",
-			"");
-	}
+	static JtagDevice* CreateDevice(
+		unsigned int devid,
+		unsigned int stepping,
+		unsigned int idcode,
+		JtagInterface* iface,
+		size_t pos);
 
-	//One position back should be a dummy.
-	//We need to swap that out with the SDMA
-	size_t sdma_pos = m_pos-1;
-	auto sdma_dummy = dynamic_cast<JtagDummy*>(m_iface->GetDevice(sdma_pos));
-	if(sdma_dummy == NULL)
-	{
-		throw JtagExceptionWrapper(
-			"FreescaleIMXDevice expects a dummy SDMA one chain position prior",
-			"");
-	}
-	m_sdma = new FreescaleIMXSmartDMA(0x0, 0x0, 0x0, m_iface, sdma_pos);
-	m_iface->SwapOutDummy(sdma_pos, m_sdma);
-}
+	virtual void PostInitProbes();
 
-JtagDevice* FreescaleIMXDevice::CreateDevice(
-	unsigned int devid, unsigned int stepping, unsigned int idcode, JtagInterface* iface, size_t pos)
-{
-	//TODO: Sanity checks
-	return new FreescaleIMXDevice(devid, stepping, idcode, iface, pos);
-}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// General device info
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General device info
+	virtual std::string GetDescription();
 
-string FreescaleIMXDevice::GetDescription()
-{
-	const char* desc = "";
-	switch(m_devid)
-	{
-		case IMX_6_DUAL_LITE:
-			desc = "Dual Lite";
-			break;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Helpers for chain manipulation
+public:
+	void SetIR(unsigned char irval)
+	{ JtagDevice::SetIR(&irval, m_irlength); }
+};
 
-		case IMX_6_SOLO:
-			desc = "Solo";
-			break;
-	}
-
-	char srev[256];
-	snprintf(srev, sizeof(srev), "Freescale i.mx6 %s (stepping %u)",
-		desc,
-		m_stepping);
-
-	return string(srev);
-}
-
-bool FreescaleIMXDevice::IsProgrammed()
-{
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
-}
-
-void FreescaleIMXDevice::Erase()
-{
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
-}
-
-void FreescaleIMXDevice::Program(FirmwareImage* /*image*/)
-{
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
-}
+#endif

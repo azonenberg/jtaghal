@@ -740,6 +740,30 @@ void JtagInterface::CreateDummyDevices()
 	m_devices[dummypos] = new JtagDummy(0x00000000, this, dummypos, dummybits);
 }
 
+/**
+	@brief Swap out a dummy device with a real device, once we've figured out by context/heuristics what it does
+ */
+void JtagInterface::SwapOutDummy(size_t pos, JtagDevice* realdev)
+{
+	auto olddev = m_devices[pos];
+	if(dynamic_cast<JtagDummy*>(olddev) == NULL)
+	{
+		throw JtagExceptionWrapper(
+			"JtagInterface::SwapOutDummy - tried to swap out something that wasn't a dummy!",
+			"");
+	}
+
+	if(olddev->GetIRLength() != realdev->GetIRLength())
+	{
+		throw JtagExceptionWrapper(
+			"JtagInterface::SwapOutDummy - replacement device has wrong IR length",
+			"");
+	}
+
+	delete olddev;
+	m_devices[pos] = realdev;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Performance profiling
 

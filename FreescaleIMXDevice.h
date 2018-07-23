@@ -37,9 +37,16 @@
 #define FreescaleIMXDevice_h
 
 #include "FreescaleMicrocontroller.h"
+class FreescaleIMXSmartDMA;
 
 #include <list>
 #include <string>
+
+enum ImxDeviceIDs
+{
+	IMX_6_SOLO		= 0x891B,
+	IMX_6_DUAL_LITE	= 0x891A
+};
 
 /**
 	@brief A Freescale i.mx applications processor
@@ -69,54 +76,32 @@ public:
 
 	virtual void PostInitProbes();
 
-	/*
-
-	///5-bit-wide JTAG instructions (from BSDL file and datasheet)
+	///5-bit-wide JTAG instructions (from datasheet table 56-3)
 	enum instructions
 	{
-		///Standard JTAG bypass
-		INST_BYPASS				= 0x1F,
-
 		///Read ID code
-		INST_IDCODE				= 0x01,
+		INST_IDCODE				= 0x00,
 
-		///Read implementation code
-		INST_IMPCODE			= 0x03,
+		///Boundary scan stuff
+		INST_SAMPLE_PRELOAD		= 0x01,
+		INST_EXTEST				= 0x02,
+		INST_HIZ				= 0x03,
+		INST_EXTEST_PULSE		= 0x08,
+		INST_EXTEST_TRAIN		= 0x09,
 
-		///Selects Microchip scan chain
-		INST_MTAP_SW_MCHP		= 0x04,
+		//Debug security
+		INST_EXTRADEBUG			= 0x04,
+		INST_ENTER_DEBUG		= 0x05,
+		INST_SECURE_CHALL		= 0x0c,
+		INST_SECURE_RESP		= 0x0d,
 
-		///Selects EJTAG scan chain
-		INST_MTAP_SW_EJTAG		= 0x05,
+		//TAP selection mode
+		INST_TAP_SELECT			= 0x07,
 
-		///Command to Microchip virtualized JTAG
-		INST_MTAP_COMMAND		= 0x07,
-
-		///Select address register for memory ops
-		INST_ADDRESS			= 0x08,
-
-		///Select data register for memory ops
-		INST_DATA				= 0x09,
-
-		///Control register of some sort?
-		INST_CONTROL			= 0x0A,
-
-		///Selects address, data, control end to end in one DR
-		INST_ALL				= 0x0B,
-
-		///Makes the CPU trap to debugger after a reset
-		INST_DEBUGBOOT			= 0x0C,
-
-		///Boot normally after a reset
-		INST_NORMALBOOT			= 0x0D,
-
-		///Register used for moving data to/from the debug bridge
-		INST_FASTDATA			= 0x0E,
-
-		//Sample the program counter (used for profiling... not implemented?)
-		INST_PCSAMPLE			= 0x14
+		//Not used
+		INST_BYPASS				= 0x1f
 	};
-	*/
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
 
@@ -153,17 +138,18 @@ protected:
 
 	FreescaleIMXDeviceStatusRegister GetStatus();
 	EjtagImplementationCodeRegister GetImpCode();
-
+	*/
 protected:
 
 	///Device ID code
-	unsigned int m_devid;
+	ImxDeviceIDs m_devid;
 
 	///Stepping number
 	unsigned int m_stepping;
 
-	///Device info
-	const FreescaleIMXDeviceInfo* m_devinfo;*/
+	//Pointers to our other JTAG devices
+	ARMDebugPort* m_dap;
+	FreescaleIMXSmartDMA* m_sdma;
 };
 
 #endif
