@@ -30,82 +30,25 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of JtagDevice
+	@brief Declaration of FreescaleDevice
  */
 
-#ifndef JtagDevice_h
-#define JtagDevice_h
-
-class JtagInterface;
+#ifndef FreescaleDevice_h
+#define FreescaleDevice_h
 
 /**
-	@brief Represents a single device in the JTAG chain
+	@brief Abstract base class for all Freescale devices (typically MCUs)
 
 	\ingroup libjtaghal
  */
-class JtagDevice
+class FreescaleDevice : public JtagDevice
 {
 public:
-	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-	virtual ~JtagDevice();
-
-	/**
-		@brief Gets a human-readable description of this device.
-
-		Example: "Xilinx XC6SLX45 stepping 3"
-
-		@return Device description
-	 */
-	virtual std::string GetDescription()=0;
-
-	unsigned int GetIDCode();
+	FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	virtual ~FreescaleDevice();
 
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-
-	virtual void PrintInfo();
-
-public:
-	//JTAG interface helpers
-	void SetIR(const unsigned char* data)
-	{ SetIR(data, m_irlength); }
-
-	void SetIRDeferred(const unsigned char* data)
-	{ SetIRDeferred(data, m_irlength); }
-
-	void SetIR(const unsigned char* data, int count);
-	void SetIRDeferred(const unsigned char* data, int count);
-	void SetIR(const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(const unsigned char* send_data, int count);
-	bool IsSplitScanSupported();
-	void ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned char* rcv_data, int count);
-	void SendDummyClocks(int n);
-	void SendDummyClocksDeferred(int n);
-	void ResetToIdle();
-	void Commit();
-
-	size_t GetIRLength()
-	{ return m_irlength; }
-
-	void EnterShiftDR();
-	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
-
-protected:
-	///Length of this device's instruction register, in bits
-	size_t m_irlength;
-
-	///32-bit JEDEC ID code of this device
-	unsigned int m_idcode;
-
-	///The JTAGInterface associated with this device
-	JtagInterface* m_iface;
-
-	///Position of this device in the interface's scan chain
-	size_t m_pos;
-
-	///Cached IR
-	unsigned char m_cachedIR[4];
 };
 
 #endif
+

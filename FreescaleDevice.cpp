@@ -30,82 +30,75 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of JtagDevice
+	@brief Implementation of FreescaleDevice
  */
 
-#ifndef JtagDevice_h
-#define JtagDevice_h
+#include "jtaghal.h"
+#include "JEDECVendorID_enum.h"
 
-class JtagInterface;
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
 /**
-	@brief Represents a single device in the JTAG chain
+	@brief Initializes this device
 
-	\ingroup libjtaghal
+	@param idcode	The ID code of this device
+	@param iface	The JTAG adapter this device was discovered on
+	@param pos		Position in the chain that this device was discovered
  */
-class JtagDevice
+FreescaleDevice::FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
+: JtagDevice(idcode, iface, pos)
 {
-public:
-	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-	virtual ~JtagDevice();
+}
 
-	/**
-		@brief Gets a human-readable description of this device.
+/**
+	@brief Default virtual destructor
+ */
+FreescaleDevice::~FreescaleDevice()
+{
 
-		Example: "Xilinx XC6SLX45 stepping 3"
+}
 
-		@return Device description
-	 */
-	virtual std::string GetDescription()=0;
+/**
+	@brief Creates a FreescaleDevice given an ID code
 
-	unsigned int GetIDCode();
+	@throw JtagException if the ID code supplied is not a valid Freescale device, or not a known family number
 
-	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	@param idcode	The ID code of this device
+	@param iface	The JTAG adapter this device was discovered on
+	@param pos		Position in the chain that this device was discovered
 
-	virtual void PrintInfo();
+	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
+ */
+JtagDevice* FreescaleDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
+{
+	//Save the original ID code to give to the derived class
+	unsigned int idcode_raw = idcode;
 
-public:
-	//JTAG interface helpers
-	void SetIR(const unsigned char* data)
-	{ SetIR(data, m_irlength); }
+	//Rightmost bit is always a zero, ignore it
+	idcode >>= 1;
 
-	void SetIRDeferred(const unsigned char* data)
-	{ SetIRDeferred(data, m_irlength); }
+	//Sanity check manufacturer ID
+	if( (idcode & 0x7FF) != VENDOR_ID_FREESCALE)
+	{
+		throw JtagExceptionWrapper(
+			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not a Freescale device)",
+			"");
+	}
+	idcode >>= 11;
 
-	void SetIR(const unsigned char* data, int count);
-	void SetIRDeferred(const unsigned char* data, int count);
-	void SetIR(const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(const unsigned char* send_data, int count);
-	bool IsSplitScanSupported();
-	void ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned char* rcv_data, int count);
-	void SendDummyClocks(int n);
-	void SendDummyClocksDeferred(int n);
-	void ResetToIdle();
-	void Commit();
+	//Next 16 bits are part number
+	unsigned int partnum = idcode & 0xffff;
+	idcode >>= 16;
 
-	size_t GetIRLength()
-	{ return m_irlength; }
+	//then last 4 are stepping
+	unsigned int stepping = idcode;
 
-	void EnterShiftDR();
-	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
+	LogWarning("Unimplemented Freescale device (part=0x%x, stepping=0x%x)\n", partnum, stepping);
+	return NULL;
 
-protected:
-	///Length of this device's instruction register, in bits
-	size_t m_irlength;
-
-	///32-bit JEDEC ID code of this device
-	unsigned int m_idcode;
-
-	///The JTAGInterface associated with this device
-	JtagInterface* m_iface;
-
-	///Position of this device in the interface's scan chain
-	size_t m_pos;
-
-	///Cached IR
-	unsigned char m_cachedIR[4];
-};
-
-#endif
+	//Create the device
+	//return FreescalePIC32Device::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
+}

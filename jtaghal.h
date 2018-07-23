@@ -131,6 +131,7 @@
 
 //Vendor classes
 #include "ARMDevice.h"
+#include "FreescaleDevice.h"
 #include "MicrochipDevice.h"
 #include "STMicroDevice.h"
 #include "XilinxDevice.h"

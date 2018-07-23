@@ -86,18 +86,21 @@ JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, 
 	switch(idcode_s)
 	{
 	case VENDOR_ID_ARM:
-	case VENDOR_ID_ARM_OLD:
+	case VENDOR_ID_ARM_TEST:
 		return ARMDevice::CreateDevice(idcode, iface, pos);
 		break;
+
+	case VENDOR_ID_FREESCALE:
+		return FreescaleDevice::CreateDevice(idcode, iface, pos);
+
+	case VENDOR_ID_MICROCHIP:
+		return MicrochipDevice::CreateDevice(idcode, iface, pos);
 
 	case VENDOR_ID_PHILIPS:
 		LogWarning("[JtagDevice] Philips not implemented. Is this an older XPLA3 die?\n");
 		//FIXME: Check for CoolRunner XPLA3 device IDs and call XilinxDevice for them
 		//See Xilinx AR#14761
 		break;
-
-	case VENDOR_ID_MICROCHIP:
-		return MicrochipDevice::CreateDevice(idcode, iface, pos);
 
 	case VENDOR_ID_STMICRO:
 		return STMicroDevice::CreateDevice(idcode, iface, pos);
