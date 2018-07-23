@@ -265,9 +265,10 @@ void JtagInterface::InitializeChain()
 
 	//Shift out the ID codes and reset the scan chain.
 	EnterShiftDR();
+	vector<uint32_t> idcodes;
 	for(size_t i=0; i<m_devicecount; i++)
-		m_idcodes.push_back(0x0);
-	ShiftData(false, lots_of_zeros, (unsigned char*)&m_idcodes[0], 32*m_devicecount);
+		idcodes.push_back(0x0);
+	ShiftData(false, lots_of_zeros, (unsigned char*)&idcodes[0], 32*m_devicecount);
 
 	//Crunch things
 	size_t idcode_bits = 0;
@@ -275,25 +276,35 @@ void JtagInterface::InitializeChain()
 	{
 		uint32_t idcode = 0;
 		for(size_t j=0; j<32; j++)
-			PokeBit((uint8_t*)&idcode, j, PeekBit((uint8_t*)&m_idcodes[0], idcode_bits+j));
+			PokeBit((uint8_t*)&idcode, j, PeekBit((uint8_t*)&idcodes[0], idcode_bits+j));
 
 		//Skip chips with bad IDCODEs
 		if(!(idcode & 0x1))
 		{
 			LogWarning("Invalid IDCODE %08x at index %zu, ignoring...\n", idcode, i);
 			idcode_bits ++;
+			m_idcodes.push_back(0);
 			continue;
 		}
 
 		idcode_bits += 32;
-		m_idcodes[i] = idcode;
+		m_idcodes.push_back(idcode);
 	}
 
 	ResetToIdle();
 
 	//Crack ID codes
 	for(size_t i=0; i<m_devicecount; i++)
-		m_devices.push_back(JtagDevice::CreateDevice(m_idcodes[i], this, i));
+	{
+		//If the IDCODE is zero dont even bother trying.
+		//TODO: some kind of config file to specify non-idcode-capable TAPs rather than only supporting PnP?
+		if(m_idcodes[i] == 0)
+			m_devices.push_back(NULL);
+
+		//All good, create the device
+		else
+			m_devices.push_back(JtagDevice::CreateDevice(m_idcodes[i], this, i));
+	}
 }
 
 /**
