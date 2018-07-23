@@ -56,14 +56,17 @@ ARM7TDMISProcessor::ARM7TDMISProcessor(
 	, m_rev(rev)
 {
 	m_selectedChain = 255;
-
-	//WriteIceRegister(DEBUG_CTRL, 0x3f);
-	//uint32_t ret = ReadIceRegister(DEBUG_CTRL);
 }
 
 ARM7TDMISProcessor::~ARM7TDMISProcessor()
 {
 
+}
+
+void ARM7TDMISProcessor::PostInitProbes()
+{
+	//WriteIceRegister(DEBUG_CTRL, 0x3f);
+	//uint32_t ret = ReadIceRegister(DEBUG_CTRL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

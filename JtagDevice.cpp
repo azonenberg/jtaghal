@@ -46,6 +46,10 @@ using namespace std;
 /**
 	@brief Initializes this device
 
+	NOTE: Do not do probes/scans of the chain during the constructor, because we haven't initialized all TAPs yet.
+
+	Any initialization that involves querying the chain should be done in PostInitProbes().
+
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
@@ -61,10 +65,6 @@ JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, si
 	m_irlength = 0;
 
 	memset(m_cachedIR, 0xFF, sizeof(m_cachedIR));
-
-	//If we are the last device in the chain, have the interface recalculate and add dummy devices as needed
-	if(pos == iface->GetDeviceCount()-1)
-		iface->CreateDummyDevices();
 }
 
 /**

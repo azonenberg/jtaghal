@@ -56,7 +56,10 @@ ARMDebugPort::ARMDebugPort(
 	//No Mem-AP for now
 	m_defaultMemAP 		= NULL;
 	m_defaultRegisterAP	= NULL;
+}
 
+void ARMDebugPort::PostInitProbes()
+{
 	//Turn on the debug stuff
 	EnableDebugging();
 

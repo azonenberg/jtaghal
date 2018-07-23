@@ -218,6 +218,7 @@ public:
 	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, size_t count);
 
+protected:
 	//Helpers for initialization
 	void CreateDummyDevices();
 

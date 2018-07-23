@@ -98,8 +98,13 @@ STM32Device::STM32Device(
 			m_ramKB = 0;
 	}
 
-	//Check read lock status
 	m_locksProbed = false;
+
+}
+
+void STM32Device::PostInitProbes()
+{
+	//Check read lock status
 	STM32Device::ProbeLocksNondestructive();
 
 	//Extract serial number fields

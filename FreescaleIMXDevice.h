@@ -67,103 +67,9 @@ public:
 		JtagInterface* iface,
 		size_t pos);
 
+	virtual void PostInitProbes();
+
 	/*
-	///Device families
-	enum families
-	{
-		FAMILY_MX12,		//PIC32MX 1xx/2xx
-		FAMILY_MX34,		//PIC32MX 3xx/4xx
-		FAMILY_MX567,		//PIC32MX 5xx/6xx/7xx
-
-		FAMILY_MM,			//All PIC32MM devices
-
-		FAMILY_MZ			//All PIC32MZ devices
-	};
-
-	///CPU types
-	enum cpus
-	{
-		CPU_M4K,
-		CPU_MAPTIV
-	};
-
-	///JTAG device IDs (from BSDL files and/or flash programming spec)
-	enum deviceids
-	{
-		PIC32MX110F016B = 0x4a07,
-		PIC32MX110F016C = 0x4a09,
-		PIC32MX110F016D = 0x4a0b,
-		PIC32MX120F032B = 0x4a06,
-		PIC32MX120F032C = 0x4a08,
-		PIC32MX120F032D = 0x4a0a,
-		PIC32MX130F064B = 0x4d07,
-		PIC32MX130F064C = 0x4d09,
-		PIC32MX130F064D = 0x4d0b,
-		PIC32MX150F128B = 0x4d06,
-		PIC32MX150F128C = 0x4d08,
-		PIC32MX150F128D = 0x4d0a,
-		PIC32MX210F016B = 0x4a01,
-		PIC32MX210F016C = 0x4a03,
-		PIC32MX210F016D = 0x4a05,
-		PIC32MX220F032B = 0x4a00,
-		PIC32MX220F032C = 0x4a02,
-		PIC32MX220F032D = 0x4a04,
-		PIC32MX230F064B = 0x4d01,
-		PIC32MX230F064C = 0x4d03,
-		PIC32MX230F064D = 0x4d05,
-		PIC32MX250F128B = 0x4d00,
-		PIC32MX250F128C = 0x4d02,
-		PIC32MX250F128D = 0x4d04,
-		PIC32MX330F064H = 0x5600,
-		PIC32MX330F064L = 0x5601,
-		PIC32MX340F512H = 0x0916,
-		PIC32MX350F128H = 0x570c,
-		//PIC32MX350F128L = 0x570d,	//350F128L and 350F256H have same IDCODE... BSDL error?
-		PIC32MX350F256H = 0x570d,
-		PIC32MX350F256L = 0x5705,
-		PIC32MX430F064H = 0x5602,
-		PIC32MX430F064L = 0x5603,
-		PIC32MX450F128H = 0x570e,
-		PIC32MX450F128L = 0x570f,
-		PIC32MX450F256H = 0x5706,
-		PIC32MX450F256L = 0x5707,
-		PIC32MX534F064H = 0x440c,	//H and L have same IDCODE... BSDL error?
-		//PIC32MX534F064L = 0x440c,
-		PIC32MX564F064H = 0x4401,
-		PIC32MX564F064L = 0x440d,
-		PIC32MX564F128H = 0x4403,
-		PIC32MX564F128L = 0x440f,
-		PIC32MX664F064H = 0x4405,
-		PIC32MX664F064L = 0x4411,
-		PIC32MX664F128H = 0x4407,
-		PIC32MX664F128L = 0x4413,
-		PIC32MX695F512L = 0x4341,
-		PIC32MX764F128H = 0x440b,
-		PIC32MX764F128L = 0x4417,
-		PIC32MX795F512L = 0x4307,
-
-		PIC32MM0016GPL020	= 0x6b04,
-		PIC32MM0032GPL020	= 0x6b0c,
-		PIC32MM0064GPL020	= 0x6b14,
-		PIC32MM0016GPL028	= 0x6b02,
-		PIC32MM0032GPL028	= 0x6b0a,
-		PIC32MM0064GPL028	= 0x6b12,
-		PIC32MM0016GPL036	= 0x6b06,
-		PIC32MM0032GPL036	= 0x6b0b,
-		PIC32MM0064GPL036	= 0x6b16,
-		PIC32MM0064GPM028	= 0x7708,
-		PIC32MM0128GPM028	= 0x7710,
-		PIC32MM0256GPM028	= 0x7718,
-		PIC32MM0064GPM036	= 0x770a,
-		PIC32MM0128GPM036	= 0x7712,
-		PIC32MM0256GPM036	= 0x771a,
-		PIC32MM0064GPM048	= 0x772c,
-		PIC32MM0128GPM048	= 0x7734,
-		PIC32MM0256GPM048	= 0x773c,
-		PIC32MM0064GPM064	= 0x770e,
-		PIC32MM0128GPM064	= 0x7716,
-		PIC32MM0256GPM064	= 0x771e
-	};
 
 	///5-bit-wide JTAG instructions (from BSDL file and datasheet)
 	enum instructions
@@ -210,31 +116,6 @@ public:
 		//Sample the program counter (used for profiling... not implemented?)
 		INST_PCSAMPLE			= 0x14
 	};
-
-	///8-bit instructions for Microchip virtual TAP (write to INST_MTAP_COMMAND data register)
-	enum mtap_instructions
-	{
-		///Get status
-		MCHP_STATUS				= 0x00,
-
-		///Begin chip reset
-		MCHP_ASSERT_RST			= 0xD1,
-
-		///End chip reset
-		MCHP_DE_ASSERT_RST		= 0xD0,
-
-		///Bulk-erase flash
-		MCHP_ERASE				= 0xFC,
-
-		///Enable connecting the CPU to flash
-		MCHP_FLASH_ENABLE		= 0xFE,
-
-		///Disconnect the CPU from flash
-		MCHP_FLASH_DISABLE		= 0xFD,
-
-		///Force re-read of device config
-		MCHP_READ_CONFIG		= 0xFF
-	};
 	*/
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// General device info
@@ -249,7 +130,6 @@ public:
 
 	virtual void Program(FirmwareImage* image);
 
-	/*
 	//FreescaleIMXDeviceStatusRegister GetStatusRegister();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +138,7 @@ public:
 	void SetIR(unsigned char irval)
 	{ JtagDevice::SetIR(&irval, m_irlength); }
 
+	/*
 protected:
 	void EnterMtapMode();
 	uint8_t SendMchpCommand(uint8_t cmd);

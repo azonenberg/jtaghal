@@ -64,6 +64,11 @@ public:
 
 	virtual void PrintInfo();
 
+	/**
+		@brief Does a post-initialization probe of the device to read debug ROMs etc.
+	 */
+	virtual void PostInitProbes() =0;
+
 public:
 	//JTAG interface helpers
 	void SetIR(const unsigned char* data)

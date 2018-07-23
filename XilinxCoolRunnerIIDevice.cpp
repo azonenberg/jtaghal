@@ -50,6 +50,10 @@ XilinxCoolRunnerIIDevice::XilinxCoolRunnerIIDevice(
 	m_stepping = stepping;
 }
 
+void XilinxCoolRunnerIIDevice::PostInitProbes()
+{
+}
+
 /**
 	@brief Destructor
  */

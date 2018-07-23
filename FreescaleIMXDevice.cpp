@@ -39,10 +39,25 @@
 
 using namespace std;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
 FreescaleIMXDevice::FreescaleIMXDevice(
 	unsigned int devid, unsigned int stepping,
 	unsigned int idcode, JtagInterface* iface, size_t pos)
  : FreescaleMicrocontroller(idcode, iface, pos, 5)
+{
+
+}
+
+/**
+	@brief Destructor
+ */
+FreescaleIMXDevice::~FreescaleIMXDevice()
+{
+}
+
+void FreescaleIMXDevice::PostInitProbes()
 {
 	/*
 	m_devid = devid;
@@ -73,19 +88,15 @@ FreescaleIMXDevice::FreescaleIMXDevice(
 	GetImpCode();*/
 }
 
-/**
-	@brief Destructor
- */
-FreescaleIMXDevice::~FreescaleIMXDevice()
-{
-}
-
 JtagDevice* FreescaleIMXDevice::CreateDevice(
 	unsigned int devid, unsigned int stepping, unsigned int idcode, JtagInterface* iface, size_t pos)
 {
 	//TODO: Sanity checks
 	return new FreescaleIMXDevice(devid, stepping, idcode, iface, pos);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// General device info
 
 string FreescaleIMXDevice::GetDescription()
 {

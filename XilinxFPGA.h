@@ -49,6 +49,8 @@ public:
 	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~XilinxFPGA();
 
+	virtual void PostInitProbes();
+
 protected:
 	//Static function for parsing bitstream headers (common to all Xilinx devices)
 	void ParseBitstreamCore(XilinxFPGABitstream* bitstream, const unsigned char* data, size_t len);\

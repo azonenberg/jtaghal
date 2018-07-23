@@ -247,7 +247,10 @@ MicrochipPIC32Device::MicrochipPIC32Device(
 			"Invalid PIC32 JTAG IDCODE",
 			"");
 	}
+}
 
+void MicrochipPIC32Device::PostInitProbes()
+{
 	//Reset both TAPS
 	EnterMtapMode();
 	ResetToIdle();

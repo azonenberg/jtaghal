@@ -99,6 +99,8 @@ public:
 		JtagInterface* iface,
 		size_t pos);
 
+	virtual void PostInitProbes();
+
 	///JTAG device IDs
 	enum deviceids
 	{

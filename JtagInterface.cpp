@@ -305,6 +305,16 @@ void JtagInterface::InitializeChain()
 		else
 			m_devices.push_back(JtagDevice::CreateDevice(m_idcodes[i], this, i));
 	}
+
+	//Once devices are created, add dummies if needed
+	CreateDummyDevices();
+
+	//Do init that requires probing the chain once we have all of our devices
+	for(auto p : m_devices)
+	{
+		if(p)
+			p->PostInitProbes();
+	}
 }
 
 /**

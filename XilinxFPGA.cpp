@@ -53,6 +53,11 @@ XilinxFPGA::XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, si
 {
 }
 
+void XilinxFPGA::PostInitProbes()
+{
+
+}
+
 /**
 	@brief Default virtual destructor
  */
