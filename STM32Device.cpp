@@ -44,10 +44,8 @@ STM32Device::STM32Device(
 	unsigned int devid, unsigned int stepping,
 	unsigned int idcode, JtagInterface* iface, size_t pos)
  : STMicroMicrocontroller(devid, stepping, idcode, iface, pos)
- , JtagDevice(idcode, iface, pos)
+ , JtagDevice(idcode, iface, pos, 5)
 {
-	m_irlength = 5;
-
 	if(pos == 0)
 	{
 		throw JtagExceptionWrapper(

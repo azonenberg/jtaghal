@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -217,6 +217,9 @@ public:
 	virtual bool IsSplitScanSupported();
 	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, size_t count);
+
+	//Helpers for initialization
+	void CreateDummyDevices();
 
 protected:
 

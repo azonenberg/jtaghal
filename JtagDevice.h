@@ -46,7 +46,7 @@ class JtagInterface;
 class JtagDevice
 {
 public:
-	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~JtagDevice();
 
 	/**

@@ -46,9 +46,10 @@ using namespace std;
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
+	@param irlength	Length of the JTAG instruction register
  */
-JtagFPGA::JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos)
-: JtagDevice(idcode, iface, pos)
+JtagFPGA::JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+: JtagDevice(idcode, iface, pos, irlength)
 {
 }
 

@@ -52,10 +52,9 @@ ARM7TDMISProcessor::ARM7TDMISProcessor(
 		unsigned int idcode,
 		JtagInterface* iface,
 		size_t pos)
-	: ARMDevice(idcode, iface, pos)
+	: ARMDevice(idcode, iface, pos, 4)
 	, m_rev(rev)
 {
-	m_irlength = 4;
 	m_selectedChain = 255;
 
 	//WriteIceRegister(DEBUG_CTRL, 0x3f);

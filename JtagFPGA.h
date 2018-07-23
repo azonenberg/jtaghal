@@ -45,7 +45,7 @@ class JtagFPGA	: public JtagDevice
 				, public FPGA
 {
 public:
-	JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);
+	JtagFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~JtagFPGA();
 
 	/**

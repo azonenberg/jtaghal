@@ -46,7 +46,7 @@ class XilinxFPGA	: public XilinxDevice
 					, public SerialNumberedDevice
 {
 public:
-	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos);
+	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~XilinxFPGA();
 
 protected:

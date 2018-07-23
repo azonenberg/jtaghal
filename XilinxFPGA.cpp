@@ -46,9 +46,10 @@ using namespace std;
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
+
  */
-XilinxFPGA::XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos)
-	: JtagFPGA(idcode, iface, pos)
+XilinxFPGA::XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+	: JtagFPGA(idcode, iface, pos, irlength)
 {
 }
 

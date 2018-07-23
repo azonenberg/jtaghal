@@ -54,11 +54,10 @@ XilinxSpartan6Device::XilinxSpartan6Device(
 	unsigned int idcode,
 	JtagInterface* iface,
 	size_t pos)
-: XilinxFPGA(idcode, iface, pos)
+: XilinxFPGA(idcode, iface, pos, 6)
 , m_arraysize(arraysize)
 , m_rev(rev)
 {
-	m_irlength = 6;
 }
 
 /**

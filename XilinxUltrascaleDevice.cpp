@@ -49,6 +49,7 @@ using namespace std;
 	@param idcode		The ID code of this device
 	@param iface		The JTAG adapter this device was discovered on
 	@param pos			Position in the chain that this device was discovered
+	@param irlength	Length of the JTAG instruction register
  */
 XilinxUltrascaleDevice::XilinxUltrascaleDevice(
 	unsigned int arraysize,
@@ -57,13 +58,21 @@ XilinxUltrascaleDevice::XilinxUltrascaleDevice(
 	unsigned int idcode,
 	JtagInterface* iface,
 	size_t pos)
-: XilinxFPGA(idcode, iface, pos)
+: XilinxFPGA(idcode, iface, pos, InitializePartDimensions(arraysize, family) )
 , m_arraysize(arraysize)
 , m_family(family)
 , m_rev(rev)
 {
+
+}
+
+/**
+	@brief Set up SLR count etc and return total IR size
+ */
+size_t XilinxUltrascaleDevice::InitializePartDimensions(unsigned int arraysize, unsigned int family)
+{
 	//TODO: ultrascale
-	if(m_family == XILINX_FAMILY_ULTRASCALE)
+	if(family == XILINX_FAMILY_ULTRASCALE)
 	{
 		throw JtagExceptionWrapper(
 			"Ultrascale SLR stuff not implemented",
@@ -88,7 +97,7 @@ XilinxUltrascaleDevice::XilinxUltrascaleDevice(
 	}
 
 	//Each SLR has its own instruction register but they're concatenated
-	m_irlength = 6 * m_slrCount;
+	return 6 * m_slrCount;
 }
 
 /**

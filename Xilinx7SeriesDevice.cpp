@@ -54,11 +54,10 @@ Xilinx7SeriesDevice::Xilinx7SeriesDevice(
 	unsigned int idcode,
 	JtagInterface* iface,
 	size_t pos)
-: XilinxFPGA(idcode, iface, pos)
+: XilinxFPGA(idcode, iface, pos, 6)
 , m_arraysize(arraysize)
 , m_rev(rev)
 {
-	m_irlength = 6;
 }
 /**
 	@brief Empty virtual destructor

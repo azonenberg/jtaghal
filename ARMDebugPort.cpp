@@ -49,12 +49,10 @@ ARMDebugPort::ARMDebugPort(
 	unsigned int idcode,
 	JtagInterface* iface,
 	size_t pos)
-	: ARMDevice(idcode, iface, pos)
+	: ARMDevice(idcode, iface, pos, 4)
 	, m_rev(rev)
 	, m_partnum(partnum)
 {
-	m_irlength = 4;
-
 	//No Mem-AP for now
 	m_defaultMemAP 		= NULL;
 	m_defaultRegisterAP	= NULL;

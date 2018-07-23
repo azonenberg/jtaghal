@@ -686,6 +686,20 @@ bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, size_t /*coun
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper for chains with unknown parts in them
+
+/**
+	@brief Creates dummy devices to fill out an incomplete chain
+
+	If this chain has exactly one device which is not supported or missing an IDCODE, create a dummy device to take up
+	the space so we can correctly calculate IR padding.
+ */
+void JtagInterface::CreateDummyDevices()
+{
+	LogDebug("Creating dummy devices\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Performance profiling
 
 /**

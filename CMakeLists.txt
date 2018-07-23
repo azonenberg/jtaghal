@@ -47,6 +47,8 @@ set(JTAGHAL_SOURCES
     ARMDevice.cpp
 
     FreescaleDevice.cpp
+    FreescaleMicrocontroller.cpp
+    FreescaleIMXDevice.cpp
 
     MicrochipDevice.cpp
     MicrochipMicrocontroller.cpp

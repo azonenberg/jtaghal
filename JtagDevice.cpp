@@ -49,9 +49,11 @@ using namespace std;
 	@param idcode	The ID code of this device
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
+	@param irlength	Length of the JTAG instruction register
  */
-JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
-: m_idcode(idcode)
+JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+: m_irlength(irlength)
+, m_idcode(idcode)
 , m_iface(iface)
 , m_pos(pos)
 {
@@ -59,6 +61,10 @@ JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
 	m_irlength = 0;
 
 	memset(m_cachedIR, 0xFF, sizeof(m_cachedIR));
+
+	//If we are the last device in the chain, have the interface recalculate and add dummy devices as needed
+	if(pos == iface->GetDeviceCount()-1)
+		iface->CreateDummyDevices();
 }
 
 /**

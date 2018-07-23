@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -44,7 +44,7 @@
 class MicrochipDevice : public JtagDevice
 {
 public:
-	MicrochipDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	MicrochipDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~MicrochipDevice();
 
 	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);

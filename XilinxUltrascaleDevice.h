@@ -445,6 +445,8 @@ protected:
 	void SetIRForMasterSLR(unsigned char irval, bool defer = false);
 	void SetIRForAllSLRs(unsigned char irval, bool defer = false);
 
+	size_t InitializePartDimensions(unsigned int arraysize, unsigned int family);
+
 protected:
 
 	///Array size (the specific device we are)

@@ -228,11 +228,10 @@ static const MicrochipPIC32DeviceInfo g_devinfo[] =
 MicrochipPIC32Device::MicrochipPIC32Device(
 	unsigned int devid, unsigned int stepping,
 	unsigned int idcode, JtagInterface* iface, size_t pos)
- : MicrochipMicrocontroller(idcode, iface, pos)
+ : MicrochipMicrocontroller(idcode, iface, pos, 5)
 {
 	m_devid = devid;
 	m_stepping = stepping;
-	m_irlength = 5;
 
 	//Look up device info in the table and make sure it exists
 	m_devinfo = NULL;
