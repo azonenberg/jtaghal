@@ -431,27 +431,24 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		uint8_t ack_out = 0;
 		for(int i=0; i<3; i++)
 			PokeBit(&ack_out, i, PeekBit(rxd, i));
-		if(ack_out != OK_OR_FAULT)
-			LogWarning("Don't know what to do with WAIT request from DAP\n");
 
-		//Send the read again to get the reply
-		ScanDR(txd, rxd, 35);
-		for(int i=0; i<3; i++)
-			PokeBit(&ack_out, i, PeekBit(rxd, i));
-		for(int i=0; i<32; i++)
-			PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
-
-		//If we got a success result, done
-		if(ack_out == OK_OR_FAULT)
+		//If we got data, crunch it.
+		//Note that the first poll can never return the data since we haven't even done the read request yet!
+		if((ack_out == OK_OR_FAULT) && (i > 0) )
+		{
+			for(int i=0; i<32; i++)
+				PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
 			break;
+		}
 
 		//No go? Try again after a millisecond
-		if(i == 0)
-			LogDebug("No go, trying again after 1 ms\n");
-		usleep(1 * 1000);
+		if(i == 1)
+			LogTrace("No go, trying again after 1 ms\n");
+		if(i >= 1)
+			usleep(1 * 1000);
 	}
-	if(i > 0)
-		LogDebug("Poll ended after %d ms\n", i);
+	if(i > 1)
+		LogTrace("Poll ended after %d ms\n", i);
 
 	//Give up if we still got nothing
 	if(i == nmax)
@@ -558,9 +555,11 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	ARMDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
+		/*
 		LogError("Write of %08x to register %x on AP %d failed\n",
 			wdata, addr, ap);
 		m_aps[ap]->PrintStatusRegister();
+		*/
 
 		DebugAbort();
 		ClearStatusRegisterErrors();

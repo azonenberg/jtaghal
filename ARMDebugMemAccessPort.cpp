@@ -203,7 +203,17 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 	for(int i=0; i<960; i++)
 	{
 		//Read the next entry and stop if it's a terminator
-		uint32_t entry = ReadWord(baseAddress + i*4);
+		uint32_t entry = 0;
+		uint32_t entryAddr = (baseAddress + i*4);
+		try
+		{
+			entry = ReadWord(entryAddr);
+		}
+		catch(const JtagException& e)
+		{
+			LogWarning("Failed to read ROM table entry at i=%d, addr=0x%08x\n", i, entryAddr);
+			break;
+		}
 		if(entry == 0)
 			break;
 
@@ -233,110 +243,117 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 			offset = -( (offset ^ 0xfffff) + 1);
 		uint32_t address = (offset << 12) + baseAddress;
 
-		//Walk this table entry
-		uint32_t compid_raw[4];
-		for(int j=0; j<4; j++)
-			compid_raw[j] = ReadWord(address + 0xff0 + 4*j);
-		uint32_t compid =
-			((compid_raw[3] & 0xff) << 24) |
-			((compid_raw[2] & 0xff) << 16) |
-			((compid_raw[1] & 0xff) << 8) |
-			(compid_raw[0] & 0xff);
-
-		LogTrace("address = %08x\n", address);
-		LogIndenter li;
-
-		//Look up peripheral ID
-		uint64_t periphid_raw[8];
-		for(int i=0; i<4; i++)
-			periphid_raw[i] = ReadWord(address + 0xfe0 + 4*i);
-		for(int i=0; i<4; i++)
-			periphid_raw[i+4] = ReadWord(address + 0xfd0 + 4*i);
-		ARMDebugPeripheralIDRegister idr;
-		idr.word =
-			(periphid_raw[7] << 56) |
-			(periphid_raw[6] << 48) |
-			(periphid_raw[5] << 40) |
-			(periphid_raw[4] << 32) |
-			(periphid_raw[3] << 24) |
-			(periphid_raw[2] << 16) |
-			(periphid_raw[1] << 8)  |
-			(periphid_raw[0] << 0);
-
-		//Debug prints
-		if(i > 0)
+		try
 		{
-			for(int j=0; j<12; j++)
+			//Walk this table entry
+			uint32_t compid_raw[4];
+			for(int j=0; j<4; j++)
+				compid_raw[j] = ReadWord(address + 0xff0 + 4*j);
+			uint32_t compid =
+				((compid_raw[3] & 0xff) << 24) |
+				((compid_raw[2] & 0xff) << 16) |
+				((compid_raw[1] & 0xff) << 8) |
+				(compid_raw[0] & 0xff);
+
+			LogTrace("address = %08x\n", address);
+			LogIndenter li;
+
+			//Look up peripheral ID
+			uint64_t periphid_raw[8];
+			for(int i=0; i<4; i++)
+				periphid_raw[i] = ReadWord(address + 0xfe0 + 4*i);
+			for(int i=0; i<4; i++)
+				periphid_raw[i+4] = ReadWord(address + 0xfd0 + 4*i);
+			ARMDebugPeripheralIDRegister idr;
+			idr.word =
+				(periphid_raw[7] << 56) |
+				(periphid_raw[6] << 48) |
+				(periphid_raw[5] << 40) |
+				(periphid_raw[4] << 32) |
+				(periphid_raw[3] << 24) |
+				(periphid_raw[2] << 16) |
+				(periphid_raw[1] << 8)  |
+				(periphid_raw[0] << 0);
+
+			//Debug prints
+			if(i > 0)
 			{
-				uint32_t base = address + 0xfd0 + 4*j;
-				uint32_t val = ReadWord(base);
-				LogTrace("0x%08x => 0x%08x\n", base, val);
+				for(int j=0; j<12; j++)
+				{
+					uint32_t base = address + 0xfd0 + 4*j;
+					uint32_t val = ReadWord(base);
+					LogTrace("0x%08x => 0x%08x\n", base, val);
+				}
+			}
+
+			/*{
+				LogTrace("Peripheral ID:\n");
+				LogIndenter li;
+				LogTrace("Reserved: %x\n", idr.bits.reserved_zero);
+				LogTrace("Log 4K: %d\n", idr.bits.log_4k_blocks);
+				LogTrace("Continuation: %d\n", idr.bits.jep106_cont);
+				LogTrace("Rev: %d\n", idr.bits.revand);
+				LogTrace("Mod: %d\n", idr.bits.cust_mod);
+				LogTrace("Prev: %d\n", idr.bits.revnum);
+				LogTrace("JEP106: used=%x, %x\n", idr.bits.jep106_used, idr.bits.jep106_id);
+				LogTrace("Part: %x\n", idr.bits.partnum);
+			}*/
+
+			unsigned int num_extra_pages = 1 << idr.bits.log_4k_blocks;
+
+			//Verify the mandatory component ID bits are in the right spots
+			if( (compid & 0xffff0fff) != (0xb105000d) )
+			{
+				LogTrace("Invalid component ID for peripheral at %08x\n", address);
+				LogTrace("  Wrong ID register values - Got %08x and expected something close to 0xb105000d\n", compid);
+				continue;
+			}
+
+			//If the peripheral has >1 page, back off to the START (the rom table points to the LAST page)
+			uint32_t id_base = address;
+			if(idr.bits.log_4k_blocks != 0)
+			{
+				address -= (num_extra_pages - 1) * 0x1000;
+				LogTrace("Updated base address %08x\n", address);
+			}
+
+			//Figure out what it means
+			unsigned int ccls = (compid >> 12) & 0xf;
+
+			switch(ccls)
+			{
+				//Process CoreSight and "generic IP" blocks
+				case CLASS_CORESIGHT:
+				case CLASS_GENERIC_IP:
+					ProcessDebugBlock(address, id_base, idr);
+					break;
+
+				//Additional ROM table
+				case CLASS_ROMTABLE:
+					{
+						LogTrace("Found extra ROM table at %08x, loading\n", address);
+						LogIndenter li;
+
+						//If the ROM table is a pointer to US, ignore it!
+						if(address == baseAddress)
+						{
+							LogTrace("ROM table pointer goes back to us! Possible ROM bug\n");
+							continue;
+						}
+
+						LoadROMTable(address);
+					}
+					break;
+
+				//Don't know what to do with anything else
+				default:
+					LogTrace("Found unknown component class %x, skipping\n", ccls);
+					break;
 			}
 		}
-
-		/*{
-			LogTrace("Peripheral ID:\n");
-			LogIndenter li;
-			LogTrace("Reserved: %x\n", idr.bits.reserved_zero);
-			LogTrace("Log 4K: %d\n", idr.bits.log_4k_blocks);
-			LogTrace("Continuation: %d\n", idr.bits.jep106_cont);
-			LogTrace("Rev: %d\n", idr.bits.revand);
-			LogTrace("Mod: %d\n", idr.bits.cust_mod);
-			LogTrace("Prev: %d\n", idr.bits.revnum);
-			LogTrace("JEP106: used=%x, %x\n", idr.bits.jep106_used, idr.bits.jep106_id);
-			LogTrace("Part: %x\n", idr.bits.partnum);
-		}*/
-
-		unsigned int num_extra_pages = 1 << idr.bits.log_4k_blocks;
-
-		//Verify the mandatory component ID bits are in the right spots
-		if( (compid & 0xffff0fff) != (0xb105000d) )
+		catch(const JtagException& e)
 		{
-			LogTrace("Invalid component ID for peripheral at %08x\n", address);
-			LogTrace("  Wrong ID register values - Got %08x and expected something close to 0xb105000d\n", compid);
-			continue;
-		}
-
-		//If the peripheral has >1 page, back off to the START (the rom table points to the LAST page)
-		uint32_t id_base = address;
-		if(idr.bits.log_4k_blocks != 0)
-		{
-			address -= (num_extra_pages - 1) * 0x1000;
-			LogTrace("Updated base address %08x\n", address);
-		}
-
-		//Figure out what it means
-		unsigned int ccls = (compid >> 12) & 0xf;
-
-		switch(ccls)
-		{
-			//Process CoreSight and "generic IP" blocks
-			case CLASS_CORESIGHT:
-			case CLASS_GENERIC_IP:
-				ProcessDebugBlock(address, id_base, idr);
-				break;
-
-			//Additional ROM table
-			case CLASS_ROMTABLE:
-				{
-					LogTrace("Found extra ROM table at %08x, loading\n", address);
-					LogIndenter li;
-
-					//If the ROM table is a pointer to US, ignore it!
-					if(address == baseAddress)
-					{
-						LogTrace("ROM table pointer goes back to us! Possible ROM bug\n");
-						continue;
-					}
-
-					LoadROMTable(address);
-				}
-				break;
-
-			//Don't know what to do with anything else
-			default:
-				LogTrace("Found unknown component class %x, skipping\n", ccls);
-				break;
+			LogWarning("Failed to read ROM table entry at 0x%08x, skipping...\n", address);
 		}
 	}
 }
