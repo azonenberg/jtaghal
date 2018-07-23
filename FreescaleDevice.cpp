@@ -48,8 +48,8 @@ using namespace std;
 	@param iface	The JTAG adapter this device was discovered on
 	@param pos		Position in the chain that this device was discovered
  */
-FreescaleDevice::FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
-: JtagDevice(idcode, iface, pos)
+FreescaleDevice::FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+: JtagDevice(idcode, iface, pos, irlength)
 {
 }
 
@@ -96,9 +96,6 @@ JtagDevice* FreescaleDevice::CreateDevice(unsigned int idcode, JtagInterface* if
 	//then last 4 are stepping
 	unsigned int stepping = idcode;
 
-	LogWarning("Unimplemented Freescale device (part=0x%x, stepping=0x%x)\n", partnum, stepping);
-	return NULL;
-
-	//Create the device
-	//return FreescalePIC32Device::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
+	//For now, assume it's an i.mx
+	return FreescaleIMXDevice::CreateDevice(partnum, stepping, idcode_raw, iface, pos);
 }

@@ -30,25 +30,96 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FreescaleDevice
+	@brief Implementation of FreescaleIMXDevice
  */
 
-#ifndef FreescaleDevice_h
-#define FreescaleDevice_h
+#include "jtaghal.h"
+#include "FreescaleIMXDevice.h"
+#include "memory.h"
+
+using namespace std;
+
+FreescaleIMXDevice::FreescaleIMXDevice(
+	unsigned int devid, unsigned int stepping,
+	unsigned int idcode, JtagInterface* iface, size_t pos)
+ : FreescaleMicrocontroller(idcode, iface, pos, 5)
+{
+	/*
+	m_devid = devid;
+	m_stepping = stepping;
+
+	//Look up device info in the table and make sure it exists
+	m_devinfo = NULL;
+	for(auto& x : g_devinfo)
+	{
+		if(x.devid == devid)
+			m_devinfo = &x;
+	}
+
+	if(!m_devinfo)
+	{
+		throw JtagExceptionWrapper(
+			"Invalid PIC32 JTAG IDCODE",
+			"");
+	}
+
+	//Reset both TAPS
+	EnterMtapMode();
+	ResetToIdle();
+	EnterEjtagMode();
+	ResetToIdle();
+
+	//Get our implementation code
+	GetImpCode();*/
+}
 
 /**
-	@brief Abstract base class for all Freescale devices (typically MCUs)
-
-	\ingroup libjtaghal
+	@brief Destructor
  */
-class FreescaleDevice : public JtagDevice
+FreescaleIMXDevice::~FreescaleIMXDevice()
 {
-public:
-	FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~FreescaleDevice();
+}
 
-	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-};
+JtagDevice* FreescaleIMXDevice::CreateDevice(
+	unsigned int devid, unsigned int stepping, unsigned int idcode, JtagInterface* iface, size_t pos)
+{
+	//TODO: Sanity checks
+	return new FreescaleIMXDevice(devid, stepping, idcode, iface, pos);
+}
 
-#endif
+string FreescaleIMXDevice::GetDescription()
+{
+	/*
+	char srev[256];
+	snprintf(srev, sizeof(srev), "Microchip %s (%u KB SRAM, %u KB code flash, %.2f KB boot flash, stepping %u)",
+		m_devinfo->name,
+		m_devinfo->sram_size,
+		m_devinfo->program_flash_size,
+		m_devinfo->boot_flash_size,
+		m_stepping);
 
+	return string(srev);
+	*/
+	return "i.mx unimplemented";
+}
+
+bool FreescaleIMXDevice::IsProgrammed()
+{
+	throw JtagExceptionWrapper(
+		"Not implemented",
+		"");
+}
+
+void FreescaleIMXDevice::Erase()
+{
+	throw JtagExceptionWrapper(
+		"Not implemented",
+		"");
+}
+
+void FreescaleIMXDevice::Program(FirmwareImage* /*image*/)
+{
+	throw JtagExceptionWrapper(
+		"Not implemented",
+		"");
+}

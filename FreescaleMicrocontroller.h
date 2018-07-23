@@ -30,24 +30,31 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FreescaleDevice
+	@brief Declaration of FreescaleMicrocontroller
  */
 
-#ifndef FreescaleDevice_h
-#define FreescaleDevice_h
+#ifndef FreescaleMicrocontroller_h
+#define FreescaleMicrocontroller_h
 
 /**
-	@brief Abstract base class for all Freescale devices (typically MCUs)
+	@brief Generic base class for all Freescale MCUs
 
 	\ingroup libjtaghal
  */
-class FreescaleDevice : public JtagDevice
+class FreescaleMicrocontroller		: public FreescaleDevice
+									, public Microcontroller
 {
 public:
-	FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~FreescaleDevice();
+	FreescaleMicrocontroller(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
+	virtual ~FreescaleMicrocontroller();
 
-	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	virtual bool HasIndirectFlashSupport();
+	virtual void ProgramIndirect(
+		ByteArrayFirmwareImage* image,
+		int buswidth,
+		bool reboot = true,
+		unsigned int base_address = 0,
+		std::string prog_image = "");
 };
 
 #endif

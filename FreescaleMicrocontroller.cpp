@@ -30,25 +30,38 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FreescaleDevice
+	@brief Implementation of FreescaleMicrocontroller
  */
 
-#ifndef FreescaleDevice_h
-#define FreescaleDevice_h
+#include "jtaghal.h"
 
-/**
-	@brief Abstract base class for all Freescale devices (typically MCUs)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-	\ingroup libjtaghal
- */
-class FreescaleDevice : public JtagDevice
+FreescaleMicrocontroller::FreescaleMicrocontroller(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+	: FreescaleDevice(idcode, iface, pos, irlength)
 {
-public:
-	FreescaleDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~FreescaleDevice();
+}
 
-	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
-};
+FreescaleMicrocontroller::~FreescaleMicrocontroller()
+{
+	//Nothing here
+}
 
-#endif
+bool FreescaleMicrocontroller::HasIndirectFlashSupport()
+{
+	//MCUs have no external memory
+	return false;
+}
 
+void FreescaleMicrocontroller::ProgramIndirect(
+	ByteArrayFirmwareImage* /*image*/,
+	int /*buswidth*/,
+	bool /*reboot*/,
+	unsigned int /*base_address*/,
+	std::string /*prog_image*/)
+{
+	throw JtagExceptionWrapper(
+		"Freescale MCUs cannot be indirectly programmed",
+		"");
+}
