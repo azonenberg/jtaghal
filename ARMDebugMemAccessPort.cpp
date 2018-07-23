@@ -211,7 +211,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		}
 		catch(const JtagException& e)
 		{
-			LogWarning("Failed to read ROM table entry at i=%d, addr=0x%08x\n", i, entryAddr);
+			LogTrace("Failed to read ROM table line at i=%d, addr=0x%08x\n", i, entryAddr);
 			break;
 		}
 		if(entry == 0)
@@ -353,7 +353,7 @@ void ARMDebugMemAccessPort::LoadROMTable(uint32_t baseAddress)
 		}
 		catch(const JtagException& e)
 		{
-			LogWarning("Failed to read ROM table entry at 0x%08x, skipping...\n", address);
+			LogTrace("Failed to read ROM table target at 0x%08x, skipping...\n", address);
 		}
 	}
 }

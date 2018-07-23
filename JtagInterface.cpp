@@ -281,7 +281,7 @@ void JtagInterface::InitializeChain()
 		//Skip chips with bad IDCODEs
 		if(!(idcode & 0x1))
 		{
-			LogWarning("Invalid IDCODE %08x at index %zu, ignoring...\n", idcode, i);
+			//LogWarning("Invalid IDCODE %08x at index %zu, ignoring...\n", idcode, i);
 			idcode_bits ++;
 			m_idcodes.push_back(0);
 			continue;
