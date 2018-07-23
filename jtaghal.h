@@ -126,6 +126,7 @@
 #include "ProgrammableLogicDevice.h"
 #include "CPLD.h"
 #include "FPGA.h"
+#include "JtagDummy.h"
 #include "JtagFPGA.h"
 #include "Microcontroller.h"
 

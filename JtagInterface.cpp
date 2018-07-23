@@ -706,7 +706,38 @@ bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, size_t /*coun
  */
 void JtagInterface::CreateDummyDevices()
 {
-	LogDebug("Creating dummy devices\n");
+	LogTrace("Checking for missing devices\n");
+
+	size_t dummypos = 0;
+	bool found_dummy = false;
+	size_t irbits = 0;
+	for(size_t i=0; i<m_devicecount; i++)
+	{
+		if(m_devices[i] == NULL)
+		{
+			if(found_dummy)
+			{
+				LogError("More than one device found in the chain without an ID code!\n");
+				return;
+			}
+			else
+			{
+				dummypos = i;
+				found_dummy = true;
+			}
+		}
+		else
+			irbits += m_devices[i]->GetIRLength();
+	}
+	if(!found_dummy)
+		return;
+
+	//If we get here, we have one and only one dummy.
+	//Figure out how big the instruction register should be.
+	size_t dummybits = m_irtotal - irbits;
+	LogTrace("Found hole in scan chain, creating dummy with %zu-bit instruction register at chain position %zu\n",
+		dummybits, dummypos);
+	m_devices[dummypos] = new JtagDummy(0x00000000, this, dummypos, dummybits);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

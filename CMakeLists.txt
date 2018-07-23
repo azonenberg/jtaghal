@@ -21,6 +21,7 @@ set(JTAGHAL_SOURCES
     JtagDevice.cpp
     CPLD.cpp
     FPGA.cpp
+    JtagDummy.cpp
     JtagFPGA.cpp
     Microcontroller.cpp
 
