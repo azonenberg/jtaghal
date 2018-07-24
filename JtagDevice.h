@@ -38,6 +38,8 @@
 
 class JtagInterface;
 
+#define RegisterConstant(c) m_constantMap[(#c)] = c
+
 /**
 	@brief Represents a single device in the JTAG chain
 
@@ -46,7 +48,7 @@ class JtagInterface;
 class JtagDevice
 {
 public:
-	JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
+	JtagDevice(uint32_t idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~JtagDevice();
 
 	/**
@@ -60,7 +62,7 @@ public:
 
 	unsigned int GetIDCode();
 
-	static JtagDevice* CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos);
+	static JtagDevice* CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos);
 
 	virtual void PrintInfo();
 
@@ -68,6 +70,17 @@ public:
 		@brief Does a post-initialization probe of the device to read debug ROMs etc.
 	 */
 	virtual void PostInitProbes() =0;
+
+	bool LookupConstant(std::string name, uint32_t& value)
+	{
+		if(m_constantMap.find(name) != m_constantMap.end())
+		{
+			value = m_constantMap[name];
+			return true;
+		}
+		else
+			return false;
+	}
 
 public:
 	//JTAG interface helpers
@@ -93,6 +106,12 @@ public:
 	size_t GetIRLength()
 	{ return m_irlength; }
 
+	size_t GetChainIndex()
+	{ return m_pos; }
+
+	uint32_t GetIdcode()
+	{ return m_idcode; }
+
 	void EnterShiftDR();
 	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
 
@@ -101,7 +120,7 @@ protected:
 	size_t m_irlength;
 
 	///32-bit JEDEC ID code of this device
-	unsigned int m_idcode;
+	uint32_t m_idcode;
 
 	///The JTAGInterface associated with this device
 	JtagInterface* m_iface;
@@ -111,6 +130,9 @@ protected:
 
 	///Cached IR
 	unsigned char m_cachedIR[4];
+
+	//Map of constant names to values, used by jtagsh and other scripting support
+	std::map<std::string, uint32_t> m_constantMap;
 };
 
 #endif

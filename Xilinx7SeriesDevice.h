@@ -362,36 +362,36 @@ protected:
 	 */
 	enum x7_config_regs
 	{
-		X7_CONFIG_REG_CRC		= 0x00,
-		X7_CONFIG_REG_FAR		= 0x01,
-		X7_CONFIG_REG_FDRI		= 0x02,
-		X7_CONFIG_REG_FDRO		= 0x03,
-		X7_CONFIG_REG_CMD		= 0x04,
-		X7_CONFIG_REG_CTL0		= 0x05,
-		X7_CONFIG_REG_MASK		= 0x06,
-		X7_CONFIG_REG_STAT		= 0x07,
-		X7_CONFIG_REG_LOUT		= 0x08,
-		X7_CONFIG_REG_COR0		= 0x09,
-		X7_CONFIG_REG_MFWR		= 0x0A,
-		X7_CONFIG_REG_CBC		= 0x0B,
-		X7_CONFIG_REG_IDCODE	= 0x0C,
-		X7_CONFIG_REG_AXSS		= 0x0D,
-		X7_CONFIG_REG_COR1		= 0x0E,
+		CONFIG_CRC		= 0x00,
+		CONFIG_FAR		= 0x01,
+		CONFIG_FDRI		= 0x02,
+		CONFIG_FDRO		= 0x03,
+		CONFIG_CMD		= 0x04,
+		CONFIG_CTL0		= 0x05,
+		CONFIG_MASK		= 0x06,
+		CONFIG_STAT		= 0x07,
+		CONFIG_LOUT		= 0x08,
+		CONFIG_COR0		= 0x09,
+		CONFIG_MFWR		= 0x0A,
+		CONFIG_CBC		= 0x0B,
+		CONFIG_IDCODE	= 0x0C,
+		CONFIG_AXSS		= 0x0D,
+		CONFIG_COR1		= 0x0E,
 		//0x0F reserved or usused
-		X7_CONFIG_REG_WBSTAR	= 0x10,
-		X7_CONFIG_REG_TIMER		= 0x11,
+		CONFIG_WBSTAR	= 0x10,
+		CONFIG_TIMER		= 0x11,
 		//0x12 reserved or unused
 		//0x13 reserved or unused
 		//0x14 reserved or unused
 		//0x15 reserved or unused
-		X7_CONFIG_REG_BOOTSTS	= 0x16,
+		CONFIG_BOOTSTS	= 0x16,
 		//0x17 reserved or unused
-		X7_CONFIG_REG_CTL1		= 0x18,
+		CONFIG_CTL1		= 0x18,
 		//0x19 and up reserved or unused
 
-		X7_CONFIG_REG_BSPI		= 0x1F,
+		CONFIG_BSPI		= 0x1F,
 
-		X7_CONFIG_REG_MAX		//max config reg value
+		CONFIG_MAX		//max config reg value
 	};
 
 	/**

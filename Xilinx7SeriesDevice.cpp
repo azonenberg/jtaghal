@@ -58,6 +58,26 @@ Xilinx7SeriesDevice::Xilinx7SeriesDevice(
 , m_arraysize(arraysize)
 , m_rev(rev)
 {
+	RegisterConstant(CONFIG_CRC);
+	RegisterConstant(CONFIG_FAR);
+	RegisterConstant(CONFIG_FDRI);
+	RegisterConstant(CONFIG_FDRO);
+	RegisterConstant(CONFIG_CMD);
+	RegisterConstant(CONFIG_CTL0);
+	RegisterConstant(CONFIG_MASK);
+	RegisterConstant(CONFIG_STAT);
+	RegisterConstant(CONFIG_LOUT);
+	RegisterConstant(CONFIG_COR0);
+	RegisterConstant(CONFIG_MFWR);
+	RegisterConstant(CONFIG_CBC);
+	RegisterConstant(CONFIG_IDCODE);
+	RegisterConstant(CONFIG_AXSS);
+	RegisterConstant(CONFIG_COR1);
+	RegisterConstant(CONFIG_WBSTAR);
+	RegisterConstant(CONFIG_TIMER);
+	RegisterConstant(CONFIG_BOOTSTS);
+	RegisterConstant(CONFIG_CTL1);
+	RegisterConstant(CONFIG_BSPI);
 }
 /**
 	@brief Empty virtual destructor
@@ -211,7 +231,7 @@ void Xilinx7SeriesDevice::GetSerialNumber(unsigned char* data)
 bool Xilinx7SeriesDevice::IsProgrammed()
 {
 	Xilinx7SeriesDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_STAT);
 	return statreg.bits.done;
 }
 
@@ -237,7 +257,7 @@ void Xilinx7SeriesDevice::InternalErase()
 	int i;
 	for(i=0; i<10; i++)
 	{
-		statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+		statreg.word = ReadWordConfigRegister(CONFIG_STAT);
 		if(statreg.bits.init_b)
 			break;
 
@@ -338,7 +358,7 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 
 	//Get the status register and verify that configuration was successful
 	Xilinx7SeriesDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_STAT);
 	if(statreg.bits.done != 1 || statreg.bits.gwe != 1)
 	{
 		if(statreg.bits.crc_err)
@@ -362,7 +382,7 @@ void Xilinx7SeriesDevice::Program(FirmwareImage* image)
 void Xilinx7SeriesDevice::PrintStatusRegister()
 {
 	Xilinx7SeriesDeviceStatusRegister statreg;
-	statreg.word = ReadWordConfigRegister(X7_CONFIG_REG_STAT);
+	statreg.word = ReadWordConfigRegister(CONFIG_STAT);
 	LogIndenter li;
 	LogVerbose(
 		"Status register is 0x%04x\n"
@@ -548,7 +568,7 @@ void Xilinx7SeriesDevice::ParseBitstreamInternals(
 	fpos += sizeof(syncword);
 
 	//String names for config regs
-	static const char* config_register_names[X7_CONFIG_REG_MAX]=
+	static const char* config_register_names[CONFIG_MAX]=
 	{
 		"CRC",
 		"FAR",
@@ -635,7 +655,7 @@ void Xilinx7SeriesDevice::ParseBitstreamInternals(
 			}
 
 			//Validate frame
-			if(frame.bits.reg_addr >= X7_CONFIG_REG_MAX)
+			if(frame.bits.reg_addr >= CONFIG_MAX)
 			{
 				LogWarning("[Xilinx7SeriesDevice] Invalid register address 0x%x in config frame at bitstream offset %02x\n",
 					frame.bits.reg_addr, (int)fpos);
@@ -661,7 +681,7 @@ void Xilinx7SeriesDevice::ParseBitstreamInternals(
 				//Look at the frame data
 				switch(frame.bits.reg_addr)
 				{
-					case X7_CONFIG_REG_CMD:
+					case CONFIG_CMD:
 					{
 						//Expect 1 word
 						if(frame.bits.count != 1)
@@ -684,7 +704,7 @@ void Xilinx7SeriesDevice::ParseBitstreamInternals(
 						}
 					}
 					break;
-					case X7_CONFIG_REG_IDCODE:
+					case CONFIG_IDCODE:
 					{
 						//Expect 1 word
 						if(frame.bits.count != 1)

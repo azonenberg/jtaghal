@@ -79,6 +79,7 @@ void ARMCortexA9::PrintInfo()
 	//uint32_t pss_idcode = ReadMemory(0xF8000530);
 	//LogDebug("pss_idcode = %08x\n", pss_idcode);
 
+	/*
 	//Read MCTRL
 	uint32_t mctrl = ReadMemory(0xF8007080);
 	LogDebug("mctrl = %08x\n", mctrl);
@@ -95,6 +96,7 @@ void ARMCortexA9::PrintInfo()
 		m_ap->GetDebugPort()->WriteMemory(0xe000a040, 0x00000000);	//gpio.XGPIOPS_DATA_OFFSET
 		usleep(500 * 1000);
 	}
+	*/
 
 	//MIO LED @ MIO7
 	//MIO inputs at MIO50, 51

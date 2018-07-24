@@ -55,7 +55,7 @@ using namespace std;
 	@param pos		Position in the chain that this device was discovered
 	@param irlength	Length of the JTAG instruction register
  */
-JtagDevice::JtagDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
+JtagDevice::JtagDevice(uint32_t idcode, JtagInterface* iface, size_t pos, size_t irlength)
 : m_irlength(irlength)
 , m_idcode(idcode)
 , m_iface(iface)
@@ -80,7 +80,7 @@ JtagDevice::~JtagDevice()
 
 	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
  */
-JtagDevice* JtagDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
+JtagDevice* JtagDevice::CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos)
 {
 	//Rightmost bit is always a zero, ignore it
 	unsigned int idcode_s = (idcode >> 1) & 0x7ff;

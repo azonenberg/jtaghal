@@ -384,8 +384,10 @@ void XilinxSpartan6Device::PrintStatusRegister()
 	@throw JtagException if the read fails
 
 	@param reg The configuration register to read
+
+	@return The register value. Note that only the low 16 bits are valid but XilinxFPGA's API has 32 in the return type
  */
-uint16_t XilinxSpartan6Device::ReadWordConfigRegister(unsigned int reg)
+uint32_t XilinxSpartan6Device::ReadWordConfigRegister(unsigned int reg)
 {
 	//Send the read request
 	SetIR(INST_CFG_IN);

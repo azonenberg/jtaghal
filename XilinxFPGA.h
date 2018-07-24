@@ -51,6 +51,10 @@ public:
 
 	virtual void PostInitProbes();
 
+public:
+	//Configuration bus access
+	virtual uint32_t ReadWordConfigRegister(unsigned int reg)	=0;
+
 protected:
 	//Static function for parsing bitstream headers (common to all Xilinx devices)
 	void ParseBitstreamCore(XilinxFPGABitstream* bitstream, const unsigned char* data, size_t len);\

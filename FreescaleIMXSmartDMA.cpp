@@ -41,7 +41,7 @@
 using namespace std;
 
 FreescaleIMXSmartDMA::FreescaleIMXSmartDMA(
-	unsigned int devid, unsigned int stepping,
+	unsigned int /*devid*/, unsigned int /*stepping*/,
 	unsigned int idcode, JtagInterface* iface, size_t pos)
  : FreescaleDevice(idcode, iface, pos, 4)
 {

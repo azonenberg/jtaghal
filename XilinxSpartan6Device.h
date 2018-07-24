@@ -285,7 +285,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal configuration helpers
 protected:
-	uint16_t ReadWordConfigRegister(unsigned int reg);
+	virtual uint32_t ReadWordConfigRegister(unsigned int reg);
 	void ReadWordsConfigRegister(unsigned int reg, uint16_t* dout, unsigned int count);
 	void WriteWordConfigRegister(unsigned int reg, uint16_t value);
 

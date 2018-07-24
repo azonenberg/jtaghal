@@ -316,7 +316,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal configuration helpers
 protected:
-	uint32_t ReadWordConfigRegister(unsigned int reg);
+	virtual uint32_t ReadWordConfigRegister(unsigned int reg);
 
 	virtual void ParseBitstreamInternals(
 		const unsigned char* data,
