@@ -193,6 +193,12 @@ void JtagInterface::PrintChainFaultMessage()
  */
 void JtagInterface::InitializeChain()
 {
+	//Clear out any junk already on the chain. This is necessary if chain state ever changes
+	m_idcodes.clear();
+	for(auto d : m_devices)
+		delete d;
+	m_devices.clear();
+
 	unsigned char lots_of_ones[128];
 	memset(lots_of_ones, 0xff, sizeof(lots_of_ones));
 	unsigned char lots_of_zeros[128];
