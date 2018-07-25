@@ -202,7 +202,7 @@ class ARMv8Processor 	: public DebuggableDevice
 					, public ARMAPBDevice
 {
 public:
-	ARMv8Processor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	ARMv8Processor(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
 	virtual ~ARMv8Processor();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,21 +226,19 @@ public:
 	virtual std::string GetDescription() =0;
 	virtual void PrintInfo() =0;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Memory access via the default (AHB) MEM-AP
-
-	virtual uint32_t ReadMemory(uint64_t addr);
-
 protected:
-	/*
-	void PrintIDRegister(ARMv8DebugIDRegister did);
+
+	//void PrintIDRegister(ARMv8DebugIDRegister did);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debugger control
 
-	void EnterDebugState();
-	void ExitDebugState();
+	virtual void DebugHalt();
+	virtual void DebugResume();
 
+	virtual void PrintRegisters();
+
+	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ID register state etc
 

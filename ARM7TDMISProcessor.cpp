@@ -52,7 +52,8 @@ ARM7TDMISProcessor::ARM7TDMISProcessor(
 		unsigned int idcode,
 		JtagInterface* iface,
 		size_t pos)
-	: ARMDevice(idcode, iface, pos, 4)
+	: DebuggableDevice(NULL)
+	, ARMDevice(idcode, iface, pos, 4)
 	, m_rev(rev)
 {
 	m_selectedChain = 255;
@@ -241,17 +242,16 @@ void ARM7TDMISProcessor::PrintIDRegister(ARM7TDMISDebugIDRegister did)
 	LogVerbose("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 */
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System memory access
 
-uint32_t ARM7TDMISProcessor::ReadMemory(uint32_t /*addr*/)
-{
-	LogError("ARM7TDMISProcessor::ReadMemory unimplemented\n");
-	return 0;
-	//return m_ap->GetDebugPort()->ReadMemory(addr);
-}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debugging
+
+void ARM7TDMISProcessor::PrintRegisters()
+{
+	throw JtagExceptionWrapper(
+		"Register printing not implemented for this CPU yet",
+		"");
+}
 
 /**
 	@brief Checks if the CPU is halted due to a fatal error
@@ -351,14 +351,21 @@ void ARM7TDMISProcessor::DumpRegisters()
 		LogNotice("%10s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
 }*/
 
+uint32_t ARM7TDMISProcessor::ReadMemory(uint32_t addr)
+{
+	throw JtagExceptionWrapper(
+		"Memory access not implemented for this CPU yet",
+		"");
+
+	return 0;
+}
+
 /**
 	@brief Halts the CPU and enters debug state
-
-	See ARMv7-M arch manual C1-6
  */
- /*(
-void ARM7TDMISProcessor::EnterDebugState()
+void ARM7TDMISProcessor::DebugHalt()
 {
+	/*
 	LogTrace("Halting CPU to enter debug state...\n");
 	LogIndenter li;
 
@@ -375,12 +382,16 @@ void ARM7TDMISProcessor::EnterDebugState()
 			break;
 		//LogTrace("DHCSR = %08x\n", dhcsr);
 		usleep(1000);
-	}
+	}*/
+	throw JtagExceptionWrapper(
+		"Debug halt/resume not implemented for this CPU yet",
+		"");
 }
 
 
-void ARM7TDMISProcessor::ExitDebugState()
+void ARM7TDMISProcessor::DebugResume()
 {
+	/*
 	//Request a resume by writing to DBGDRCR.RRQ
 	LogTrace("Restarting CPU...\n");
 	LogIndenter li;
@@ -394,9 +405,11 @@ void ARM7TDMISProcessor::ExitDebugState()
 		if(v & 2)
 			break;
 		usleep(1000);
-	}
+	}*/
+	throw JtagExceptionWrapper(
+		"Debug halt/resume not implemented for this CPU yet",
+		"");
 }
-*/
 
 bool ARM7TDMISProcessor::IsProgrammed()
 {

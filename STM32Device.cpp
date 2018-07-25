@@ -274,7 +274,7 @@ void STM32Device::PrintLockProbeDetails()
 		{
 			cpu->ReadCPURegister(ARMv7MProcessor::R0);
 			LogNotice("CPU registers:  unlocked\n");
-			cpu->DumpRegisters();
+			cpu->PrintRegisters();
 		}
 		catch(const JtagException& e)
 		{

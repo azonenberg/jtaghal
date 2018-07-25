@@ -36,6 +36,8 @@
 #ifndef DebuggableDevice_h
 #define DebuggableDevice_h
 
+class DebuggerInterface;
+
 /**
 	@brief Generic base class for all debuggable devices (MCUs etc)
 
@@ -44,6 +46,7 @@
 class DebuggableDevice
 {
 public:
+	DebuggableDevice(DebuggerInterface* iface);
 	virtual ~DebuggableDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +54,20 @@ public:
 
 	virtual std::string GetDescription() =0;
 
+	virtual uint32_t ReadMemory(uint32_t addr);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debug commands
+
+	//Halt the CPU and enter debug mode
+	virtual void DebugHalt() =0;
+	virtual void DebugResume() =0;
+
+	//Print out all registers
+	virtual void PrintRegisters() =0;
+
+protected:
+	DebuggerInterface* m_iface;
 };
 
 #endif

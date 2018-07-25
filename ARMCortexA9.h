@@ -44,7 +44,7 @@
 class ARMCortexA9 	: public ARMv7Processor
 {
 public:
-	ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	ARMCortexA9(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
 	virtual ~ARMCortexA9();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -44,7 +44,7 @@
 class ARMCortexA57 	: public ARMv8Processor
 {
 public:
-	ARMCortexA57(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	ARMCortexA57(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
 	virtual ~ARMCortexA57();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

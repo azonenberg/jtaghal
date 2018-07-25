@@ -112,19 +112,19 @@ void ARMDebugMemAccessPort::PrintStatusRegister()
 {
 	ARMDebugMemAPControlStatusWord csw = GetStatusRegister();
 	LogIndenter li;
-	LogDebug("Status register for AP %u:\n", m_apnum);
+	LogNotice("Status register for AP %u:\n", m_apnum);
 	LogIndenter li2;
 	if(csw.bits.size >= ACCESS_INVALID)
-		LogDebug("Size               : UNDEFINED\n");
+		LogNotice("Size               : UNDEFINED\n");
 	else
-		LogDebug("Size               : %s\n", g_cswLenNames[csw.bits.size]);
-	LogDebug("Auto inc           : %u\n", csw.bits.auto_increment);
-	LogDebug("Enable             : %u\n", csw.bits.enable);
-	LogDebug("Busy               : %u\n", csw.bits.busy);
-	LogDebug("Mode               : %u\n", csw.bits.mode);
-	LogDebug("Secure debug       : %u\n", csw.bits.secure_priv_debug);
-	LogDebug("Bus protection     : %u\n", csw.bits.bus_protect);
-	LogDebug("Nonsecure transfer : %u\n", csw.bits.nonsecure_transfer);
+		LogNotice("Size               : %s\n", g_cswLenNames[csw.bits.size]);
+	LogNotice("Auto inc           : %u\n", csw.bits.auto_increment);
+	LogNotice("Enable             : %u\n", csw.bits.enable);
+	LogNotice("Busy               : %u\n", csw.bits.busy);
+	LogNotice("Mode               : %u\n", csw.bits.mode);
+	LogNotice("Secure debug       : %u\n", csw.bits.secure_priv_debug);
+	LogNotice("Bus protection     : %u\n", csw.bits.bus_protect);
+	LogNotice("Nonsecure transfer : %u\n", csw.bits.nonsecure_transfer);
 }
 
 string ARMDebugMemAccessPort::GetDescription()
@@ -406,7 +406,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 			//Cortex-M4 SCS
 			case 0x00c:
 			{
-				ARMCortexM4* cortex = new ARMCortexM4(this, base_address, reg.bits);
+				ARMCortexM4* cortex = new ARMCortexM4(m_dp, this, base_address, reg.bits);
 				m_dp->AddTarget(cortex);
 				m_debugDevices.push_back(cortex);
 			}
@@ -415,7 +415,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 			//Cortex-A57
 			case 0xd07:
 			{
-				ARMCortexA57* cortex = new ARMCortexA57(this, base_address, reg.bits);
+				ARMCortexA57* cortex = new ARMCortexA57(m_dp, this, base_address, reg.bits);
 				m_dp->AddTarget(cortex);
 				m_debugDevices.push_back(cortex);
 			}
@@ -424,7 +424,7 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 			//Cortex-A9
 			case 0xC09:
 			{
-				ARMCortexA9* cortex = new ARMCortexA9(this, base_address, reg.bits);
+				ARMCortexA9* cortex = new ARMCortexA9(m_dp, this, base_address, reg.bits);
 				m_dp->AddTarget(cortex);
 				m_debugDevices.push_back(cortex);
 			}

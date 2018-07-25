@@ -46,8 +46,12 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMCortexA57::ARMCortexA57(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMv8Processor(ap, address, idreg)
+ARMCortexA57::ARMCortexA57(
+	DebuggerInterface* iface,
+	ARMDebugMemAccessPort* ap,
+	uint32_t address,
+	ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMv8Processor(iface, ap, address, idreg)
 {
 
 }

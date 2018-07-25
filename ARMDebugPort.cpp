@@ -393,7 +393,7 @@ ARMDebugPortStatusRegister ARMDebugPort::GetStatusRegister()
 void ARMDebugPort::ClearStatusRegisterErrors()
 {
 	ARMDebugPortStatusRegister stat;
-	stat.word = 0;
+	stat.word = DPRegisterRead(REG_CTRL_STAT);
 	stat.bits.sticky_err = 1;
 	DPRegisterWrite(REG_CTRL_STAT, stat.word);
 }
@@ -455,7 +455,6 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 	if(i == nmax)
 	{
 		DebugAbort();
-		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
 			"Failed to read AP register (still waiting after way too long)",
 			"");
@@ -469,7 +468,6 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 		//PrintStatusRegister(stat, false);
 
 		DebugAbort();
-		ClearStatusRegisterErrors();
 
 		throw JtagExceptionWrapper(
 			"Failed to read AP register",
@@ -485,14 +483,18 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 void ARMDebugPort::DebugAbort()
 {
 	SetIR(INST_ABORT);
-	m_iface->EnterShiftDR();
 
 	//Write to the abort register
-	//TODO: make a bit field or something
-	uint32_t abort_value = 0x1;
-	unsigned char unused[4] = {0};
-	m_iface->ShiftData(1, (unsigned char*)&abort_value, unused, 32);
-	m_iface->LeaveExit1DR();
+	uint8_t abort_value[5] = {0};
+	PokeBit(abort_value, 3, true);
+	unsigned char unused[5];
+	ScanDR(abort_value, unused, 35);
+	auto statreg = GetStatusRegister();
+	if(statreg.bits.sticky_err)
+	{
+		LogTrace("Sticky error bit is set, clearing\n");
+		ClearStatusRegisterErrors();
+	}
 }
 
 /**
@@ -563,7 +565,6 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 		*/
 
 		DebugAbort();
-		ClearStatusRegisterErrors();
 		throw JtagExceptionWrapper(
 			"Failed to write AP register",
 			"");
@@ -580,29 +581,50 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 uint32_t ARMDebugPort::DPRegisterRead(DpReg addr)
 {
 	SetIR(INST_DPACC);
+	uint32_t data_out;
 
-	//Send the 3-bit A / RnW field to request the read
-	uint8_t addr_flags = (addr << 1) | OP_READ;
-	uint8_t txd[5] = {0};
-	for(int i=0; i<3; i++)
-		PokeBit(txd, i, PeekBit(&addr_flags, i));
-	unsigned char rxd[5];
-	ScanDR(txd, rxd, 35);
-
-	//Send the same A / RnW field again to get the response data
-	ScanDR(txd, rxd, 35);
-	uint8_t ack_out = 0;
-	for(int i=0; i<3; i++)
-		PokeBit(&ack_out, i, PeekBit(rxd, i));
-	if(ack_out != OK_OR_FAULT)
+	//Poll until we get a good read back
+	int i = 0;
+	int nmax = 50;
+	for(; i<nmax; i++)
 	{
+		//Send the 3-bit A / RnW field to request the read
+		uint8_t addr_flags = (addr << 1) | OP_READ;
+		uint8_t txd[5] = {0};
+		for(int i=0; i<3; i++)
+			PokeBit(txd, i, PeekBit(&addr_flags, i));
+		uint8_t rxd[5];
+		ScanDR(txd, rxd, 35);
+		uint8_t ack_out = 0;
+		for(int i=0; i<3; i++)
+			PokeBit(&ack_out, i, PeekBit(rxd, i));
+
+		//If we got data, crunch it.
+		//Note that the first poll can never return the data since we haven't even done the read request yet!
+		if((ack_out == OK_OR_FAULT) && (i > 0) )
+		{
+			for(int i=0; i<32; i++)
+				PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
+			break;
+		}
+
+		//No go? Try again after a millisecond
+		if(i == 1)
+			LogTrace("No go, trying again after 1 ms\n");
+		if(i >= 1)
+			usleep(1 * 1000);
+	}
+	if(i > 1)
+		LogTrace("Poll ended after %d ms\n", i);
+
+	//Give up if we still got nothing
+	if(i == nmax)
+	{
+		DebugAbort();
 		throw JtagExceptionWrapper(
-			"Don't know what to do with WAIT request from DAP",
+			"Failed to read DP register (still waiting after way too long)",
 			"");
 	}
-	uint32_t data_out;
-	for(int i=0; i<32; i++)
-		PokeBit((unsigned char*)&data_out, i, PeekBit(rxd, i+3));
 
 	return data_out;
 }

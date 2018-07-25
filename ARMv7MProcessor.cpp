@@ -46,8 +46,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMv7MProcessor::ARMv7MProcessor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMAPBDevice(ap, address, idreg)
+ARMv7MProcessor::ARMv7MProcessor(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: DebuggableDevice(iface)
+	, ARMAPBDevice(ap, address, idreg)
 {
 	//LogTrace("Found ARMv7-M processor at %08x, probing...\n", address);
 
@@ -129,13 +130,6 @@ void ARMv7MProcessor::PrintIDRegister(ARMv7MDebugIDRegister did)
 	LogVerbose("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
 */
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System memory access
-
-uint32_t ARMv7MProcessor::ReadMemory(uint32_t addr)
-{
-	return m_ap->GetDebugPort()->ReadMemory(addr);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debugging
@@ -217,7 +211,10 @@ uint32_t ARMv7MProcessor::ReadCPURegister(ARM_V7M_CPU_REGISTERS reg)
 	return ReadRegisterByIndex(DCRDR);
 }
 
-void ARMv7MProcessor::DumpRegisters()
+/**
+	@brief Prints out all CPU registers
+ */
+void ARMv7MProcessor::PrintRegisters()
 {
 	ARM_V7M_CPU_REGISTERS all_regs[] =
 	{
@@ -242,7 +239,7 @@ void ARMv7MProcessor::DumpRegisters()
 
 	See ARMv7-M arch manual C1-6
  */
-void ARMv7MProcessor::EnterDebugState()
+void ARMv7MProcessor::DebugHalt()
 {
 	LogTrace("Halting CPU to enter debug state...\n");
 	LogIndenter li;
@@ -264,7 +261,7 @@ void ARMv7MProcessor::EnterDebugState()
 }
 
 
-void ARMv7MProcessor::ExitDebugState()
+void ARMv7MProcessor::DebugResume()
 {
 	/*
 	//Request a resume by writing to DBGDRCR.RRQ

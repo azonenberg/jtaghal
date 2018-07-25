@@ -54,6 +54,7 @@ public:
 public:
 	//Configuration bus access
 	virtual uint32_t ReadWordConfigRegister(unsigned int reg)	=0;
+	virtual void PrintStatusRegister() =0;
 
 protected:
 	//Static function for parsing bitstream headers (common to all Xilinx devices)
@@ -76,7 +77,6 @@ protected:
 		XilinxFPGABitstream* bitstream,
 		size_t fpos) =0;
 
-	virtual void PrintStatusRegister() =0;
 	virtual bool ReadingSerialRequiresReset();
 
 public:

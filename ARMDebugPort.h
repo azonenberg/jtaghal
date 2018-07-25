@@ -200,10 +200,15 @@ public:
 		REG_IDR			= 0xFC	//ID code
 	};
 
-protected:
+public:
 	ARMDebugPortStatusRegister GetStatusRegister();
-	void ClearStatusRegisterErrors();
 	void PrintStatusRegister(ARMDebugPortStatusRegister reg, bool children = true);
+
+	void PrintStatusRegister()
+	{ PrintStatusRegister(GetStatusRegister()); }
+
+protected:
+	void ClearStatusRegisterErrors();
 
 	uint32_t DPRegisterRead(DpReg addr);
 	void DPRegisterWrite(DpReg addr, uint32_t wdata);

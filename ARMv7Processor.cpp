@@ -46,8 +46,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMv7Processor::ARMv7Processor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMAPBDevice(ap, address, idreg)
+ARMv7Processor::ARMv7Processor(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: DebuggableDevice(iface)
+	, ARMAPBDevice(ap, address, idreg)
 {
 	LogTrace("Found ARMv7 processor at %08x, probing...\n", address);
 
@@ -129,22 +130,18 @@ void ARMv7Processor::PrintIDRegister(ARMv7DebugIDRegister did)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System memory access
-
-uint32_t ARMv7Processor::ReadMemory(uint32_t addr)
-{
-	return m_ap->GetDebugPort()->ReadMemory(addr);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debugging
+
+void ARMv7Processor::PrintRegisters()
+{
+}
 
 /**
 	@brief Halts the CPU and enters debug state
 
 	See ARMv7-A/R arch ref manual, C11-2236
  */
-void ARMv7Processor::EnterDebugState()
+void ARMv7Processor::DebugHalt()
 {
 	//Request a halt by writing to DBGDRCR.HRQ
 	LogTrace("Halting CPU to enter debug state...\n");
@@ -162,7 +159,7 @@ void ARMv7Processor::EnterDebugState()
 	}
 }
 
-void ARMv7Processor::ExitDebugState()
+void ARMv7Processor::DebugResume()
 {
 	//Request a resume by writing to DBGDRCR.RRQ
 	LogTrace("Restarting CPU...\n");

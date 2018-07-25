@@ -44,7 +44,7 @@
 class ARMCortexM4 	: public ARMv7MProcessor
 {
 public:
-	ARMCortexM4(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
+	ARMCortexM4(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg);
 	virtual ~ARMCortexM4();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

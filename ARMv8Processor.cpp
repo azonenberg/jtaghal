@@ -46,8 +46,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMv8Processor::ARMv8Processor(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMAPBDevice(ap, address, idreg)
+ARMv8Processor::ARMv8Processor(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: DebuggableDevice(iface)
+	, ARMAPBDevice(ap, address, idreg)
 {
 	LogTrace("Found ARMv8 processor at %08x, probing...\n", address);
 
@@ -133,25 +134,21 @@ void ARMv8Processor::PrintIDRegister(ARMv8DebugIDRegister did)
 		did.bits.bpoints_minus_one+1, did.bits.context_bpoints_minus_one+1);
 	LogVerbose("%d watchpoints\n", did.bits.wpoints_minus_one + 1);
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System memory access*/
-uint32_t ARMv8Processor::ReadMemory(uint64_t addr)
-{
-	return m_ap->GetDebugPort()->ReadMemory(addr);
-}
+*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debugging
 
+void ARMv8Processor::PrintRegisters()
+{
+}
+
 /**
 	@brief Halts the CPU and enters debug state
-
-	See ARMv8-A/R arch ref manual, C11-2236
  */
-/*
-void ARMv8Processor::EnterDebugState()
+void ARMv8Processor::DebugHalt()
 {
+	/*
 	//Request a halt by writing to DBGDRCR.HRQ
 	LogTrace("Halting CPU to enter debug state...\n");
 	LogIndenter li;
@@ -166,10 +163,15 @@ void ARMv8Processor::EnterDebugState()
 			break;
 		usleep(1000);
 	}
+	*/
+	throw JtagExceptionWrapper(
+		"Debug halt/resume not implemented for this CPU yet",
+		"");
 }
 
-void ARMv8Processor::ExitDebugState()
+void ARMv8Processor::DebugResume()
 {
+	/*
 	//Request a resume by writing to DBGDRCR.RRQ
 	LogTrace("Restarting CPU...\n");
 	LogIndenter li;
@@ -184,5 +186,8 @@ void ARMv8Processor::ExitDebugState()
 			break;
 		usleep(1000);
 	}
+	*/
+	throw JtagExceptionWrapper(
+		"Debug halt/resume not implemented for this CPU yet",
+		"");
 }
-*/

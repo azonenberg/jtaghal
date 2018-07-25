@@ -46,8 +46,8 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMCortexM4::ARMCortexM4(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMv7MProcessor(ap, address, idreg)
+ARMCortexM4::ARMCortexM4(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMv7MProcessor(iface, ap, address, idreg)
 {
 	//LogTrace("Found ARM Cortex-M4 at %08x, probing...\n", address);
 

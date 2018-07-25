@@ -46,8 +46,12 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMCortexA9::ARMCortexA9(ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMv7Processor(ap, address, idreg)
+ARMCortexA9::ARMCortexA9(
+	DebuggerInterface* iface,
+	ARMDebugMemAccessPort* ap,
+	uint32_t address,
+	ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMv7Processor(iface, ap, address, idreg)
 {
 
 }
@@ -107,8 +111,15 @@ void ARMCortexA9::PrintInfo()
 	//Read L0_SEL
 
 	//Read the PC and dump the instruction at that address
-	uint32_t pc = SampleProgramCounter();
-	LogVerbose("PC = %08x\n", pc);
+	try
+	{
+		uint32_t pc = SampleProgramCounter();
+		LogVerbose("PC = %08x\n", pc);
+	}
+	catch(const JtagException& e)
+	{
+		LogVerbose("Error reading PC value\n");
+	}
 	//uint32_t value = ReadMemory(0xE0000000);//m_ap->ReadWord(0x80000000); //ReadMemory(0xFC000000);
 
 	//LogDebug("    value = %08x\n", value);
