@@ -351,13 +351,20 @@ void ARM7TDMISProcessor::DumpRegisters()
 		LogNotice("%10s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
 }*/
 
-uint32_t ARM7TDMISProcessor::ReadMemory(uint32_t addr)
+uint32_t ARM7TDMISProcessor::ReadMemory(uint32_t /*addr*/)
 {
 	throw JtagExceptionWrapper(
 		"Memory access not implemented for this CPU yet",
 		"");
 
 	return 0;
+}
+
+void ARM7TDMISProcessor::WriteMemory(uint32_t /*addr*/, uint32_t /*value*/)
+{
+	throw JtagExceptionWrapper(
+		"Memory access not implemented for this CPU yet",
+		"");
 }
 
 /**

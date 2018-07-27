@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -55,6 +55,7 @@ public:
 	virtual std::string GetDescription() =0;
 
 	virtual uint32_t ReadMemory(uint32_t addr);
+	virtual void WriteMemory(uint32_t addr, uint32_t value);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug commands

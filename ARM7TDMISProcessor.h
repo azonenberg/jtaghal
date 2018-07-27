@@ -146,6 +146,7 @@ protected:
 	virtual void PrintRegisters();
 
 	virtual uint32_t ReadMemory(uint32_t addr);
+	virtual void WriteMemory(uint32_t addr, uint32_t value);
 
 	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

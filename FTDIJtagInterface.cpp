@@ -432,18 +432,28 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type, const std::string& layout)
 		m_gpioDirection.push_back(false);
 	}
 
-	//Digilent HS1 and azonenberg's usb-jtag-mini (0403:8028): GPIOL3 is active HIGH output enable
+	//Digilent HS1 and azonenberg's usb-jtag-mini (0403:8028)
 	if(layout == "hs1")
 	{
+		//GPIOL3 is active HIGH output enable
 		SetGpioDirectionDeferred(3, true);
 		SetGpioValueDeferred(3, true);
 	}
 
-	//JTAGKey (or compatible bus blaster etc): GPIOL0 is active LOW output enable
+	//JTAGKey (or compatible bus blaster etc)
 	else if(layout == "jtagkey")
 	{
+		//GPIOL0 is active LOW output enable
 		SetGpioDirectionDeferred(0, true);
 		SetGpioValueDeferred(0, false);
+
+		//GPIOH0 is TRST_N, hold this high for now since we don't support TRST in the API yet
+		SetGpioDirectionDeferred(4, true);
+		SetGpioValueDeferred(4, true);
+
+		//GPIOH2 is TRST_N_OE_N, hold this high so TRST is driven
+		SetGpioDirectionDeferred(6, true);
+		SetGpioValueDeferred(6, true);
 	}
 
 	else
