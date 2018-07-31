@@ -403,6 +403,32 @@ void ARMDebugMemAccessPort::ProcessDebugBlock(uint32_t base_address, uint32_t id
 		//Handle fully supported devices first, then just make a generic CoreSight device for the rest
 		switch(reg.bits.partnum)
 		{
+			//Cortex-M4 FPB
+			case 0x003:
+			{
+				//Find the CPU it goes to
+				ARMv7MProcessor* cpu = NULL;
+				for(size_t i=m_debugDevices.size() - 1; ; i--)
+				{
+					cpu = dynamic_cast<ARMv7MProcessor*>(m_debugDevices[i]);
+					if(cpu)
+						break;
+					if(i == 0)
+						break;
+				}
+
+				if(!cpu)
+				{
+					LogError("Found Cortex-M4 Flash Patch/Breakpoint unit but unable to match it to a CPU core");
+					return;
+				}
+
+				//Create the FPB unit and attach it to the CPU (rather than having it show up as a separate device)
+				ARMFlashPatchBreakpoint* fpb = new ARMFlashPatchBreakpoint(cpu, this, base_address, reg.bits);
+				cpu->AddFlashPatchUnit(fpb);
+			};
+			break;
+
 			//Cortex-M4 SCS
 			case 0x00c:
 			{

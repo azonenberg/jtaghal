@@ -139,7 +139,10 @@
 
 //Vendor device classes (and support stuff)
 #include "ARMDebugPort.h"
+#include "ARMDebugMemAccessPort.h"
 #include "ARMAPBDevice.h"
+#include "ARMCoreSightDevice.h"
+#include "ARMFlashPatchBreakpoint.h"
 #include "ARMv7Processor.h"
 #include "ARMv8Processor.h"
 #include "ARMv7MProcessor.h"

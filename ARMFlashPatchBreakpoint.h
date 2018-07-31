@@ -30,59 +30,63 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of ARMCortexM4
+	@brief ARMv7-M Flash Patch/Breakpoint Unit
  */
+#ifndef ARMFlashPatchBreakpoint_h
+#define ARMFlashPatchBreakpoint_h
 
-#include "jtaghal.h"
-#include "DebuggableDevice.h"
-#include "ARMAPBDevice.h"
-#include "ARMDebugPort.h"
-#include "ARMDebugAccessPort.h"
-#include "ARMDebugMemAccessPort.h"
-#include "ARMCortexM4.h"
+class ARMv7MProcessor;
 
-using namespace std;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
-
-ARMCortexM4::ARMCortexM4(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: ARMv7MProcessor(iface, ap, address, idreg)
+class ARMFlashPatchBreakpoint : public ARMCoreSightDevice
 {
+public:
+	ARMFlashPatchBreakpoint(
+		ARMv7MProcessor* cpu,
+		ARMDebugMemAccessPort* ap,
+		uint32_t address,
+		ARMDebugPeripheralIDRegisterBits idreg);
+	virtual ~ARMFlashPatchBreakpoint();
 
-}
+	virtual std::string GetDescription();
+	virtual void PrintInfo();
 
-ARMCortexM4::~ARMCortexM4()
-{
+	enum FpbRegisters
+	{
+		FP_CTRL		= 0,
+		FP_REMAP	= 1,
+		FP_COMP0	= 2	//plus comparator number
+	};
 
-}
+	uint32_t GetCodeComparatorIndex(uint32_t i)
+	{ return FP_COMP0 + i; }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General device info
+	uint32_t GetLiteralComparatorIndex(uint32_t i)
+	{ return FP_COMP0 + m_codeComparators + i; }
 
-void ARMCortexM4::PrintInfo()
-{
-	LogVerbose("%s\n", GetDescription().c_str());
-	LogIndenter li;
+	uint32_t GetCodeComparatorCount()
+	{ return m_codeComparators; }
 
-	if(HaltedDueToUnrecoverableException())
-		LogVerbose("Core is halted due to unrecoverable exception\n");
+	uint32_t GetLiteralComparatorCount()
+	{ return m_literalComparators; }
 
-	if(m_fpb)
-		m_fpb->PrintInfo();
-}
+	void Enable();
+	void Disable();
 
-string ARMCortexM4::GetDescription()
-{
-	char tmp[128];
-	snprintf(
-		tmp,
-		sizeof(tmp),
-		"ARM Cortex-M4 rev %d mod %d stepping %d",
-		m_idreg.revnum,
-		m_idreg.cust_mod,
-		m_idreg.revand
-		);
+	void SetRemapTableBase(uint32_t base);
+	void RemapFlashWord(uint32_t slot, uint32_t flashAddress, uint32_t newValue);
+	//TODO: literal comparator support
 
-	return string(tmp);
-}
+protected:
+	ARMv7MProcessor* m_cpu;
+
+	uint32_t	m_codeComparators;
+	uint32_t	m_literalComparators;
+	bool		m_enabled;
+	bool		m_canRemap;
+	uint32_t	m_tableBase;
+	uint32_t	m_sramBase;
+
+	void ProbeStatusRegisters();
+};
+
+#endif

@@ -30,193 +30,157 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of ARMv7MProcessor
+	@brief ARM Cortex-M Flash Patch/Breakpoint
  */
-
 #include "jtaghal.h"
-#include "DebuggableDevice.h"
 #include "ARMAPBDevice.h"
-#include "ARMDebugPort.h"
-#include "ARMDebugAccessPort.h"
-#include "ARMDebugMemAccessPort.h"
-#include "ARMv7MProcessor.h"
+#include "ARMFlashPatchBreakpoint.h"
 
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMv7MProcessor::ARMv7MProcessor(DebuggerInterface* iface, ARMDebugMemAccessPort* ap, uint32_t address, ARMDebugPeripheralIDRegisterBits idreg)
-	: DebuggableDevice(iface)
-	, ARMAPBDevice(ap, address, idreg)
-	, m_fpb(NULL)
+ARMFlashPatchBreakpoint::ARMFlashPatchBreakpoint(
+	ARMv7MProcessor* cpu,
+	ARMDebugMemAccessPort* ap,
+	uint32_t address,
+	ARMDebugPeripheralIDRegisterBits idreg)
+	: ARMCoreSightDevice(ap, address, idreg)
+	, m_cpu(cpu)
 {
+	//Assume RAM is at 0x20000000 for now.
+	//TODO: is this always true for Cortex-M's?
+	m_sramBase = 0x20000000;
 
+	//Read the control register to get read-only config
+	uint32_t ctrl = ReadRegisterByIndex(FP_CTRL);
+	m_literalComparators = (ctrl >> 8) & 0xf;
+	m_codeComparators = ( (ctrl >> 4) & 0xf ) | ( (ctrl >> 8) & 0xf0 );
+
+	//Read the remap register to see if we can remap or just to breakpoints
+	uint32_t remap = ReadRegisterByIndex(FP_REMAP);
+	m_canRemap = false;
+	if(remap & 0x20000000)
+		m_canRemap = true;
+
+	//Pull volatile config
+	ProbeStatusRegisters();
 }
 
-ARMv7MProcessor::~ARMv7MProcessor()
+ARMFlashPatchBreakpoint::~ARMFlashPatchBreakpoint()
 {
-	if(m_fpb)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Pretty printing
+
+void ARMFlashPatchBreakpoint::ProbeStatusRegisters()
+{
+	uint32_t ctrl = ReadRegisterByIndex(FP_CTRL);
+	m_enabled = (ctrl & 1) ? true : false;
+
+	uint32_t remap = ReadRegisterByIndex(FP_REMAP);
+	m_tableBase = (remap & 0x1FFFFFE0) | m_sramBase;
+}
+
+void ARMFlashPatchBreakpoint::PrintInfo()
+{
+	ProbeStatusRegisters();
+
+	//Heading
+	LogNotice("%s rev %d.%d.%d\n",
+		GetDescription().c_str(),
+		m_idreg.revnum, m_idreg.cust_mod, m_idreg.revand);
+	LogIndenter li;
+
+	//LogNotice("Attached to CPU: %s\n", m_cpu->GetDescription().c_str());
+
+	//Summary
+	if(m_enabled)
+		LogNotice("FPB enabled\n");
+	else
+		LogNotice("FPB disabled\n");
+
+	if(m_canRemap)
 	{
-		delete m_fpb;
-		m_fpb = NULL;
+		LogNotice("Remap supported\n");
+		LogNotice("Remap table is at 0x%08x\n", m_tableBase);
+	}
+	else
+		LogNotice("Remap not supported, breakpoints only\n");
+
+	//Code
+	LogNotice("%d code comparators\n", m_codeComparators);
+	for(uint32_t i=0; i<m_codeComparators; i++)
+	{
+		LogIndenter li2;
+	}
+
+	//Literals
+	LogNotice("%d literal comparators\n", m_literalComparators);
+}
+
+string ARMFlashPatchBreakpoint::GetDescription()
+{
+	switch(m_idreg.partnum)
+	{
+		case 0x003:
+			return "Cortex-M4 Flash Patch/Breakpoint";
+
+		default:
+			LogWarning("Unknown ARM FPB device (part number 0x%x)\n", m_idreg.partnum);
+			return "unknown FPB device";
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debug info
+// Fun commands that actually do stuff
 
-/**
-	@brief Checks if the CPU is halted due to a fatal error
- */
-bool ARMv7MProcessor::HaltedDueToUnrecoverableException()
+void ARMFlashPatchBreakpoint::Enable()
 {
-	uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
-	if( (dhcsr >> 19) & 1)
-		return true;
-	return false;
+	uint32_t ctrl = ReadRegisterByIndex(FP_CTRL);
+	ctrl |= 1;		//set ENABLE
+	ctrl |= 2;		//must also set KEY for writes to take effect
+	WriteRegisterByIndex(FP_CTRL, ctrl);
+
+	m_enabled = true;
 }
 
-const char* ARMv7MProcessor::GetRegisterName(ARM_V7M_CPU_REGISTERS reg)
+void ARMFlashPatchBreakpoint::Disable()
 {
-	switch(reg)
-	{
-		case R0:
-			return "R0";
-		case R1:
-			return "R1";
-		case R2:
-			return "R2";
-		case R3:
-			return "R3";
-		case R4:
-			return "R4";
-		case R5:
-			return "R5";
-		case R6:
-			return "R6";
-		case R7:
-			return "R7";
-		case R8:
-			return "R8";
-		case R9:
-			return "R9";
-		case R10:
-			return "R10";
-		case R11:
-			return "R11";
-		case R12:
-			return "R12";
-		case SP:
-			return "SP";
-		case LR:
-			return "LR";
-		case DBGRA:
-			return "DBGRA";
-		case XPSR:
-			return "xPSR";
-		case MSP:
-			return "MSP";
-		case PSP:
-			return "PSP";
-		case CTRL:
-			return "CTRL";
-	}
-	return "(invalid)";
+	uint32_t ctrl = ReadRegisterByIndex(FP_CTRL);
+	ctrl &= ~1;		//clear ENABLE
+	ctrl |= 2;		//must also set KEY for writes to take effect
+	WriteRegisterByIndex(FP_CTRL, ctrl);
+
+	m_enabled = false;
 }
 
-uint32_t ARMv7MProcessor::ReadCPURegister(ARM_V7M_CPU_REGISTERS reg)
+void ARMFlashPatchBreakpoint::SetRemapTableBase(uint32_t base)
 {
-	//Request the read
-	WriteRegisterByIndex(DCRSR, (0x0000 << 16) | reg);	//0000 = read, 0001 = write
+	//TODO: Sanity check that address is within SRAM region
 
-	//Poll DHCSR.S_REGRDY until we're done
-	while(true)
+	//Align to 8 word boundary
+	base &= 0x1FFFFFE0;
+	WriteRegisterByIndex(FP_REMAP, base);
+
+	//Save the actual address including SRAM offset
+	m_tableBase = base | m_sramBase;
+}
+
+void ARMFlashPatchBreakpoint::RemapFlashWord(uint32_t slot, uint32_t flashAddress, uint32_t newValue)
+{
+	if(flashAddress & 3)
 	{
-		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
-		if(dhcsr & 0x00010000)
-			break;
-		usleep(100);
+		LogWarning("ARM FPB requres word-aligned address\n");
+		return;
 	}
 
-	//Read the actual data
-	return ReadRegisterByIndex(DCRDR);
-}
+	//Write the patched data to the remap table
+	m_ap->WriteWord(m_tableBase + slot*4, newValue);
 
-/**
-	@brief Prints out all CPU registers
- */
-void ARMv7MProcessor::PrintRegisters()
-{
-	ARM_V7M_CPU_REGISTERS all_regs[] =
-	{
-		R0, R1, R2, R3,  R4,  R5, R6,
-		R7, R8, R9, R10, R11, R12,
-		SP,
-		LR,
-		DBGRA,
-		XPSR,
-		MSP,
-		PSP,
-		CTRL
-	};
-
-	LogIndenter li;
-	for(auto reg : all_regs)
-		LogNotice("%10s: %08x\n", GetRegisterName(reg), ReadCPURegister(reg));
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debug commands
-
-void ARMv7MProcessor::AddFlashPatchUnit(ARMFlashPatchBreakpoint* fpb)
-{
-	if(!m_fpb)
-		m_fpb = fpb;
-}
-
-/**
-	@brief Halts the CPU and enters debug state
-
-	See ARMv7-M arch manual C1-6
- */
-void ARMv7MProcessor::DebugHalt()
-{
-	LogTrace("Halting CPU to enter debug state...\n");
-	LogIndenter li;
-
-	//Set C_DEBUGEN and C_HALT on consecutive writes.
-	//When we halt, also mask interrupts
-	WriteRegisterByIndex(DHCSR, 0xa05f0001);
-	WriteRegisterByIndex(DHCSR, 0xa05f000b);
-
-	//Poll DHCSR.S_HALT until the CPU stops
-	while(true)
-	{
-		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
-		if(dhcsr & 0x00020000)
-			break;
-		//LogTrace("DHCSR = %08x\n", dhcsr);
-		usleep(1000);
-	}
-}
-
-
-void ARMv7MProcessor::DebugResume()
-{
-	LogTrace("Resuming CPU...\n");
-	LogIndenter li;
-
-	//Leave debug state
-	WriteRegisterByIndex(DHCSR, 0xa05f0000);
-
-	//Poll DHCSR.S_HALT until the CPU is running
-	while(true)
-	{
-		uint32_t dhcsr = ReadRegisterByIndex(DHCSR);
-		if(! (dhcsr & 0x00020000) )
-			break;
-		//LogTrace("DHCSR = %08x\n", dhcsr);
-		usleep(1000);
-	}
+	//Write to FP_COMPx to enable the comparator. Mask off unused address bits.
+	flashAddress &= 0x1ffffffc;
+	WriteRegisterByIndex(GetCodeComparatorIndex(slot), flashAddress | 1);
 }

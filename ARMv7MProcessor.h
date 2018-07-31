@@ -149,25 +149,17 @@ public:
 
 	virtual void PrintRegisters();
 
-	/*
+	ARMFlashPatchBreakpoint* GetFlashPatchBreakpoint()
+	{ return m_fpb; }
+
+protected:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ID register state etc
+	// Internal debug components
 
-	unsigned int m_breakpoints;
-	unsigned int m_context_breakpoints;
-	unsigned int m_watchpoints;
-	bool m_hasDevid;
-	bool m_hasSecExt;
-	bool m_hasSecureHalt;
-	unsigned int m_revision;
-	unsigned int m_variant;
-	//TODO: arch version
+	ARMFlashPatchBreakpoint* m_fpb;
 
-	ARMv7MDebugIDRegister m_deviceID;
-
-	///Device-dependent address of the program counter sample register (PCSR)
-	ARM_V7_DEBUG_REGISTERS m_pcsrIndex;
-	*/
+public:
+	void AddFlashPatchUnit(ARMFlashPatchBreakpoint* fpb);
 };
 
 #endif

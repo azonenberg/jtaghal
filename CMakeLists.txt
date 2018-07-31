@@ -35,6 +35,7 @@ set(JTAGHAL_SOURCES
 
     ARMAPBDevice.cpp
     ARMCoreSightDevice.cpp
+    ARMFlashPatchBreakpoint.cpp
     ARMv7Processor.cpp
     ARMv7MProcessor.cpp
     ARMv8Processor.cpp
