@@ -54,6 +54,17 @@ STM32Device::STM32Device(
 			"");
 	}
 
+	//Look up RAM size (TODO can we get this from descriptors somehow?)
+	switch(m_deviceID)
+	{
+		case STM32F411E:
+			m_ramKB = 128;
+			break;
+
+		default:
+			m_ramKB = 0;
+	}
+
 	//uint32_t id = m_dap->ReadMemory(0xe0042000);
 	//LogDebug("id = %08x\n", id);
 
@@ -66,7 +77,7 @@ STM32Device::STM32Device(
 
 }
 
-void STM32Device::PostInitProbes()
+void STM32Device::PostInitProbes(bool quiet)
 {
 	//Get a pointer to our ARM DAP. This should always be one scan chain position before us.
 	m_dap = dynamic_cast<ARMDebugPort*>(m_iface->GetDevice(m_pos-1));
@@ -77,80 +88,89 @@ void STM32Device::PostInitProbes()
 			"");
 	}
 
-	//Look up size of flash memory
-	try
+	//Leave a lot of stuff blank to avoid probing and tripping alarms
+	if(quiet)
 	{
-		m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
-	}
-	catch(const JtagException& e)
-	{
-		//If we fail, set flash size to zero so we don't try doing anything with it
+		//unknown protection level
+		m_protectionLevel = 3;
+		m_locksProbed = true;
 		m_flashKB = 0;
-
-		if(!IsDeviceReadLocked().GetValue())
-			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
-
-		else
-			LogVerbose("STM32Device: Cannot determine flash size because read protection is set\n");
-	}
-
-	//Look up RAM size (TODO can we get this from descriptors somehow?)
-	switch(m_deviceID)
-	{
-		case STM32F411E:
-			m_ramKB = 128;
-			break;
-
-		default:
-			m_ramKB = 0;
-	}
-
-	//Check read lock status
-	STM32Device::ProbeLocksNondestructive();
-
-	//Extract serial number fields
-	try
-	{
-		uint32_t serial[3];
-		serial[0] = m_dap->ReadMemory(0x1fff7a10);
-		serial[1] = m_dap->ReadMemory(0x1fff7a14);
-		serial[2] = m_dap->ReadMemory(0x1fff7a18);
-		m_waferX = serial[0] >> 16;
-		m_waferY = serial[0] & 0xffff;
-		m_waferNum = serial[1] & 0xff;
-		m_waferLot[0] = (serial[1] >> 24) & 0xff;
-		m_waferLot[1] = (serial[1] >> 16) & 0xff;
-		m_waferLot[2] = (serial[1] >> 8) & 0xff;
-		m_waferLot[3] = (serial[2] >> 24) & 0xff;
-		m_waferLot[4] = (serial[2] >> 16) & 0xff;
-		m_waferLot[5] = (serial[2] >> 8) & 0xff;
-		m_waferLot[6] = (serial[2] >> 0) & 0xff;
-		m_waferLot[7] = 0;
-		m_serialRaw[0] = m_waferX >> 8;
-		m_serialRaw[1] = m_waferX & 0xff;
-		m_serialRaw[2] = m_waferY >> 8;
-		m_serialRaw[3] = m_waferY & 0xff;
-		m_serialRaw[4] = m_waferNum;
-		for(int i=0; i<7; i++)
-			m_serialRaw[5+i] = m_waferLot[i];
-	}
-	catch(const JtagException& e)
-	{
-		//If we can't read the serial number, that probably means the chip is locked.
-		//Write zeroes rather than leaving it uninitialized.
 		m_waferX = 0;
 		m_waferY = 0;
 		m_waferNum = 0;
 		strncpy(m_waferLot, "???????", sizeof(m_waferLot));
 		for(int i=0; i<12; i++)
 			m_serialRaw[i] = 0;
+		return;
+	}
 
-		//Display a warning if the chip is NOT locked,  but we couldn't read the serial number anyway
-		if(!IsDeviceReadLocked().GetValue())
+	//Check read lock status
+	STM32Device::ProbeLocksNondestructive();
+
+	//Look up size of flash memory.
+	//If locked, don't try reading as this will trigger security lockdown
+	if(IsDeviceReadLocked().GetValue())
+		LogVerbose("STM32Device: Cannot determine flash size because read protection is set\n");
+	else
+	{
+		try
+		{
+			m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+		}
+		catch(const JtagException& e)
+		{
+			//If we fail, set flash size to zero so we don't try doing anything with it
+			m_flashKB = 0;
+			LogWarning("STM32Device: Unable to read flash memory size even though read protection doesn't seem to be set\n");
+		}
+	}
+
+	//Extract serial number fields
+	if(IsDeviceReadLocked().GetValue())
+	{
+		LogVerbose("STM32Device: Cannot determine serial number because read protection is set\n");
+	}
+	else
+	{
+		try
+		{
+			uint32_t serial[3];
+			serial[0] = m_dap->ReadMemory(0x1fff7a10);
+			serial[1] = m_dap->ReadMemory(0x1fff7a14);
+			serial[2] = m_dap->ReadMemory(0x1fff7a18);
+			m_waferX = serial[0] >> 16;
+			m_waferY = serial[0] & 0xffff;
+			m_waferNum = serial[1] & 0xff;
+			m_waferLot[0] = (serial[1] >> 24) & 0xff;
+			m_waferLot[1] = (serial[1] >> 16) & 0xff;
+			m_waferLot[2] = (serial[1] >> 8) & 0xff;
+			m_waferLot[3] = (serial[2] >> 24) & 0xff;
+			m_waferLot[4] = (serial[2] >> 16) & 0xff;
+			m_waferLot[5] = (serial[2] >> 8) & 0xff;
+			m_waferLot[6] = (serial[2] >> 0) & 0xff;
+			m_waferLot[7] = 0;
+			m_serialRaw[0] = m_waferX >> 8;
+			m_serialRaw[1] = m_waferX & 0xff;
+			m_serialRaw[2] = m_waferY >> 8;
+			m_serialRaw[3] = m_waferY & 0xff;
+			m_serialRaw[4] = m_waferNum;
+			for(int i=0; i<7; i++)
+				m_serialRaw[5+i] = m_waferLot[i];
+		}
+		catch(const JtagException& e)
+		{
+			//If we can't read the serial number, that probably means the chip is locked.
+			//Write zeroes rather than leaving it uninitialized.
+			m_waferX = 0;
+			m_waferY = 0;
+			m_waferNum = 0;
+			strncpy(m_waferLot, "???????", sizeof(m_waferLot));
+			for(int i=0; i<12; i++)
+				m_serialRaw[i] = 0;
+
+			//Display a warning if the chip is NOT locked,  but we couldn't read the serial number anyway
 			LogWarning("STM32Device: Unable to read serial number even though read protection doesn't seem to be set\n");
-
-		else
-			LogVerbose("STM32Device: Cannot determine serial number because read protection is set\n");
+		}
 	}
 }
 
@@ -260,7 +280,8 @@ void STM32Device::PrintLockProbeDetails()
 	{
 		"completely unlocked",
 		"boundary scan enabled, memory access and debug disabled",
-		"JTAG completely disabled"
+		"JTAG completely disabled",
+		"quiet probe, lock status not checked"
 	};
 	LogNotice("STM32 read protection level appears to be: %d (%s)\nDetails:\n", m_protectionLevel, table[m_protectionLevel]);
 
@@ -424,6 +445,9 @@ UncertainBoolean STM32Device::IsDeviceReadLocked()
 
 		case 0:
 			return UncertainBoolean( false, UncertainBoolean::CERTAIN );
+
+		case 3:
+			return UncertainBoolean( true, UncertainBoolean::USELESS );
 
 		case 1:
 		default:

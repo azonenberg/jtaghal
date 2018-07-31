@@ -85,7 +85,7 @@ FreescaleIMXDevice::~FreescaleIMXDevice()
 {
 }
 
-void FreescaleIMXDevice::PostInitProbes()
+void FreescaleIMXDevice::PostInitProbes(bool /*quiet*/)
 {
 	//Get a pointer to our ARM DAP. This should always be one scan chain position before us.
 	m_dap = dynamic_cast<ARMDebugPort*>(m_iface->GetDevice(m_pos-2));

@@ -64,7 +64,7 @@ ARM7TDMISProcessor::~ARM7TDMISProcessor()
 
 }
 
-void ARM7TDMISProcessor::PostInitProbes()
+void ARM7TDMISProcessor::PostInitProbes(bool /*quiet*/)
 {
 	//WriteIceRegister(DEBUG_CTRL, 0x3f);
 	//uint32_t ret = ReadIceRegister(DEBUG_CTRL);

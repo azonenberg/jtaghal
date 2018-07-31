@@ -53,7 +53,7 @@ XilinxFPGA::XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, si
 {
 }
 
-void XilinxFPGA::PostInitProbes()
+void XilinxFPGA::PostInitProbes(bool /*quiet*/)
 {
 
 }

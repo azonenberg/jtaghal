@@ -68,8 +68,10 @@ public:
 
 	/**
 		@brief Does a post-initialization probe of the device to read debug ROMs etc.
+
+		@param quiet Do minimal probing to avoid triggering security lockdowns
 	 */
-	virtual void PostInitProbes() =0;
+	virtual void PostInitProbes(bool quiet) =0;
 
 	bool LookupConstant(std::string name, uint32_t& value)
 	{

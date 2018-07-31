@@ -49,7 +49,7 @@ public:
 	XilinxFPGA(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~XilinxFPGA();
 
-	virtual void PostInitProbes();
+	virtual void PostInitProbes(bool quiet);
 
 public:
 	//Configuration bus access

@@ -74,7 +74,7 @@ public:
 		JtagInterface* iface,
 		size_t pos);
 
-	virtual void PostInitProbes();
+	virtual void PostInitProbes(bool quiet);
 
 	///5-bit-wide JTAG instructions (from datasheet table 56-3)
 	enum instructions

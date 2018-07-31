@@ -61,7 +61,7 @@ JtagDummy::~JtagDummy()
 
 }
 
-void JtagDummy::PostInitProbes()
+void JtagDummy::PostInitProbes(bool /*quiet*/)
 {
 
 }

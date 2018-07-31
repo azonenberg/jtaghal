@@ -50,7 +50,7 @@ public:
 	virtual ~JtagDummy();
 
 	virtual std::string GetDescription();
-	virtual void PostInitProbes();
+	virtual void PostInitProbes(bool quiet);
 };
 
 #endif

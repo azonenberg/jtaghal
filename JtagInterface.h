@@ -205,7 +205,7 @@ public:
 	virtual void ResetToIdle();		//TODO: Make this protected as well? Not likely to be needed for anything in well-written code
 
 	//High-level JTAG interface (register level)
-	void InitializeChain();
+	void InitializeChain(bool quiet = false);
 	size_t GetDeviceCount();
 	unsigned int GetIDCode(unsigned int device);
 	JtagDevice* GetDevice(unsigned int device);

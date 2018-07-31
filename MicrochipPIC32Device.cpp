@@ -249,7 +249,7 @@ MicrochipPIC32Device::MicrochipPIC32Device(
 	}
 }
 
-void MicrochipPIC32Device::PostInitProbes()
+void MicrochipPIC32Device::PostInitProbes(bool /*quiet*/)
 {
 	//Reset both TAPS
 	EnterMtapMode();

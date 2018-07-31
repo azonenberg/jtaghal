@@ -54,7 +54,7 @@ FreescaleIMXSmartDMA::FreescaleIMXSmartDMA(
 	}
 }
 
-void FreescaleIMXSmartDMA::PostInitProbes()
+void FreescaleIMXSmartDMA::PostInitProbes(bool /*quiet*/)
 {
 
 }

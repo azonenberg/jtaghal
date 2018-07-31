@@ -50,7 +50,7 @@ XilinxCoolRunnerIIDevice::XilinxCoolRunnerIIDevice(
 	m_stepping = stepping;
 }
 
-void XilinxCoolRunnerIIDevice::PostInitProbes()
+void XilinxCoolRunnerIIDevice::PostInitProbes(bool /*quiet*/)
 {
 }
 

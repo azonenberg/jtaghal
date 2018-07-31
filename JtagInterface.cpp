@@ -191,7 +191,7 @@ void JtagInterface::PrintChainFaultMessage()
 
 	@throw JtagException if any of the scan operations fails.
  */
-void JtagInterface::InitializeChain()
+void JtagInterface::InitializeChain(bool quiet)
 {
 	//Clear out any junk already on the chain. This is necessary if chain state ever changes
 	m_idcodes.clear();
@@ -319,7 +319,7 @@ void JtagInterface::InitializeChain()
 	for(auto p : m_devices)
 	{
 		if(p)
-			p->PostInitProbes();
+			p->PostInitProbes(quiet);
 	}
 }
 

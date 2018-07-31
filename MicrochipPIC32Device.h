@@ -172,7 +172,7 @@ public:
 		JtagInterface* iface,
 		size_t pos);
 
-	virtual void PostInitProbes();
+	virtual void PostInitProbes(bool quiet);
 
 	///Device families
 	enum families
