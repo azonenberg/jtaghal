@@ -482,22 +482,28 @@ void STM32Device::SetReadLock()
 
 void STM32Device::ClearReadLock()
 {
-	/*
-	UnlockFlash();
-	UnlockFlashOptions();
-
 	LogTrace("Clearing read lock...\n");
 	LogIndenter li;
+
+	UnlockFlash();
+	UnlockFlashOptions();
 
 	//Read OPTCR
 	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
 	LogTrace("Old OPTCR = %08x\n", cr);
-	cr &= 0xffff00ff;*/
 
-	//Try poking something into RAM
-	m_dap->WriteMemory(m_sramMemoryBase, 0xfeedface);
-	uint32_t v = m_dap->ReadMemory(m_sramMemoryBase);
-	LogDebug("v = 0x%08x\n", v);
+	//Patch the read lock value to "not locked"
+	cr &= 0xffff00ff;
+	cr |= 0x0000aa00;
+
+	//Actually commit the write to the option register
+	//If we don't do this, the SRAM register is changed but it won't persist across reboots. Pretty useless!
+	cr |= 0x2;
+
+	LogTrace("Setting OPTCR = %08x\n", cr);
+
+	//Write it back
+	m_dap->WriteMemory(m_flashSfrBase + 0x14, cr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
