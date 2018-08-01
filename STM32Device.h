@@ -84,6 +84,7 @@ public:
 	virtual void Erase();
 
 	virtual void Program(FirmwareImage* image);
+	virtual FirmwareImage* LoadFirmwareImage(const unsigned char* data, size_t len);
 
 protected:
 	void UnlockFlash();
@@ -119,6 +120,18 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SFRs
+
+	enum FlashSfrOffsets
+	{
+		FLASH_KEYR 		= 0x04,
+		FLASH_OPTKEYR	= 0x08,
+		FLASH_SR		= 0x0c,
+		FLASH_CR 		= 0x10,
+		FLASH_OPTCR		= 0x14
+	};
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Find our CPU
 
 	ARMv7MProcessor* GetCPU();
@@ -130,6 +143,7 @@ public:
 	{ JtagDevice::SetIR(&irval, m_irlength); }
 
 protected:
+
 	ARMDebugPort* m_dap;
 
 	unsigned int m_deviceID;

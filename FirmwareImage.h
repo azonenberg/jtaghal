@@ -58,7 +58,7 @@ public:
 	///Human-readable name of the device this bitstream is intended for
 	std::string devname;
 
-	virtual std::string GetDescription() =0;
+	virtual std::string GetDescription();
 };
 
 #endif

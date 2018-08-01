@@ -35,6 +35,8 @@
 
 #include "jtaghal.h"
 
+using namespace std;
+
 FirmwareImage::FirmwareImage()
 {
 	idcode = 0;
@@ -43,4 +45,9 @@ FirmwareImage::FirmwareImage()
 FirmwareImage::~FirmwareImage()
 {
 
+}
+
+string FirmwareImage::GetDescription()
+{
+	return "(generic firmware image)";
 }

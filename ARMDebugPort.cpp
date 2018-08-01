@@ -58,7 +58,7 @@ ARMDebugPort::ARMDebugPort(
 	m_defaultRegisterAP	= NULL;
 }
 
-void ARMDebugPort::PostInitProbes(bool quiet)
+void ARMDebugPort::PostInitProbes(bool /*quiet*/)
 {
 	//Turn on the debug stuff
 	EnableDebugging();

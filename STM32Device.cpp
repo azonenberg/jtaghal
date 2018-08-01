@@ -361,7 +361,7 @@ void STM32Device::ProbeLocksNondestructive()
 
 	try
 	{
-		uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+		uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 		uint32_t rdp = (optcr >> 8) & 0xff;
 
 		LogTrace("OPTCR = %08x\n", optcr);
@@ -463,7 +463,7 @@ void STM32Device::SetReadLock()
 	LogIndenter li;
 
 	//Read OPTCR
-	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 	LogTrace("Old OPTCR = %08x\n", cr);
 	cr &= 0xffff00ff;
 	cr |= 0x5500;		//CC = level 2 lock
@@ -477,7 +477,7 @@ void STM32Device::SetReadLock()
 	LogTrace("Setting OPTCR = %08x\n", cr);
 
 	//Write it back
-	m_dap->WriteMemory(m_flashSfrBase + 0x14, cr);
+	m_dap->WriteMemory(m_flashSfrBase + FLASH_OPTCR, cr);
 }
 
 void STM32Device::ClearReadLock()
@@ -489,7 +489,7 @@ void STM32Device::ClearReadLock()
 	UnlockFlashOptions();
 
 	//Read OPTCR
-	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 	LogTrace("Old OPTCR = %08x\n", cr);
 
 	//Patch the read lock value to "not locked"
@@ -503,7 +503,7 @@ void STM32Device::ClearReadLock()
 	LogTrace("Setting OPTCR = %08x\n", cr);
 
 	//Write it back
-	m_dap->WriteMemory(m_flashSfrBase + 0x14, cr);
+	m_dap->WriteMemory(m_flashSfrBase + FLASH_OPTCR, cr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,7 +518,7 @@ void STM32Device::UnlockFlashOptions()
 	uint32_t cr = 0x00000001;
 	try
 	{
-		cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+		cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 	}
 	catch(JtagException& e)
 	{
@@ -530,13 +530,13 @@ void STM32Device::UnlockFlashOptions()
 		LogTrace("Option register is curently locked, unlocking...\n");
 
 		//Unlock flash
-		m_dap->WriteMemory(m_flashSfrBase + 0x8, 0x08192A3B);
-		m_dap->WriteMemory(m_flashSfrBase + 0x8, 0x4C5D6E7F);
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_OPTKEYR, 0x08192A3B);
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_OPTKEYR, 0x4C5D6E7F);
 
 		//Check CR
 		try
 		{
-			cr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+			cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 		}
 		catch(JtagException& e)
 		{
@@ -561,18 +561,18 @@ void STM32Device::UnlockFlash()
 	LogIndenter li;
 
 	//Check CR
-	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + 0x10);
+	uint32_t cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_CR);
 	LogTrace("Initial CR = %08x\n", cr);
 	if(cr & 0x80000000)
 	{
 		LogTrace("Flash is curently locked\n");
 
 		//Unlock flash
-		m_dap->WriteMemory(m_flashSfrBase + 0x4, 0x45670123);
-		m_dap->WriteMemory(m_flashSfrBase + 0x4, 0xCDEF89AB);
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_KEYR, 0x45670123);
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_KEYR, 0xCDEF89AB);
 
 		//Check CR
-		cr = m_dap->ReadMemory(m_flashSfrBase + 0x10);
+		cr = m_dap->ReadMemory(m_flashSfrBase + FLASH_CR);
 		LogTrace("Unlocked CR = %08x\n", cr);
 		if(cr & 0x80000000)
 		{
@@ -587,18 +587,18 @@ void STM32Device::UnlockFlash()
 
 void STM32Device::PollUntilFlashNotBusy()
 {
-	LogTrace("Waiting for Flash to be ready...\n");
-	LogIndenter li;
+	//LogTrace("Waiting for Flash to be ready...\n");
+	//LogIndenter li;
 
 	//Poll FLASH_SR.BSY until it's clear
-	uint32_t sr = m_dap->ReadMemory(m_flashSfrBase + 0x0c);
+	uint32_t sr = m_dap->ReadMemory(m_flashSfrBase + FLASH_SR);
 	//LogTrace("SR = %08x\n", sr);
 	int interval = 1;
 	while(sr & 0x00010000)
 	{
 		//LogTrace("SR = %08x\n", sr);
 		usleep(100 * interval);
-		sr = m_dap->ReadMemory(m_flashSfrBase + 0x0c);
+		sr = m_dap->ReadMemory(m_flashSfrBase + FLASH_SR);
 
 		//Exponential back-off on polling interval
 		interval *= 10;
@@ -618,7 +618,7 @@ void STM32Device::Erase()
 	}
 
 	//Look up FLASH_OPTCR
-	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + 0x14);
+	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 	LogTrace("FLASH_OPTCR = %08x\n", optcr);
 
 	//Unlock flash and make sure it's ready
@@ -629,8 +629,7 @@ void STM32Device::Erase()
 	//bit9:8 = 10 = x64
 	//bit2 = mass erase
 	//bit16 = go do it
-	LogTrace("Mass erase...\n");
-	m_dap->WriteMemory(m_flashSfrBase + 0x10, 0x10204);
+	m_dap->WriteMemory(m_flashSfrBase + FLASH_CR, 0x10204);
 
 	//Wait for it to finish the erase operation
 	PollUntilFlashNotBusy();
@@ -646,7 +645,7 @@ void STM32Device::Erase()
 
 bool STM32Device::BlankCheck()
 {
-	LogTrace("Blank checking...\n");
+	LogDebug("Blank checking...\n");
 	LogIndenter li;
 
 	bool quitImmediately = true;
@@ -658,10 +657,10 @@ bool STM32Device::BlankCheck()
 	bool blank = true;
 	for(; addr<addrMax; addr += 4)
 	{
-		if( (addr & 0xffff) == 0)
+		if( (addr & 0x3fff) == 0)
 		{
-			float bytesDone = (addr - m_flashMemoryBase) * 1.0f / flashBytes;
-			LogTrace("%08x (%.1f %%)\n", addr, bytesDone * 100.0f);
+			float fracDone = (addr - m_flashMemoryBase) * 1.0f / flashBytes;
+			LogDebug("%08x (%.1f %%)\n", addr, fracDone * 100.0f);
 		}
 
 		uint32_t rdata = m_dap->ReadMemory(addr);
@@ -678,9 +677,72 @@ bool STM32Device::BlankCheck()
 	return blank;
 }
 
-void STM32Device::Program(FirmwareImage* /*image*/)
+/**
+	@brief Loads the firmware
+
+	For now assume it's a raw ROM image, no ELF etc supported
+ */
+FirmwareImage* STM32Device::LoadFirmwareImage(const unsigned char* data, size_t len)
 {
-	throw JtagExceptionWrapper(
-		"Not implemented",
-		"");
+	ByteArrayFirmwareImage* img = new ByteArrayFirmwareImage;
+	img->raw_bitstream_len = len;
+	img->raw_bitstream = new uint8_t[len];
+	memcpy(img->raw_bitstream, data, len);
+	return img;
+}
+
+/**
+	@brief Programs a firmware image to the device
+
+	For now, assume we are blank when we start.
+
+	For now. assume the image is a flat binary to be burned to flash.
+ */
+void STM32Device::Program(FirmwareImage* image)
+{
+	//TODO: use specialized firmware format for MCU firmware
+	auto bimage = dynamic_cast<ByteArrayFirmwareImage*>(image);
+	if(!bimage)
+	{
+		throw JtagExceptionWrapper(
+			"STM32Device::Program() needs a byte array firmware image",
+			"");
+	}
+
+	//Unlock flash and make sure it's ready
+	UnlockFlash();
+	PollUntilFlashNotBusy();
+
+	LogDebug("Programming address range from 0x%08x to 0x%08x...\n",
+		m_flashMemoryBase, m_flashMemoryBase + (uint32_t)bimage->raw_bitstream_len);
+
+	uint32_t oldcr = m_dap->ReadMemory(m_flashSfrBase + FLASH_CR) & 0xfffffcfe;	//mask off PG bit and op size
+	oldcr |= 0x200;		//set op size to x32
+	for(size_t offset=0; offset < bimage->raw_bitstream_len; offset=offset+4)
+	{
+		//Look up the data word
+		uint32_t addr = m_flashMemoryBase + offset;
+		uint32_t* ptr = reinterpret_cast<uint32_t*>(bimage->raw_bitstream + offset);
+
+		//Status print
+		if( (offset & 0x3fff) == 0)
+		{
+			float fracDone = offset * 1.0f / bimage->raw_bitstream_len;
+			LogDebug("%08x (%.1f %%)\n", addr, fracDone * 100.0f);
+		}
+
+		//OPTIMIZATION: if the data word is 0xffffffff, then no need to program it since the flash is already blank
+		if(*ptr == 0xffffffff)
+			continue;
+
+		//Set PG bit in CR to configure flash for programming
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_CR, oldcr | 0x1);
+
+		//Write the actual data word and wait until it finishes
+		m_dap->WriteMemory(addr, *ptr);
+		PollUntilFlashNotBusy();
+
+		//Clear PG bit to exit programming mode
+		m_dap->WriteMemory(m_flashSfrBase + FLASH_CR, oldcr);
+	}
 }
