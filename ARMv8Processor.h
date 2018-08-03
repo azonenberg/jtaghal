@@ -58,7 +58,7 @@ enum ARMDebugArchVersion
 };
 */
 /**
-	@brief ARM debug ID register (see ARMv8 ARM, C11.11.15)
+	ARM debug ID register (see ARMv8 ARM, C11.11.15)
  */
 /*
 union ARMv8DebugIDRegister
@@ -194,7 +194,7 @@ union ARMv8DebugStatusControlRegister
 } __attribute__ ((packed));
 */
 /**
-	@brief An ARM Cortex-A9 CPU core, as seen over a CoreSight APB bus
+	@brief An ARMv8 Cortex-A CPU core, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */

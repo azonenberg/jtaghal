@@ -41,7 +41,7 @@ class JtagInterface;
 #define RegisterConstant(c) m_constantMap[(#c)] = c
 
 /**
-	@brief Represents a single device in the JTAG chain
+	@brief A single TAP in the JTAG chain. May not correspond 1:1 with physical silicon dies.
 
 	\ingroup libjtaghal
  */

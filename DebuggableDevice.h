@@ -39,7 +39,7 @@
 class DebuggerInterface;
 
 /**
-	@brief Generic base class for all debuggable devices (MCUs etc)
+	@brief Generic base class for all debuggable devices (CPU cores etc)
 
 	\ingroup libjtaghal
  */

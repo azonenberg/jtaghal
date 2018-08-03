@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -36,6 +36,11 @@
 #ifndef GPIOInterface_h
 #define GPIOInterface_h
 
+/**
+	@brief A GPIO bitbang interface. Many JTAG adapters have uncommitted GPIOs which may be used for test purposes.
+
+	\ingroup jtaghal
+ */
 class GPIOInterface
 {
 public:

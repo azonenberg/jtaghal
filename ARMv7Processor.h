@@ -58,7 +58,7 @@ enum ARMDebugArchVersion
 };
 
 /**
-	@brief ARM debug ID register (see ARMv7 ARM, C11.11.15)
+	@brief ARM debug ID register (see ARMv7 Architecture Reference Manual, C11.11.15)
  */
 union ARMv7DebugIDRegister
 {
@@ -104,7 +104,7 @@ union ARMv7DebugIDRegister
 } __attribute__ ((packed));
 
 /**
-	ARM debug status/control register (see ARMv7 ARM, C11.11.20)
+	@brief ARM debug status/control register (see ARMv7 Architecture Reference Manual, C11.11.20)
  */
 union ARMv7DebugStatusControlRegister
 {
@@ -192,7 +192,7 @@ union ARMv7DebugStatusControlRegister
 } __attribute__ ((packed));
 
 /**
-	@brief An ARM Cortex-A9 CPU core, as seen over a CoreSight APB bus
+	@brief An ARMv7 Cortex-A CPU core, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */

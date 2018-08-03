@@ -75,7 +75,7 @@ union ARMDebugPortIDRegister
 } __attribute__ ((packed));
 
 /**
-	@brief An AP attached to an ADIv5 DP
+	@brief Base class for all access ports within an ARMDebugPort
 
 	\ingroup libjtaghal
  */

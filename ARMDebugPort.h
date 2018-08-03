@@ -36,6 +36,11 @@
 #ifndef ARMDebugPort_h
 #define ARMDebugPort_h
 
+/**
+	@brief Base class for ARM debug ports (JTAG-DP, SWJ-DP, etc)
+
+	\ingroup libjtaghal
+ */
 class ARMDebugPort		: public DebuggerInterface
 {
 public:

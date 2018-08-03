@@ -123,6 +123,9 @@ union EjtagControlRegister
 	uint32_t word;
 } __attribute__ ((packed));
 
+/**
+	@brief Internal data structure storing properties of a single SKU in the PIC32 family
+ */
 struct MicrochipPIC32DeviceInfo
 {
 	///JTAG device ID

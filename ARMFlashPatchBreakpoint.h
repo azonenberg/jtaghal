@@ -30,13 +30,18 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief ARMv7-M Flash Patch/Breakpoint Unit
+	@brief Declaration of ARMFlashPatchBreakpoint
  */
 #ifndef ARMFlashPatchBreakpoint_h
 #define ARMFlashPatchBreakpoint_h
 
 class ARMv7MProcessor;
 
+/**
+	@brief Cortex-M Flash Patch/Breakpoint Unit (see ARMv7-M architecture ref C1.11)
+
+	\ingroup libjtaghal
+ */
 class ARMFlashPatchBreakpoint : public ARMCoreSightDevice
 {
 public:

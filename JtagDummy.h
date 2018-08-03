@@ -37,7 +37,7 @@
 #define JtagDummy_h
 
 /**
-	@brief Abstract base class for an unknown device on a JTAG chain.
+	@brief An unknown device (IDCODE not recognized, or no IDCODE present) on a JTAG chain.
 
 	Just exists to take up a slot in the chain and consume IR bits.
 

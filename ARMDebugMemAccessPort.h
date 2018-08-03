@@ -39,7 +39,7 @@
 #include <stdlib.h>
 
 /**
-	@brief ARM debug port identification register (see ADIv5 Architecture Specification figure 6-3)
+	@brief Contents of the CSW register in a MEM-AP (see ADIv5 Architecture Specification 7.6.4)
  */
 union ARMDebugMemAPControlStatusWord
 {
@@ -90,7 +90,7 @@ class ARMDebugAccessPort;
 class ARMAPBDevice;
 
 /**
-	@brief A memory mapped debug interface
+	@brief A bridge from an ARMDebugPort to an ARM memory bus
 
 	\ingroup libjtaghal
  */

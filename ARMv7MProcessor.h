@@ -40,7 +40,7 @@ class DebuggableDevice;
 class ARMAPBDevice;
 
 /**
-	@brief An ARM Cortex-M CPU core supporting the ARMv7-M architecture, as seen over a CoreSight APB bus
+	@brief An ARMv7 Cortex-M CPU core, as seen over a CoreSight APB bus
 
 	\ingroup libjtaghal
  */

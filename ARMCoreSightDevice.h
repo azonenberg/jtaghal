@@ -30,11 +30,16 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Base class for ARM CoreSight components (other than CPU cores) on a debug APB bus
+	@brief Declaration of ARMCoreSightDevice
  */
 #ifndef ARMCoreSightDevice_h
 #define ARMCoreSightDevice_h
 
+/**
+	@brief Base class for ARM CoreSight components (other than CPU cores) on a debug APB bus
+
+	\ingroup libjtaghal
+ */
 class ARMCoreSightDevice : public ARMAPBDevice
 {
 public:

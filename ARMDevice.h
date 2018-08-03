@@ -45,7 +45,7 @@ enum ARM_IDCODES
 };
 
 /**
-	@brief Abstract base class for all ARM Ltd devices (typically ARM DAPs)
+	@brief Abstract base class for all ARM Ltd JTAG devices (ADIv5 DAP or legacy CPUs with their own JTAG TAPs)
 
 	\ingroup libjtaghal
  */

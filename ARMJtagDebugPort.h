@@ -106,7 +106,7 @@ union ARMJtagDebugPortStatusRegister
 class ARMDebugMemAccessPort;
 
 /**
-	@brief An ARM debug port (contains one or more APs and a DP)
+	@brief An ARM JTAG-DP (contains one or more APs and a DP)
 
 	\ingroup libjtaghal
  */
