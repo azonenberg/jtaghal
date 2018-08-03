@@ -34,7 +34,6 @@
  */
 
 #include "jtaghal.h"
-#include "ARMDebugPort.h"
 #include "ARMDebugMemAccessPort.h"
 #include "ARMAPBDevice.h"
 

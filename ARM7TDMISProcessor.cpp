@@ -35,11 +35,6 @@
 
 #include "jtaghal.h"
 #include "DebuggableDevice.h"
-#include "ARMAPBDevice.h"
-#include "ARMDebugPort.h"
-#include "ARMDebugAccessPort.h"
-#include "ARMDebugMemAccessPort.h"
-#include "ARM7TDMISProcessor.h"
 
 using namespace std;
 

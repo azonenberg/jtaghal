@@ -46,7 +46,7 @@ set(JTAGHAL_SOURCES
     ARM7TDMISProcessor.cpp
     ARMDebugAccessPort.cpp
     ARMDebugMemAccessPort.cpp
-    ARMDebugPort.cpp
+    ARMJtagDebugPort.cpp
     ARMDevice.cpp
 
     FreescaleDevice.cpp

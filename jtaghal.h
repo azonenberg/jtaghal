@@ -139,7 +139,7 @@
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
-#include "ARMDebugPort.h"
+#include "ARMJtagDebugPort.h"
 #include "ARMDebugMemAccessPort.h"
 #include "ARMAPBDevice.h"
 #include "ARMCoreSightDevice.h"
