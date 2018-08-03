@@ -30,11 +30,11 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMDebugPort
+	@brief Declaration of ARMJtagDebugPort
  */
 
-#ifndef ARMDebugPort_h
-#define ARMDebugPort_h
+#ifndef ARMJtagDebugPort_h
+#define ARMJtagDebugPort_h
 
 #include <stdlib.h>
 
@@ -45,7 +45,7 @@
 /**
 	@brief ARM debug port status register (see ADIv5 Architecture Specification figure 6-3)
  */
-union ARMDebugPortStatusRegister
+union ARMJtagDebugPortStatusRegister
 {
 	struct
 	{
@@ -110,21 +110,21 @@ class ARMDebugMemAccessPort;
 
 	\ingroup libjtaghal
  */
-class ARMDebugPort		: public ARMDevice
-						, public DebuggerInterface
+class ARMJtagDebugPort		: public ARMDebugPort
+							, public ARMDevice
 {
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Construction / destruction
 
-	ARMDebugPort(
+	ARMJtagDebugPort(
 		unsigned int partnum,
 		unsigned int rev,
 		unsigned int idcode,
 		JtagInterface* iface,
 		size_t pos);
-	virtual ~ARMDebugPort();
+	virtual ~ARMJtagDebugPort();
 
 	static JtagDevice* CreateDevice(
 		unsigned int partnum,
@@ -189,23 +189,11 @@ public:
 		REG_RDBUFF = 3
 	};
 
-	//Well-defined AP registers
-	enum ApReg
-	{
-		REG_MEM_CSW		= 0x00,	//Control/status word
-		REG_MEM_TAR		= 0x04,	//Transfer address register
-		REG_MEM_DRW		= 0x0C,	//Data read/write
-		REG_MEM_BASE	= 0xF8,	//Location of debug ROM
-
-		REG_IDR			= 0xFC	//ID code
-	};
-
 public:
-	ARMDebugPortStatusRegister GetStatusRegister();
-	void PrintStatusRegister(ARMDebugPortStatusRegister reg, bool children = true);
+	ARMJtagDebugPortStatusRegister GetStatusRegister();
+	void PrintStatusRegister(ARMJtagDebugPortStatusRegister reg, bool children = true);
 
-	void PrintStatusRegister()
-	{ PrintStatusRegister(GetStatusRegister()); }
+	virtual void PrintStatusRegister();
 
 protected:
 	void ClearStatusRegisterErrors();

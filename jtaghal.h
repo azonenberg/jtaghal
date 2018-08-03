@@ -121,6 +121,7 @@
 #include "FPGABitstream.h"
 
 //Device classes
+#include "DebuggerInterface.h"
 #include "DebuggableDevice.h"
 #include "ProgrammableDevice.h"
 #include "ProgrammableLogicDevice.h"
@@ -139,6 +140,7 @@
 #include "XilinxDevice.h"
 
 //Vendor device classes (and support stuff)
+#include "ARMDebugPort.h"
 #include "ARMJtagDebugPort.h"
 #include "ARMDebugMemAccessPort.h"
 #include "ARMAPBDevice.h"

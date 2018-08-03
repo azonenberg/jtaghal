@@ -27,100 +27,16 @@
 *                                                                                                                      *
 ***********************************************************************************************************************/
 
-/**
-	@file
-	@author Andrew D. Zonenberg
-	@brief Implementation of ARMDevice
- */
-
 #include "jtaghal.h"
-#include "JEDECVendorID_enum.h"
-
-using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-/**
-	@brief Initializes this device
-
-	@param idcode	The ID code of this device
-	@param iface	The JTAG adapter this device was discovered on
-	@param pos		Position in the chain that this device was discovered
-	@param irlength	Length of the JTAG instruction register
- */
-ARMDevice::ARMDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
-: JtagDevice(idcode, iface, pos, irlength)
+ARMDebugPort::ARMDebugPort()
 {
 }
 
-/**
-	@brief Default virtual destructor
- */
-ARMDevice::~ARMDevice()
+ARMDebugPort::~ARMDebugPort()
 {
 
-}
-
-/**
-	@brief Creates a ARMDevice given an ID code
-
-	@throw JtagException if the ID code supplied is not a valid Microchip device, or not a known family number
-
-	@param idcode	The ID code of this device
-	@param iface	The JTAG adapter this device was discovered on
-	@param pos		Position in the chain that this device was discovered
-
-	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
- */
-JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
-{
-	//Save the original ID code to give to the derived class
-	unsigned int idcode_raw = idcode;
-
-	//Rightmost bit is always a zero, ignore it
-	idcode >>= 1;
-	unsigned int vendor = (idcode & 0x7ff);
-	idcode >>= 11;
-
-	//Next 16 bits are part number
-	unsigned int partnum =  idcode & 0xFFFF;
-	idcode >>= 12;
-
-	//Revision
-	unsigned int rev = idcode & 0xF;
-
-	//Special processing needed for dummy/test vendor ID
-	if(vendor == VENDOR_ID_ARM_TEST)
-	{
-		switch(partnum)
-		{
-			case IDCODE_ARM_7TDMI_S:
-				return new ARM7TDMISProcessor(partnum, rev, idcode_raw, iface, pos);
-
-			default:
-				throw JtagExceptionWrapper(
-				"Unknown part number - probably not yet supported",
-				"");
-		}
-
-	}
-	else if(vendor != VENDOR_ID_ARM)
-	{
-		throw JtagExceptionWrapper(
-			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
-			"");
-	}
-
-	//Create the device
-	switch(partnum)
-	{
-	case IDCODE_ARM_DAP_JTAG:
-		return ARMJtagDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
-
-	default:
-		throw JtagExceptionWrapper(
-			"Unknown part number - probably not yet supported",
-			"");
-	}
 }

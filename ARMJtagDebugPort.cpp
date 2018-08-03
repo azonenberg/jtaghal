@@ -30,7 +30,7 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of ARMDebugPort
+	@brief Implementation of ARMJtagDebugPort
  */
 
 #include "jtaghal.h"
@@ -42,7 +42,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-ARMDebugPort::ARMDebugPort(
+ARMJtagDebugPort::ARMJtagDebugPort(
 	unsigned int partnum,
 	unsigned int rev,
 	unsigned int idcode,
@@ -57,7 +57,7 @@ ARMDebugPort::ARMDebugPort(
 	m_defaultRegisterAP	= NULL;
 }
 
-void ARMDebugPort::PostInitProbes(bool /*quiet*/)
+void ARMJtagDebugPort::PostInitProbes(bool /*quiet*/)
 {
 	//Turn on the debug stuff
 	EnableDebugging();
@@ -162,14 +162,14 @@ void ARMDebugPort::PostInitProbes(bool /*quiet*/)
 	}
 }
 
-ARMDebugPort::~ARMDebugPort()
+ARMJtagDebugPort::~ARMJtagDebugPort()
 {
 	for(auto x : m_aps)
 		delete x.second;
 	m_aps.clear();
 }
 
-JtagDevice* ARMDebugPort::CreateDevice(
+JtagDevice* ARMJtagDebugPort::CreateDevice(
 		unsigned int partnum,
 		unsigned int rev,
 		unsigned int idcode,
@@ -179,10 +179,10 @@ JtagDevice* ARMDebugPort::CreateDevice(
 	switch(partnum)
 	{
 	case IDCODE_ARM_DAP_JTAG:
-		return new ARMDebugPort(partnum, rev, idcode, iface, pos);
+		return new ARMJtagDebugPort(partnum, rev, idcode, iface, pos);
 
 	default:
-		LogError("ARMDebugPort::CreateDevice(partnum=%x, rev=%x, idcode=%08x)\n", partnum, rev, idcode);
+		LogError("ARMJtagDebugPort::CreateDevice(partnum=%x, rev=%x, idcode=%08x)\n", partnum, rev, idcode);
 
 		throw JtagExceptionWrapper(
 			"Unknown ARM debug device (ID code not in database)",
@@ -193,10 +193,10 @@ JtagDevice* ARMDebugPort::CreateDevice(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initialization
 
-void ARMDebugPort::EnableDebugging()
+void ARMJtagDebugPort::EnableDebugging()
 {
 	//Clear any stale errors
-	ARMDebugPortStatusRegister stat = GetStatusRegister();
+	ARMJtagDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
 		LogDebug("    Error bit is set, clearing\n");
@@ -229,7 +229,7 @@ void ARMDebugPort::EnableDebugging()
 // Memory access
 
 ///Read a single 32-bit word of memory (TODO support smaller sizes)
-uint32_t ARMDebugPort::ReadMemory(uint32_t address)
+uint32_t ARMJtagDebugPort::ReadMemory(uint32_t address)
 {
 	//Sanity check
 	if(m_defaultMemAP == NULL)
@@ -244,7 +244,7 @@ uint32_t ARMDebugPort::ReadMemory(uint32_t address)
 }
 
 ///Writes a single 32-bit word of memory (TODO support smaller sizes)
-void ARMDebugPort::WriteMemory(uint32_t address, uint32_t value)
+void ARMJtagDebugPort::WriteMemory(uint32_t address, uint32_t value)
 {
 	//Sanity check
 	if(m_defaultMemAP == NULL)
@@ -258,7 +258,7 @@ void ARMDebugPort::WriteMemory(uint32_t address, uint32_t value)
 	m_defaultMemAP->WriteWord(address, value);
 }
 
-uint32_t ARMDebugPort::ReadDebugRegister(uint32_t address)
+uint32_t ARMJtagDebugPort::ReadDebugRegister(uint32_t address)
 {
 	//Sanity check
 	if(m_defaultRegisterAP == NULL)
@@ -273,7 +273,7 @@ uint32_t ARMDebugPort::ReadDebugRegister(uint32_t address)
 }
 
 ///Writes a single 32-bit word of memory
-void ARMDebugPort::WriteDebugRegister(uint32_t address, uint32_t value)
+void ARMJtagDebugPort::WriteDebugRegister(uint32_t address, uint32_t value)
 {
 	//Sanity check
 	if(m_defaultRegisterAP == NULL)
@@ -290,7 +290,7 @@ void ARMDebugPort::WriteDebugRegister(uint32_t address, uint32_t value)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device info
 
-std::string ARMDebugPort::GetDescription()
+std::string ARMJtagDebugPort::GetDescription()
 {
 	string devname = "(unknown)";
 
@@ -312,7 +312,7 @@ std::string ARMDebugPort::GetDescription()
 	return string("ARM ") + devname + " rev " + srev;
 }
 
-void ARMDebugPort::PrintInfo()
+void ARMJtagDebugPort::PrintInfo()
 {
 	//Device descriptor
 	LogNotice("%2d: %s\n", (int)m_pos, GetDescription().c_str());
@@ -352,7 +352,7 @@ void ARMDebugPort::PrintInfo()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Chain querying
 
-void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg, bool children)
+void ARMJtagDebugPort::PrintStatusRegister(ARMJtagDebugPortStatusRegister reg, bool children)
 {
 	LogDebug("DAP status: %08x\n", reg.word);
 	LogDebug("    Sys pwrup ack:     %u\n", reg.bits.sys_pwrup_ack);
@@ -379,19 +379,24 @@ void ARMDebugPort::PrintStatusRegister(ARMDebugPortStatusRegister reg, bool chil
 	}
 }
 
+void ARMJtagDebugPort::PrintStatusRegister()
+{
+	PrintStatusRegister(GetStatusRegister());
+}
+
 /**
 	@brief Gets the status register
  */
-ARMDebugPortStatusRegister ARMDebugPort::GetStatusRegister()
+ARMJtagDebugPortStatusRegister ARMJtagDebugPort::GetStatusRegister()
 {
-	ARMDebugPortStatusRegister stat;
+	ARMJtagDebugPortStatusRegister stat;
 	stat.word = DPRegisterRead(REG_CTRL_STAT);
 	return stat;
 }
 
-void ARMDebugPort::ClearStatusRegisterErrors()
+void ARMJtagDebugPort::ClearStatusRegisterErrors()
 {
-	ARMDebugPortStatusRegister stat;
+	ARMJtagDebugPortStatusRegister stat;
 	stat.word = DPRegisterRead(REG_CTRL_STAT);
 	stat.bits.sticky_err = 1;
 	DPRegisterWrite(REG_CTRL_STAT, stat.word);
@@ -405,7 +410,7 @@ void ARMDebugPort::ClearStatusRegisterErrors()
 
 	@return The value read
  */
-uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
+uint32_t ARMJtagDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 {
 	//Set the high bits of the address as the current bank
 	uint32_t select = (ap << 24) | (addr & 0xf0);
@@ -460,7 +465,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 	}
 
 	//Verify the read was successful
-	ARMDebugPortStatusRegister stat = GetStatusRegister();
+	ARMJtagDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
 		LogError("Something went wrong (sticky error bit set when reading AP %d register %d)\n", ap, addr);
@@ -479,7 +484,7 @@ uint32_t ARMDebugPort::APRegisterRead(uint8_t ap, ApReg addr)
 /**
 	@brief Aborts the current AP transaction
  */
-void ARMDebugPort::DebugAbort()
+void ARMJtagDebugPort::DebugAbort()
 {
 	SetIR(INST_ABORT);
 
@@ -503,7 +508,7 @@ void ARMDebugPort::DebugAbort()
 	@param addr			The ID of the AP register to read
 	@param wdata		The value to write
  */
-void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
+void ARMJtagDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 {
 	//Set the high bits of the address as the current bank
 	uint32_t select = (ap << 24) | (addr & 0xf0);
@@ -554,7 +559,7 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 	}
 
 	//Verify the read was successful
-	ARMDebugPortStatusRegister stat = GetStatusRegister();
+	ARMJtagDebugPortStatusRegister stat = GetStatusRegister();
 	if(stat.bits.sticky_err)
 	{
 		/*
@@ -577,7 +582,7 @@ void ARMDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 
 	@return The value read
  */
-uint32_t ARMDebugPort::DPRegisterRead(DpReg addr)
+uint32_t ARMJtagDebugPort::DPRegisterRead(DpReg addr)
 {
 	SetIR(INST_DPACC);
 	uint32_t data_out;
@@ -628,7 +633,7 @@ uint32_t ARMDebugPort::DPRegisterRead(DpReg addr)
 	return data_out;
 }
 
-void ARMDebugPort::DPRegisterWrite(DpReg addr, uint32_t wdata)
+void ARMJtagDebugPort::DPRegisterWrite(DpReg addr, uint32_t wdata)
 {
 	SetIR(INST_DPACC);
 

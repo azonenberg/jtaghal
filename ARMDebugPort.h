@@ -30,97 +30,50 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Implementation of ARMDevice
+	@brief Declaration of ARMDebugPort
  */
 
-#include "jtaghal.h"
-#include "JEDECVendorID_enum.h"
+#ifndef ARMDebugPort_h
+#define ARMDebugPort_h
 
-using namespace std;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
-
-/**
-	@brief Initializes this device
-
-	@param idcode	The ID code of this device
-	@param iface	The JTAG adapter this device was discovered on
-	@param pos		Position in the chain that this device was discovered
-	@param irlength	Length of the JTAG instruction register
- */
-ARMDevice::ARMDevice(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength)
-: JtagDevice(idcode, iface, pos, irlength)
+class ARMDebugPort		: public DebuggerInterface
 {
-}
+public:
+	ARMDebugPort();
+	virtual ~ARMDebugPort();
 
-/**
-	@brief Default virtual destructor
- */
-ARMDevice::~ARMDevice()
-{
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Status
 
-}
+	virtual void PrintStatusRegister() =0;
 
-/**
-	@brief Creates a ARMDevice given an ID code
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debug register access via APB
 
-	@throw JtagException if the ID code supplied is not a valid Microchip device, or not a known family number
+	virtual uint32_t ReadDebugRegister(uint32_t address) =0;
+	virtual void WriteDebugRegister(uint32_t address, uint32_t value) =0;
 
-	@param idcode	The ID code of this device
-	@param iface	The JTAG adapter this device was discovered on
-	@param pos		Position in the chain that this device was discovered
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// AP register access
 
-	@return A valid JtagDevice object, or NULL if the vendor ID was not recognized.
- */
-JtagDevice* ARMDevice::CreateDevice(unsigned int idcode, JtagInterface* iface, size_t pos)
-{
-	//Save the original ID code to give to the derived class
-	unsigned int idcode_raw = idcode;
-
-	//Rightmost bit is always a zero, ignore it
-	idcode >>= 1;
-	unsigned int vendor = (idcode & 0x7ff);
-	idcode >>= 11;
-
-	//Next 16 bits are part number
-	unsigned int partnum =  idcode & 0xFFFF;
-	idcode >>= 12;
-
-	//Revision
-	unsigned int rev = idcode & 0xF;
-
-	//Special processing needed for dummy/test vendor ID
-	if(vendor == VENDOR_ID_ARM_TEST)
+	//Well-defined AP registers
+	enum ApReg
 	{
-		switch(partnum)
-		{
-			case IDCODE_ARM_7TDMI_S:
-				return new ARM7TDMISProcessor(partnum, rev, idcode_raw, iface, pos);
+		REG_MEM_CSW		= 0x00,	//Control/status word
+		REG_MEM_TAR		= 0x04,	//Transfer address register
+		REG_MEM_DRW		= 0x0C,	//Data read/write
+		REG_MEM_BASE	= 0xF8,	//Location of debug ROM
 
-			default:
-				throw JtagExceptionWrapper(
-				"Unknown part number - probably not yet supported",
-				"");
-		}
+		REG_IDR			= 0xFC	//ID code
+	};
 
-	}
-	else if(vendor != VENDOR_ID_ARM)
-	{
-		throw JtagExceptionWrapper(
-			"Invalid IDCODE supplied (wrong JEDEC manufacturer ID, not an ARM device)",
-			"");
-	}
+protected:
 
-	//Create the device
-	switch(partnum)
-	{
-	case IDCODE_ARM_DAP_JTAG:
-		return ARMJtagDebugPort::CreateDevice(partnum, rev, idcode_raw, iface, pos);
+	//need to be a friend so that the Mem-AP can poke registers
+	//TODO: try to find a cleaner way to expose this?
+	friend class ARMDebugMemAccessPort;
+	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr) =0;
+	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata) =0;
+};
 
-	default:
-		throw JtagExceptionWrapper(
-			"Unknown part number - probably not yet supported",
-			"");
-	}
-}
+#endif
