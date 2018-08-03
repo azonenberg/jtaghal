@@ -43,7 +43,9 @@ using namespace std;
 /**
 	@brief Default constructor
 
-	Initializes the interface's mutex and creates an empty scan chain.
+	Initializes the interface to the empty state.
+
+	You should generally call InitializeChain() to detect devices before doing much of anything else.
  */
 JtagInterface::JtagInterface()
 {
@@ -60,7 +62,7 @@ JtagInterface::JtagInterface()
 /**
 	@brief Interface destructor
 
-	Deletes the mutex and destroys all JtagDevice objects in the scan chain
+	Destroys all JtagDevice objects in the scan chain
  */
 JtagInterface::~JtagInterface()
 {
@@ -324,7 +326,7 @@ void JtagInterface::InitializeChain(bool quiet)
 }
 
 /**
-	@brief Returns the number of devices in the scan chain (only valid after InitializeChain() has been called)
+	@brief Returns the number of devices in the scan chain
 
 	@return Device count
  */
@@ -337,6 +339,11 @@ size_t JtagInterface::GetDeviceCount()
 	@brief Commits the outstanding transactions to the adapter.
 
 	No-op unless the adapter supports queueing of multiple writes.
+
+	This function is automatically called when SendDummyClocks() is called or any readback is performed. Most
+	adapter classes will automatically call it when the transmit queue reaches a certain size.
+
+	This function can be called at any time to ensure all pending operations have executed.
 
 	@throw JtagException in case of error
  */
@@ -366,10 +373,7 @@ unsigned int JtagInterface::GetIDCode(unsigned int device)
 }
 
 /**
-	@brief Gets the Nth device in the chain.
-
-	WARNING: If the device ID is unrecognized, this function will return NULL. It is the caller's responsibility
-	to verify the pointer is non-NULL before using it.
+	@brief Gets the Nth device in the chain
 
 	@throw JtagException if the index is out of range
 
@@ -624,7 +628,8 @@ void JtagInterface::SendDummyClocksDeferred(size_t n)
 	followed by the read halves in order, to reduce the impact of driver/bus latency on throughput.
 
 	If split scanning is not supported, ScanDRSplitWrite() will behave identically to ScanDR() and ScanDRSplitRead()
-	will be a no-op.
+	will be a no-op. This ensures that using the split write commands will work correctly regardless of whether
+	the adapter supports split scanning in hardware.
  */
 bool JtagInterface::IsSplitScanSupported()
 {
@@ -667,7 +672,7 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
 
 	Starts and ends in Run-Test-Idle state.
 
-	If split (pipelined) scanning is supported, this call performs the read half of the scan only/
+	If split (pipelined) scanning is supported, this call performs the read half of the scan only.
 
 	@throw JtagException if any shift operation fails.
 
@@ -709,6 +714,9 @@ bool JtagInterface::ShiftDataReadOnly(unsigned char* /*rcv_data*/, size_t /*coun
 
 	If this chain has exactly one device which is not supported or missing an IDCODE, create a dummy device to take up
 	the space so we can correctly calculate IR padding.
+
+	If multiple unknown devices are present, it's impossible to recover since we don't know how long the IRs for each
+	one are, and thus can't figure out boundaries.
  */
 void JtagInterface::CreateDummyDevices()
 {
@@ -747,7 +755,13 @@ void JtagInterface::CreateDummyDevices()
 }
 
 /**
-	@brief Swap out a dummy device with a real device, once we've figured out by context/heuristics what it does
+	@brief Swap out a dummy device with a real device, once we've figured out by context/heuristics what it does.
+
+	Often when the chain is first being walked, unknown devices cannot be identified - but later on, once the remainder
+	of the chain has been discovered, the unknown devices can be identified contextually (for example a no-idcode
+	debug TAP followed by an IDCODE-capable boundary scan TAP).
+
+	This function allows a dummy device in the chain to be replaced with a non-dummy device.
  */
 void JtagInterface::SwapOutDummy(size_t pos, JtagDevice* realdev)
 {

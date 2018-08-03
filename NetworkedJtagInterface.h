@@ -39,7 +39,7 @@
 /**
 	@brief Thin wrapper around TCP sockets for talking to a jtagd instance
 
-	\ingroup libjtaghal
+	\ingroup interfaces
  */
 class NetworkedJtagInterface
 	: public JtagInterface

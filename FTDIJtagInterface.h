@@ -43,21 +43,33 @@
 /**
 	@brief A JTAG adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
 
-	GPIO pin mapping:
-		0	GPIOL0 (ADBUS4)
-		1	GPIOL1 (ADBUS5)
-		2	GPIOL2 (ADBUS6)
-		3	GPIOL3 (ADBUS7)
-		4	GPIOH0 (ACBUS0)
-		5	GPIOH1 (ACBUS1)
-		6	GPIOH2 (ACBUS2)
-		7	GPIOH3 (ACBUS3)
-		8	GPIOH4 (ACBUS4)
-		9	GPIOH5 (ACBUS5)
-		10	GPIOH6 (ACBUS6)
-		11	GPIOH7 (ACBUS7)
+	This adapter supports split scanning and queues up to 4096 bytes of command+data before comitting to hardware.
 
-	\ingroup libjtaghal
+	GPIO pin mapping:
+
+	Index	| Name
+	--------|--------
+		0	| GPIOL0 (ADBUS4)
+		1	| GPIOL1 (ADBUS5)
+		2	| GPIOL2 (ADBUS6)
+		3	| GPIOL3 (ADBUS7)
+		4	| GPIOH0 (ACBUS0)
+		5	| GPIOH1 (ACBUS1)
+		6	| GPIOH2 (ACBUS2)
+		7	| GPIOH3 (ACBUS3)
+		8	| GPIOH4 (ACBUS4)
+		9	| GPIOH5 (ACBUS5)
+		10	| GPIOH6 (ACBUS6)
+		11	| GPIOH7 (ACBUS7)
+
+	Supported layouts:
+
+	Name | Example hardware | Pin configuration
+	-----|------------------|--------------------
+	hs1  | Digilent JTAG-HS1, Digilent JTAG-SMT2, azonenberg's usb-jtag-mini | ADBUS7 is active-high output enable
+	jtagkey | Amontec JTAGkey, Bus Blaster w/ JTAGkey compatible buffer | ADBUS4 is active-low output enable, ACBUS0 is TRST_N, ACBUS2 is active-low output enable for TRST_N
+
+	\ingroup interfaces
  */
 class FTDIJtagInterface : public JtagInterface
 						, public GPIOInterface
@@ -81,7 +93,6 @@ public:
 
 	//Low-level JTAG interface
 	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
 	virtual void SendDummyClocks(size_t n);
 	virtual void SendDummyClocksDeferred(size_t n);
 	virtual void Commit();
@@ -89,7 +100,11 @@ public:
 	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
 
+protected:
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
+
 	//GPIO stuff
+public:
 	virtual void ReadGpioState();
 	virtual void WriteGpioState();
 
@@ -102,6 +117,7 @@ protected:
 		std::vector<unsigned char>& cmd_out);
 	void DoReadback(unsigned char* rcv_data, size_t count);
 
+	///@brief Buffer of data queued for the adapter, but not yet sent
 	std::vector<unsigned char> m_writeBuffer;
 
 protected:

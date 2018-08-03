@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -34,12 +34,13 @@
  */
 
 /**
-	\defgroup libjtaghal libjtaghal: JTAG Hardware Abstraction Layer
+	\defgroup interfaces JTAG interface layer
 
-	Libjtaghal is a hardware abstraction layer which presents a device-independent interface for manipulating devices in
-	a JTAG scan chain.
+	The JTAG interface layer exposes many different JTAG hardware devices as a simple C++ API.
+ */
 
-	Libjtaghal is released under the same permissive 3-clause BSD license as the remainder of the project.
+/**
+	\defgroup libjtaghal Stuff not in another group yet
  */
 
 #include "jtaghal.h"

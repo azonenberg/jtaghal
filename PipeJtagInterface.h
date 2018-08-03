@@ -39,7 +39,7 @@
 /**
 	@brief Thin wrapper around pipes for talking to an openfpga JtagPipeBridge
 
-	\ingroup libjtaghal
+	\ingroup interfaces
  */
 class PipeJtagInterface
 	: public JtagInterface

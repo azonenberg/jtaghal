@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -39,9 +39,12 @@
 #ifdef HAVE_DJTG
 
 /**
-	@brief A JTAG adapter exposed through the Digilent Adept SDK
+	@brief A JTAG adapter exposed through the Digilent Adept SDK.
 
-	\ingroup libjtaghal
+	This includes Digilent-branded dev boards, Digilent-adapter cables such as the HS1, and OEM modules such as the
+	JTAG-SMT2 which may be integrated into third party boards.
+
+	\ingroup interfaces
  */
 class DigilentJtagInterface : public JtagInterface
 {
@@ -65,8 +68,10 @@ public:
 
 	//Low-level JTAG interface
 	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
 	virtual void SendDummyClocks(size_t n);
+
+protected:
+	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
 
 protected:
 

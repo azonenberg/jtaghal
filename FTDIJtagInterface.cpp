@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -102,7 +102,7 @@ string FTDIJtagInterface::GetAPIVersion()
 }
 
 /**
-	@brief Gets the number of interfaces on the system (may include non-JTAG-capable devices)
+	@brief Gets the number of FTDI devices on the system (may include non-JTAG-capable devices)
 
 	@throw JtagException if the FTD2xx call fails
 
@@ -130,6 +130,18 @@ int FTDIJtagInterface::GetInterfaceCount()
 	return ndev_raw;
 }
 
+/**
+	@brief Checks if the requested FTDI device has a MPSSE (and is thus capable of being used for JTAG)
+
+	Note that this function cannot tell if an MPSSE-capable chipset is actually configured for use as JTAG or
+	as something else.
+
+	@throw JtagException if the index is invalid or data could not be read
+
+	@param index		Zero-based index of the device to test
+
+	@return True if the device has a MPSSE, false otherwise.
+ */
 bool FTDIJtagInterface::IsJtagCapable(int index)
 {
 	FT_STATUS err = FT_OK;
@@ -148,7 +160,6 @@ bool FTDIJtagInterface::IsJtagCapable(int index)
 	}
 
 	LogDebug("device %d type %d desc %s serial %s flags %d\n", index, type, desc, serial, flags);
-	//return true;
 
 	if( (type == FT_DEVICE_2232H) || (type == FT_DEVICE_4232H) || (type == FT_DEVICE_232H) )
 		return true;
@@ -159,11 +170,13 @@ bool FTDIJtagInterface::IsJtagCapable(int index)
 /**
 	@brief Returns the description of the Nth device
 
+	@param index		Zero-based index of the device to test
+
 	@throw JtagException if the index is invalid or data could not be read
 
 	@return Serial number string
  */
-std::string FTDIJtagInterface::GetSerialNumber(int index)
+string FTDIJtagInterface::GetSerialNumber(int index)
 {
 	char serial[16];
 	FT_STATUS err = FT_OK;
@@ -183,7 +196,7 @@ std::string FTDIJtagInterface::GetSerialNumber(int index)
 
 	@return Description string
  */
-std::string FTDIJtagInterface::GetDescription(int index)
+string FTDIJtagInterface::GetDescription(int index)
 {
 	char desc[64];
 	FT_STATUS err = FT_OK;
@@ -219,7 +232,7 @@ int FTDIJtagInterface::GetDefaultFrequency(int /*index*/)
 	@param serial		Serial number of the device to connect to
 	@param layout		Adapter layout to use
  */
-FTDIJtagInterface::FTDIJtagInterface(const std::string& serial, const std::string& layout)
+FTDIJtagInterface::FTDIJtagInterface(const string& serial, const string& layout)
 {
 	//Enable use of azonenberg's custom PID
 	FT_STATUS err = FT_OK;
@@ -266,7 +279,7 @@ FTDIJtagInterface::FTDIJtagInterface(const std::string& serial, const std::strin
 /**
 	@brief Shared initialization used by all constructors
  */
-void FTDIJtagInterface::SharedCtorInit(uint32_t type, const std::string& layout)
+void FTDIJtagInterface::SharedCtorInit(uint32_t type, const string& layout)
 {
 	FT_STATUS err = FT_OK;
 
@@ -531,7 +544,9 @@ void FTDIJtagInterface::WriteData(const void* data, size_t bytesToWrite)
 }
 
 /**
-	@brief Wrapper around FT_Write()
+	@brief Wrapper around FT_Write() to push the provided data buffer to hardware.
+
+	Performs repeated write calls as needed to ensure the entire buffer is written.
 
 	@throw JtagException on failure
 
@@ -573,7 +588,7 @@ void FTDIJtagInterface::WriteDataRaw(const void* data, size_t bytesToWrite)
 }
 
 /**
-	@brief Wrapper around FT_Write()
+	@brief Wrapper around WriteData() to send a single byte
 
 	@throw JtagException on failure
 
@@ -585,7 +600,7 @@ void FTDIJtagInterface::WriteData(unsigned char cmd)
 }
 
 /**
-	@brief Wrapper around FT_Read()
+	@brief Wrapper around FT_Read() to work around some driver / API bugs
 
 	@throw JtagException on failure
 
@@ -664,7 +679,7 @@ void FTDIJtagInterface::ReadData(void* data, size_t bytesToRead)
 /**
 	@brief Gets the manufacturer-assigned name for this programming adapter
  */
-std::string FTDIJtagInterface::GetName()
+string FTDIJtagInterface::GetName()
 {
 	return m_name;
 }
@@ -672,7 +687,7 @@ std::string FTDIJtagInterface::GetName()
 /**
 	@brief Gets the manufacturer-assigned serial number for this programming adapter
  */
-std::string FTDIJtagInterface::GetSerial()
+string FTDIJtagInterface::GetSerial()
 {
 	return m_serial;
 }
@@ -680,7 +695,7 @@ std::string FTDIJtagInterface::GetSerial()
 /**
 	@brief Gets the user-assigned name for this programming adapter
  */
-std::string FTDIJtagInterface::GetUserID()
+string FTDIJtagInterface::GetUserID()
 {
 	return m_userid;
 }
@@ -748,7 +763,7 @@ void FTDIJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data,
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Generate and send the command packet for the rest of the data
-	std::vector<unsigned char> cmd;
+	vector<unsigned char> cmd;
 	GenerateShiftPacket(send_data, count, want_read, last_tms, cmd);
 	WriteData(&cmd[0], cmd.size());
 
@@ -777,7 +792,7 @@ bool FTDIJtagInterface::ShiftDataWriteOnly(	bool last_tms,
 	}
 
 	//Otherwise, send the write
-	std::vector<unsigned char> cmd;
+	vector<unsigned char> cmd;
 	GenerateShiftPacket(send_data, count, (rcv_data != NULL), last_tms, cmd);
 	WriteData(&cmd[0], cmd.size());
 	return true;
@@ -793,6 +808,12 @@ bool FTDIJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, size_t count)
 	return true;
 }
 
+/**
+	@brief Reads back data from a prior transaction
+
+	@param rcv_data		Output data buffer
+	@param count		Number of bits to read
+ */
 void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, size_t count)
 {
 	int bytes_left = count / 8;
@@ -827,11 +848,20 @@ void FTDIJtagInterface::DoReadback(unsigned char* rcv_data, size_t count)
 	PokeBit(rcv_data, nbit, (tmp & 0x80) ? true : false);
 }
 
+/**
+	@brief Generates the MPSSE commands for a shift operation
+
+	@param send_data	Data to send
+	@param count		Number of bits to send (not bytes)
+	@param want_read	True if read data is needed, false for a write-only transaction
+	@param last_tms		TMS value to use at the end of the shift operation (all other bits have TMS=0)
+	@param cmd_out		The generated command buffer
+ */
 void FTDIJtagInterface::GenerateShiftPacket(
 	const unsigned char* send_data, size_t count,
 	bool want_read,
 	bool last_tms,
-	std::vector<unsigned char>& cmd_out)
+	vector<unsigned char>& cmd_out)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Bulk data transfer is done. We now have less than 4KB left, but it might not be an even number of bytes

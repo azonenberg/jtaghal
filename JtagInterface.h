@@ -39,21 +39,97 @@
 /**
 	@brief Abstract representation of a JTAG adapter.
 
-	A JTAG adapter interfaces the PC to a single scan chain containing zero or more JTAG devices.
+	A JTAG adapter provides access to a single scan chain containing zero or more JtagDevice objects.
 
-	To add support for a new JTAG adapter, create a new class derived from JtagInterface and implement the following
-	functions:
-		\li GetName()
-		\li GetSerial()
-		\li GetUserID()
-		\li GetFrequency()
-		\li ShiftData()
-		\li ShiftTMS()
-		\li SendDummyClocks()
+	The JtagInterface class provides three levels of abstraction for scan chain access.
 
-	\ingroup libjtaghal
+	### Low level (bit level)
 
-	NOTE: Devices are numbered such that TDI goes to device N and TDO goes to device 0.
+	This is the most basic way to access a JTAG adapter - clocking raw bits in and out.
+
+	In order to support a new "dumb" JTAG adapter without any higher level protocol offload, create a new derived class
+	and implement each of the following functions:
+
+	\li GetName()
+	\li GetSerial()
+	\li GetUserID()
+	\li GetFrequency()
+	\li ShiftData()
+	\li ShiftTMS()
+	\li SendDummyClocks()
+
+	The low-level interface also includes support for pipelined / queued command execution. This can improve
+	performance when using adapters connected to high-latency links such as USB.
+
+	The default implementations simply call the non-deferred versions and execute immediately. If an adapter supports
+	queueing of commands, overriding these functions can result in higher performance.
+
+	\li IsSplitScanSupported()
+	\li SendDummyClocksDeferred()
+	\li ShiftDataWriteOnly()
+	\li ShiftDataReadOnly()
+	\li Commit()
+
+	### Mid level (state level)
+
+	By default, these functions are simple wrappers around ShiftTMS() for changing between chain states.
+
+	If the adapter supports server-side management of chain state, these can be overridden to simply push a command
+	to the adapter.
+
+	\li ResetToIdle()
+	\li TestLogicReset()
+	\li EnterShiftIR()
+	\li LeaveExit1IR()
+	\li EnterShiftDR()
+	\li LeaveExit1DR()
+
+	### High level (register level)
+
+	These functions provide access to individual registers of TAPs, providing padding as necessary.
+
+	By default these functions are simple wrappers around ShiftData() and the mid-level state functions.
+
+	If the adapter supports server-side padding insertion/removal, these can be overridden to reduce overhead.
+
+	The "deferred" versions of these functions may queue commands. To ensure that all previous queued commands have
+	executed, call Commit() or any function which returns readback data from a scan transaction.
+
+	\li SetIR()
+	\li SetIRDeferred()
+	\li ScanDR()
+	\li ScanDRDeferred()
+	\li ScanDRSplitRead()
+	\li ScanDRSplitWrite()
+
+	### Device management
+
+	These functions provide access to individual devices on the chain.
+
+	\li InitializeChain()
+	\li GetDeviceCount()
+	\li GetIDCode()
+	\li GetDevice()
+	\li SwapOutDummy()
+
+	### Performance profiling
+
+	These functions return stats on the amount of data shifted and the time spent waiting for the adapter.
+
+	These may be useful to compare different programming algorithms and optimizations to reduce unnecessary activity.
+
+	\li GetShiftOpCount()
+	\li GetRecoverableErrorCount()
+	\li GetDataBitCount()
+	\li GetModeBitCount()
+	\li GetDummyClockCount()
+	\li GetShiftTime()
+
+	### NOTES
+
+	Devices are numbered such that TDI goes to device N and TDO goes to device 0.
+
+	\ingroup interfaces
  */
 class JtagInterface
 {
@@ -121,6 +197,9 @@ public:
 	/**
 		@brief Sends the requested number of dummy clocks with TMS=0 and flushes the command to the interface.
 
+		Since dummy clocks are often used as a delay element for programming algorithms etc, this function flushes
+		the write buffer to ensure immediate execution.
+
 		@throw JtagException may be thrown if the scan operation fails
 
 		@param n			 Number of dummy clocks to send
@@ -156,6 +235,8 @@ protected:
 
 	//High-performance pipelined scan interface (wire level)
 public:
+	virtual bool IsSplitScanSupported();
+
 	/**
 		@brief Shifts data through TDI to TDO.
 
@@ -195,13 +276,11 @@ public:
 	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
 
 	//Mid-level JTAG interface (state level)
-public:
 	virtual void TestLogicReset();
 	virtual void EnterShiftIR();
 	virtual void LeaveExit1IR();
 	virtual void EnterShiftDR();
 	virtual void LeaveExit1DR();
-public:
 	virtual void ResetToIdle();		//TODO: Make this protected as well? Not likely to be needed for anything in well-written code
 
 	//High-level JTAG interface (register level)
@@ -214,7 +293,6 @@ public:
 	void SetIR(unsigned int device, const unsigned char* data, unsigned char* data_out, size_t count);
 	void ScanDR(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	void ScanDRDeferred(unsigned int device, const unsigned char* send_data, size_t count);
-	virtual bool IsSplitScanSupported();
 	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, size_t count);
 
