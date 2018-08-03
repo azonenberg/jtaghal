@@ -47,21 +47,3 @@ XilinxCPLD::~XilinxCPLD()
 {
 	//Nothing here
 }
-
-bool XilinxCPLD::HasIndirectFlashSupport()
-{
-	//CPLDs have no external memory
-	return false;
-}
-
-void XilinxCPLD::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	std::string /*prog_image*/)
-{
-	throw JtagExceptionWrapper(
-		"Xilinx CPLDs cannot be indirectly programmed",
-		"");
-}

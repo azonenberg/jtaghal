@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -47,14 +47,6 @@ class STMicroMicrocontroller		: public STMicroDevice
 public:
 	STMicroMicrocontroller(unsigned int devicetype, unsigned int stepping, unsigned int idcode, JtagInterface* iface, size_t pos);
 	virtual ~STMicroMicrocontroller();
-
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
 };
 
 #endif

@@ -258,20 +258,14 @@ void XilinxFPGA::ParseBitstreamCore(
 	ParseBitstreamInternals(data, len, bitstream, fpos);
 }
 
-bool XilinxFPGA::HasIndirectFlashSupport()
-{
-	return false;
-	//return true;
-}
-
+/*
 void XilinxFPGA::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	string /*prog_image*/)
+	ByteArrayFirmwareImage* image,
+	int buswidth,
+	bool reboot,
+	unsigned int base_address,
+	string prog_image)
 {
-	/*
 	//Program the FPGA with the indirect bitstream
 	uint16_t faddr = LoadIndirectProgrammingImage(buswidth, prog_image);
 
@@ -382,15 +376,15 @@ void XilinxFPGA::ProgramIndirect(
 			"",
 			JtagException::EXCEPTION_TYPE_BOARD_FAULT);
 	}
-	*/
 }
+*/
 
 /**
 	@brief Loads an indirect programming image suitable for the given bus width
  */
-uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int /*buswidth*/, string /*image_fname*/)
+/*
+uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int buswidth, string image_fname)
 {
-	/*
 	//Only support QSPI for now
 	if(buswidth != 4)
 	{
@@ -472,13 +466,12 @@ uint16_t XilinxFPGA::LoadIndirectProgrammingImage(int /*buswidth*/, string /*ima
 	uint16_t faddr = nameserver.ForwardLookup("flash");
 	printf("    Flash is at NoC address %04x\n", faddr);
 	return faddr;
-	*/
+
 	return 0;
 }
 
-void XilinxFPGA::DumpIndirect(int /*buswidth*/, string /*fname*/)
+void XilinxFPGA::DumpIndirect(int buswidth, string fname)
 {
-	/*
 	//Program the FPGA with the indirect bitstream
 	uint16_t faddr = LoadIndirectProgrammingImage(buswidth);
 
@@ -511,5 +504,5 @@ void XilinxFPGA::DumpIndirect(int /*buswidth*/, string /*fname*/)
 	}
 
 	fclose(fp);
-	*/
 }
+*/

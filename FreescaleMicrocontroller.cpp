@@ -48,20 +48,3 @@ FreescaleMicrocontroller::~FreescaleMicrocontroller()
 	//Nothing here
 }
 
-bool FreescaleMicrocontroller::HasIndirectFlashSupport()
-{
-	//MCUs have no external memory
-	return false;
-}
-
-void FreescaleMicrocontroller::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	std::string /*prog_image*/)
-{
-	throw JtagExceptionWrapper(
-		"Freescale MCUs cannot be indirectly programmed",
-		"");
-}

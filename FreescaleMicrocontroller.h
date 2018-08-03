@@ -47,14 +47,6 @@ class FreescaleMicrocontroller		: public FreescaleDevice
 public:
 	FreescaleMicrocontroller(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~FreescaleMicrocontroller();
-
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
 };
 
 #endif

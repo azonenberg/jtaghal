@@ -96,23 +96,6 @@ public:
 		@param image	The parsed image to load
 	 */
 	virtual void Program(FirmwareImage* image) =0;
-
-	/**
-		@brief Checks if we support indirect flash programming.
-	 */
-	virtual bool HasIndirectFlashSupport() =0;
-
-	/**
-		@brief Uses indirect flash programming to load a bitstream onto the target device
-
-		Bus width indicates boot mode: 1-2-4 are SPI, 8-16 are BPI. Other values reserved.
-	 */
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot=true,
-		unsigned int base_address = 0,
-		std::string prog_image = "") =0;
 };
 
 #endif

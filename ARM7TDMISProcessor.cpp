@@ -437,18 +437,3 @@ void ARM7TDMISProcessor::Program(FirmwareImage* /*image*/)
 {
 
 }
-
-bool ARM7TDMISProcessor::HasIndirectFlashSupport()
-{
-	return false;
-}
-
-void ARM7TDMISProcessor::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	string /*prog_image*/)
-{
-
-}

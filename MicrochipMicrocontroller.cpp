@@ -48,22 +48,3 @@ MicrochipMicrocontroller::~MicrochipMicrocontroller()
 	//Nothing here
 }
 
-bool MicrochipMicrocontroller::HasIndirectFlashSupport()
-{
-	//MCUs have no external memory
-	return false;
-}
-
-void MicrochipMicrocontroller::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	std::string /*prog_image*/)
-{
-	//TODO: Support indirect programming since the on-die flash in PIC32s requires a bootloader
-
-	throw JtagExceptionWrapper(
-		"Microchip MCUs cannot be indirectly programmed",
-		"");
-}

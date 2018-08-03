@@ -48,14 +48,6 @@ class XilinxCPLD		: public XilinxDevice
 public:
 	XilinxCPLD(unsigned int idcode, JtagInterface* iface, size_t pos, size_t irlength);
 	virtual ~XilinxCPLD();
-
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
 };
 
 #endif

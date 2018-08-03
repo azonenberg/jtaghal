@@ -15,6 +15,7 @@ set(JTAGHAL_SOURCES
     SerialNumberedDevice.cpp
     LockableDevice.cpp
 
+	AttachedMemoryDevice.cpp
     DebuggableDevice.cpp
     ProgrammableDevice.cpp
     ProgrammableLogicDevice.cpp

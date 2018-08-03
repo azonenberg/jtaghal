@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -52,24 +52,4 @@ STMicroMicrocontroller::STMicroMicrocontroller(
 STMicroMicrocontroller::~STMicroMicrocontroller()
 {
 	//Nothing here
-}
-
-bool STMicroMicrocontroller::HasIndirectFlashSupport()
-{
-	//MCUs have no external memory
-	return false;
-}
-
-void STMicroMicrocontroller::ProgramIndirect(
-	ByteArrayFirmwareImage* /*image*/,
-	int /*buswidth*/,
-	bool /*reboot*/,
-	unsigned int /*base_address*/,
-	std::string /*prog_image*/)
-{
-	//TODO: Support indirect programming since the on-die flash in PIC32s requires a bootloader
-
-	throw JtagExceptionWrapper(
-		"STMicro MCUs cannot be indirectly programmed",
-		"");
 }

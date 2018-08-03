@@ -129,6 +129,7 @@
 #include "JtagDummy.h"
 #include "JtagFPGA.h"
 #include "Microcontroller.h"
+#include "AttachedMemoryDevice.h"
 
 //Vendor classes
 #include "ARMDevice.h"

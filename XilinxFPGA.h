@@ -80,21 +80,11 @@ protected:
 	virtual bool ReadingSerialRequiresReset();
 
 public:
-	virtual bool HasIndirectFlashSupport();
-	virtual void ProgramIndirect(
-		ByteArrayFirmwareImage* image,
-		int buswidth,
-		bool reboot = true,
-		unsigned int base_address = 0,
-		std::string prog_image = "");
-	virtual void DumpIndirect(int buswidth, std::string fname);
 
 	/**
 		@brief Reboots the FPGA and loads from external memory, if possible
 	 */
 	virtual void Reboot() =0;
-
-	virtual uint16_t LoadIndirectProgrammingImage(int buswidth, std::string image_fname = "");
 };
 
 #endif
