@@ -1,0 +1,32 @@
+/**
+	\defgroup interfaces JTAG interface layer
+
+	The JTAG interface layer exposes many different JTAG hardware devices as a simple C++ API.
+ */
+
+/**
+	\defgroup features Device features
+
+	A jtaghal device may implement one or more of these feature sets.
+
+	To create a new device, simply create a new class inheriting from JtagDevice and possibly one or more of the other
+	feature classes, overriding virtual functions as needed. Then extend JtagDevice::CreateDevice() with the vendor ID
+	to create the new device object.
+ */
+
+/**
+	\defgroup vendors Device vendors
+
+	Base classes for different manufacturers. Often related products in a line will have some common functionaity.
+ */
+
+/**
+	\defgroup devices Devices
+
+	JTAG devices
+ */
+
+/**
+	\defgroup libjtaghal Stuff not in another group yet
+ */
+

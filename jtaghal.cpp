@@ -33,16 +33,6 @@
 	@brief Implementation of global functions
  */
 
-/**
-	\defgroup interfaces JTAG interface layer
-
-	The JTAG interface layer exposes many different JTAG hardware devices as a simple C++ API.
- */
-
-/**
-	\defgroup libjtaghal Stuff not in another group yet
- */
-
 #include "jtaghal.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

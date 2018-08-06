@@ -47,6 +47,7 @@ using namespace std;
 	@brief Initializes this device
 
 	NOTE: Do not do probes/scans of the chain during the constructor, because we haven't initialized all TAPs yet.
+	This means that shift operations may not yet have the correct padding etc.
 
 	Any initialization that involves querying the chain should be done in PostInitProbes().
 
@@ -132,6 +133,11 @@ unsigned int JtagDevice::GetIDCode()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //JTAG interface helpers
 
+/**
+	@brief Wrapper around JtagInterface::SetIRDeferred()
+
+	See JtagInterface documentation for more details.
+*/
 void JtagDevice::SetIRDeferred(const unsigned char* data, int count)
 {
 	//ceil of bytes, but faster
@@ -316,6 +322,9 @@ void JtagDevice::ResetToIdle()
 	m_iface->ResetToIdle();
 }
 
+/**
+	@brief Prints lots of general debug / system information
+ */
 void JtagDevice::PrintInfo()
 {
 	LogNotice("%2d: %s\n", (int)m_pos, GetDescription().c_str());

@@ -41,9 +41,13 @@ class JtagInterface;
 #define RegisterConstant(c) m_constantMap[(#c)] = c
 
 /**
-	@brief A single TAP in the JTAG chain. May not correspond 1:1 with physical silicon dies.
+	@brief A single TAP in the JTAG chain.
 
-	\ingroup libjtaghal
+	May not correspond 1:1 with physical silicon dies since some parts contain multiple TAPs.
+
+	Most device classes in libjtaghal are derived from this class.
+
+	\ingroup features
  */
 class JtagDevice
 {
@@ -69,10 +73,22 @@ public:
 	/**
 		@brief Does a post-initialization probe of the device to read debug ROMs etc.
 
-		@param quiet Do minimal probing to avoid triggering security lockdowns
+		@param quiet Do less noisy probing to reduce chance of triggering security lockdowns.
 	 */
 	virtual void PostInitProbes(bool quiet) =0;
 
+	/**
+		@brief Looks up the value for a named constant
+
+		This is mostly used by jtagsh for allowing registers to be poked in a more human-friendly fashion.
+
+		@param name		Name of the constant
+		@param value	Value (if found)
+
+		@return			True if found, false if not found
+
+		TODO: consider refactoring this to a separate base class?
+	 */
 	bool LookupConstant(std::string name, uint32_t& value)
 	{
 		if(m_constantMap.find(name) != m_constantMap.end())
@@ -85,10 +101,20 @@ public:
 	}
 
 public:
-	//JTAG interface helpers
+
+	/**
+		@brief Convenience wrapper - sets this device's IR without requiring a length
+
+		@param data		IR data to send
+	 */
 	void SetIR(const unsigned char* data)
 	{ SetIR(data, m_irlength); }
 
+	/**
+		@brief Convenience wrapper - sets this device's IR without requiring a length
+
+		@param data		IR data to send
+	 */
 	void SetIRDeferred(const unsigned char* data)
 	{ SetIRDeferred(data, m_irlength); }
 
@@ -105,12 +131,23 @@ public:
 	void ResetToIdle();
 	void Commit();
 
+	/**
+		@brief Returns the length of this device's instruction register
+	 */
 	size_t GetIRLength()
 	{ return m_irlength; }
 
+	/**
+		@brief Returns the index of this device within the scan chain
+
+		Lower numbers are closer to TDO, higher closer to TDI.
+	 */
 	size_t GetChainIndex()
 	{ return m_pos; }
 
+	/**
+		@brief Returns the JEDEC ID code of this device
+	 */
 	uint32_t GetIdcode()
 	{ return m_idcode; }
 
@@ -133,7 +170,7 @@ protected:
 	///Cached IR
 	unsigned char m_cachedIR[4];
 
-	//Map of constant names to values, used by jtagsh and other scripting support
+	///Map of constant names to values, used by jtagsh and other scripting support
 	std::map<std::string, uint32_t> m_constantMap;
 };
 

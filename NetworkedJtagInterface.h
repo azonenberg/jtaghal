@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -88,7 +88,7 @@ private:
 
 protected:
 
-	/// Our socket
+	/// @brief The TCP socket used for communication with the server
 	Socket m_socket;
 
 	virtual size_t GetShiftOpCount();
@@ -99,6 +99,12 @@ protected:
 
 	void BufferedSend(const unsigned char* buf, int count);
 	void SendFlush();
+
+	/**
+		@brief Buffer of data queued to be sent out the socket.
+
+		We do our own buffering with Nagle disabled to minimize tiny sends while avoiding latency issues.
+	 */
 	std::vector<unsigned char> m_sendbuf;
 };
 

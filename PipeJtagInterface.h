@@ -82,8 +82,10 @@ private:
 
 protected:
 
-	/// Our pipe
+	/// @brief Pipe for reading data from the simulation
 	FILE* m_readpipe;
+
+	/// @brief Pipe for writing data to the simulation
 	FILE* m_writepipe;
 
 	virtual size_t GetShiftOpCount();

@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -361,6 +361,9 @@ void NetworkedJtagInterface::Commit()
 	m_socket.RecvLooped(&dummy, 1);
 }
 
+/**
+	@brief Flushes the BufferedSend queue
+ */
 void NetworkedJtagInterface::SendFlush()
 {
 	//Send and clear the buffer
@@ -421,6 +424,11 @@ size_t NetworkedJtagInterface::GetDummyClockCount()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GPIO stuff
 
+/**
+	@brief Checks whether the remote JTAG adapter provides GPIO capability.
+
+	@return True if GPIO capable.
+ */
 bool NetworkedJtagInterface::IsGPIOCapable()
 {
 	uint8_t op = JTAGD_OP_HAS_GPIO;
@@ -467,6 +475,12 @@ void NetworkedJtagInterface::WriteGpioState()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // I/O buffering
 
+/**
+	@brief Queues data for sending to the socket, but doesn't send immediately.
+
+	@param buf		Data to send
+	@param count	Number of bytes to send
+ */
 void NetworkedJtagInterface::BufferedSend(const unsigned char* buf, int count)
 {
 	for(int i=0; i<count; i++)
