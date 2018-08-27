@@ -30,58 +30,103 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMDebugPort
+	@brief Declaration of SWDDevice
  */
 
-#ifndef ARMDebugPort_h
-#define ARMDebugPort_h
-
-#include "DebuggerInterface.h"
+#ifndef SWDDevice_h
+#define SWDDevice_h
 
 /**
-	@brief Base class for ARM debug ports (JTAG-DP, SWJ-DP, etc)
+	@brief A single SWD-connected device
 
-	\ingroup libjtaghal
+	\ingroup features
  */
-class ARMDebugPort		: public DebuggerInterface
+class SWDDevice
 {
 public:
-	ARMDebugPort();
-	virtual ~ARMDebugPort();
+	/*
+	SWDDevice(uint32_t idcode, SWDInterface* iface, size_t pos, size_t irlength);
+	virtual ~SWDDevice();
+	*/
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Status
+	/**
+		@brief Gets a human-readable description of this device.
 
-	virtual void PrintStatusRegister() =0;
+		Example: "Xilinx XC6SLX45 stepping 3"
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Debug register access via APB
+		@return Device description
+	 */
+	/*
+	virtual std::string GetDescription()=0;
 
-	virtual uint32_t ReadDebugRegister(uint32_t address) =0;
-	virtual void WriteDebugRegister(uint32_t address, uint32_t value) =0;
+	unsigned int GetIDCode();
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// AP register access
+	static SWDDevice* CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos);
 
-	//Well-defined AP registers
-	enum ApReg
+	virtual void PrintInfo();
+	*/
+
+	/**
+		@brief Does a post-initialization probe of the device to read debug ROMs etc.
+
+		@param quiet Do less noisy probing to reduce chance of triggering security lockdowns.
+	 */
+	//virtual void PostInitProbes(bool quiet) =0;
+
+	/**
+		@brief Looks up the value for a named constant
+
+		This is mostly used by jtagsh for allowing registers to be poked in a more human-friendly fashion.
+
+		@param name		Name of the constant
+		@param value	Value (if found)
+
+		@return			True if found, false if not found
+
+		TODO: consider refactoring this to a separate base class?
+	 */
+	/*
+	bool LookupConstant(std::string name, uint32_t& value)
 	{
-		REG_MEM_CSW		= 0x00,	//Control/status word
-		REG_MEM_TAR		= 0x04,	//Transfer address register
+		if(m_constantMap.find(name) != m_constantMap.end())
+		{
+			value = m_constantMap[name];
+			return true;
+		}
+		else
+			return false;
+	}*/
 
-		REG_MEM_DRW		= 0x0C,	//Data read/write
-		REG_MEM_BASE	= 0xF8,	//Location of debug ROM
+public:
 
-		REG_IDR			= 0xFC	//ID code
-	};
+	/**
+		@brief Returns the JEDEC ID code of this device
+	 */
+	/*uint32_t GetIdcode()
+	{ return m_idcode; }
+
+	void EnterShiftDR();
+	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
 
 protected:
+	///Length of this device's instruction register, in bits
+	size_t m_irlength;
 
-	//need to be a friend so that the Mem-AP can poke registers
-	//TODO: try to find a cleaner way to expose this?
-	friend class ARMDebugMemAccessPort;
-	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr) =0;
-	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata) =0;
+	///32-bit JEDEC ID code of this device
+	uint32_t m_idcode;
+
+	///The JTAGInterface associated with this device
+	JtagInterface* m_iface;
+
+	///Position of this device in the interface's scan chain
+	size_t m_pos;
+
+	///Cached IR
+	unsigned char m_cachedIR[4];
+
+	///Map of constant names to values, used by jtagsh and other scripting support
+	std::map<std::string, uint32_t> m_constantMap;
+	*/
 };
 
 #endif

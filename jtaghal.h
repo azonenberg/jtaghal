@@ -101,6 +101,8 @@
 #include "GPIOInterface.h"
 #include "JtagDevice.h"
 #include "JtagInterface.h"
+#include "SWDDevice.h"
+#include "SWDInterface.h"
 
 //JTAG adapter drivers
 #include "DigilentJtagInterface.h"

@@ -30,58 +30,102 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of ARMDebugPort
+	@brief Declaration of SWDInterface
  */
 
-#ifndef ARMDebugPort_h
-#define ARMDebugPort_h
+#include "ARMDebugPort.h"
 
-#include "DebuggerInterface.h"
+#ifndef SWDInterface_h
+#define SWDInterface_h
 
 /**
-	@brief Base class for ARM debug ports (JTAG-DP, SWJ-DP, etc)
+	@brief Abstract representation of a SWD adapter.
 
-	\ingroup libjtaghal
+	A SWD adapter provides access to a single SW-DP (TODO: or SWJ-DP) on a single ARM SoC.
+
+	In order to support a new "dumb" SWD adapter without any higher level protocol offload, create a new derived class
+	and implement each of the following functions:
+
+	\li GetName()
+	\li GetSerial()
+	\li GetUserID()
+	\li GetFrequency()
  */
-class ARMDebugPort		: public DebuggerInterface
+class SWDInterface : public ARMDebugPort
 {
 public:
-	ARMDebugPort();
-	virtual ~ARMDebugPort();
+	SWDInterface();
+	virtual ~SWDInterface();
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Status
+	//GetInterfaceCount() is a strongly recommended static member function for each derived class
 
-	virtual void PrintStatusRegister() =0;
+	//Setup stuff
+public:
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Debug register access via APB
+	/**
+		@brief Gets the manufacturer-assigned name for this programming adapter.
 
-	virtual uint32_t ReadDebugRegister(uint32_t address) =0;
-	virtual void WriteDebugRegister(uint32_t address, uint32_t value) =0;
+		This is usually the model number but is sometimes something more generic like "Digilent Adept USB Device".
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// AP register access
+		@return The device name
+	 */
+	virtual std::string GetName() =0;
 
-	//Well-defined AP registers
-	enum ApReg
-	{
-		REG_MEM_CSW		= 0x00,	//Control/status word
-		REG_MEM_TAR		= 0x04,	//Transfer address register
+	/**
+		@brief Gets the manufacturer-assigned serial number for this programming adapter, if any.
 
-		REG_MEM_DRW		= 0x0C,	//Data read/write
-		REG_MEM_BASE	= 0xF8,	//Location of debug ROM
+		Derived classes may choose to return the user ID, an empty string, or another default value if no serial number
+		has been assigned.
 
-		REG_IDR			= 0xFC	//ID code
-	};
+		@return The serial number
+	 */
+	virtual std::string GetSerial() =0;
 
+	/**
+		@brief Gets the user-assigned name for this JTAG adapter, if any.
+
+		Derived classes may choose to return the serial number, an empty string, or another default value if no name
+		has been assigned.
+
+		@return The name for this adapter.
+	 */
+	virtual std::string GetUserID() =0;
+
+	/**
+		@brief Gets the clock frequency, in Hz, of the JTAG interface
+
+		@return The clock frequency
+	 */
+	virtual int GetFrequency() =0;
+
+	/**
+		@brief Performs a SW-DP write transaction
+	 */
+	virtual void WriteWord(uint8_t reg_addr, uint32_t wdata) =0;
+
+	/**
+		@brief Performs a SW-DP read transaction
+	 */
+	virtual uint32_t ReadWord(uint8_t reg_addr) =0;
+
+public:
+
+	//Scanning stuff
+public:
+
+	/**
+		@brief Connects to the interface and figures out what we have attached to us
+	 */
+	virtual void InitializeDevice();
+
+	//Device(s) found on the SWD interface
+	//For now: only support for one
 protected:
+	SWDDevice* m_device;
 
-	//need to be a friend so that the Mem-AP can poke registers
-	//TODO: try to find a cleaner way to expose this?
-	friend class ARMDebugMemAccessPort;
-	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr) =0;
-	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata) =0;
+public:
+	SWDDevice* GetDevice()
+	{ return m_device; }
 };
 
 #endif
