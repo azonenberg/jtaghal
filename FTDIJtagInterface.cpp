@@ -453,6 +453,20 @@ void FTDIJtagInterface::SharedCtorInit(uint32_t type, const string& layout)
 		SetGpioValueDeferred(3, true);
 	}
 
+	//Digilent HS2
+	//per https://sourceforge.net/p/xc3sprog/bugs/16/#1013/4c91/1c07
+	//"HS1/HS2 DISABLE buffer by default, if D7 (HS1) or D7..D5(HS2) are not 1, then output drivers are not enabled"
+	else if(layout == "hs2")
+	{
+		//GPIOL3...L1 are active HIGH output enable
+		SetGpioDirectionDeferred(3, true);
+		SetGpioDirectionDeferred(2, true);
+		SetGpioDirectionDeferred(1, true);
+		SetGpioValueDeferred(3, true);
+		SetGpioValueDeferred(2, true);
+		SetGpioValueDeferred(1, true);
+	}
+
 	//JTAGKey (or compatible bus blaster etc)
 	else if(layout == "jtagkey")
 	{
