@@ -42,6 +42,9 @@
 	@brief A logical device connected to some sort of test interface (may or may not be JTAG).
 
 	Every device class in libjtaghal should derive directly or indirectly from this class.
+
+	A TestableDevice isn't good for much by itself; typically a user will use RTTI to figure out what interfaces
+	the derived object implements and then cast to them.
  */
 class TestableDevice
 {

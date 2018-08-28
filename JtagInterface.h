@@ -248,7 +248,6 @@ public:
 
 	//High-level JTAG interface (register level)
 	virtual void InitializeChain(bool quiet = false);
-	size_t GetDeviceCount();
 	unsigned int GetIDCode(unsigned int device);
 	JtagDevice* GetDevice(unsigned int device);
 	void SetIR(unsigned int device, const unsigned char* data, size_t count);
@@ -268,17 +267,11 @@ public:
 
 protected:
 
-	///@brief Number of devices in the scan chain
-	size_t m_devicecount;
-
 	///@brief Total IR length of the chain
 	size_t m_irtotal;
 
 	///@brief Array of device ID codes
 	std::vector<unsigned int> m_idcodes;
-
-	///@brief Array of devices
-	std::vector<JtagDevice*> m_devices;
 
 	//Performance profiling
 

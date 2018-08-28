@@ -49,8 +49,6 @@ using namespace std;
  */
 JtagInterface::JtagInterface()
 {
-	m_devicecount = 0;
-
 	m_perfShiftOps = 0;
 	m_perfRecoverableErrs = 0;
 	m_perfDataBits = 0;
@@ -255,6 +253,7 @@ void JtagInterface::InitializeChain(bool quiet)
 	}
 
 	//Shift 1s into the DR one at a time and see when we get one back
+	uint32_t devcount = 0;
 	for(int i=0; i<1024; i++)
 	{
 		unsigned char one = 1;
@@ -262,11 +261,11 @@ void JtagInterface::InitializeChain(bool quiet)
 		ShiftData(false, &one, temp, 1);
 		if(temp[0] & 1)
 		{
-			m_devicecount = i;
+			devcount = i;
 			break;
 		}
 	}
-	LogTrace("Found %d total devices\n", (int) m_devicecount);
+	LogTrace("Found %d total devices\n", (int) devcount);
 
 	//Now we know how many devices we have! Reset the TAP
 	ResetToIdle();
@@ -274,13 +273,13 @@ void JtagInterface::InitializeChain(bool quiet)
 	//Shift out the ID codes and reset the scan chain.
 	EnterShiftDR();
 	vector<uint32_t> idcodes;
-	for(size_t i=0; i<m_devicecount; i++)
+	for(size_t i=0; i<devcount; i++)
 		idcodes.push_back(0x0);
-	ShiftData(false, lots_of_zeros, (unsigned char*)&idcodes[0], 32*m_devicecount);
+	ShiftData(false, lots_of_zeros, (unsigned char*)&idcodes[0], 32*devcount);
 
 	//Crunch things
 	size_t idcode_bits = 0;
-	for(size_t i=0; i<m_devicecount; i++)
+	for(size_t i=0; i<devcount; i++)
 	{
 		uint32_t idcode = 0;
 		for(size_t j=0; j<32; j++)
@@ -302,7 +301,7 @@ void JtagInterface::InitializeChain(bool quiet)
 	ResetToIdle();
 
 	//Crack ID codes
-	for(size_t i=0; i<m_devicecount; i++)
+	for(size_t i=0; i<devcount; i++)
 	{
 		//If the IDCODE is zero dont even bother trying.
 		//TODO: some kind of config file to specify non-idcode-capable TAPs rather than only supporting PnP?
@@ -323,16 +322,6 @@ void JtagInterface::InitializeChain(bool quiet)
 		if(p)
 			p->PostInitProbes(quiet);
 	}
-}
-
-/**
-	@brief Returns the number of devices in the scan chain
-
-	@return Device count
- */
-size_t JtagInterface::GetDeviceCount()
-{
-	return m_devicecount;
 }
 
 /**
@@ -363,7 +352,7 @@ void JtagInterface::Commit()
  */
 unsigned int JtagInterface::GetIDCode(unsigned int device)
 {
-	if(device >= (unsigned int)m_devicecount)
+	if(device >= m_devices.size())
 	{
 		throw JtagExceptionWrapper(
 			"Device index out of range",
@@ -383,7 +372,7 @@ unsigned int JtagInterface::GetIDCode(unsigned int device)
  */
 JtagDevice* JtagInterface::GetDevice(unsigned int device)
 {
-	if(device >= (unsigned int)m_devicecount)
+	if(device >= m_devices.size())
 	{
 		throw JtagExceptionWrapper(
 			"Device index out of range",
@@ -425,7 +414,7 @@ void JtagInterface::SetIRDeferred(unsigned int device, const unsigned char* data
 	EnterShiftIR();
 
 	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
-	if(m_devicecount == 1)
+	if(m_devices.size() == 1)
 		ShiftData(true, data, NULL, count);
 
 	else
@@ -475,7 +464,7 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 	EnterShiftIR();
 
 	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
-	if(m_devicecount == 1)
+	if(m_devices.size() == 1)
 		ShiftData(true, data, data_out, count);
 
 	//Nope, we need to do a bit more work since there's more than one device.
@@ -538,7 +527,7 @@ void JtagInterface::ScanDR(unsigned int device, const unsigned char* send_data, 
 	EnterShiftDR();
 
 	//OPTIMIZATION: If we have a single device in the chain, don't bother with calculating padding bits
-	if(m_devicecount == 1)
+	if(m_devices.size() == 1)
 		ShiftData(true, send_data, rcv_data, count);
 
 	//Calculate padding and do the scan
@@ -549,7 +538,7 @@ void JtagInterface::ScanDR(unsigned int device, const unsigned char* send_data, 
 
 		//First, calculate the total number of bits to shift.
 		//All other devices should be in bypass mode so they count as 1 bit
-		size_t shift_bits = (m_devicecount - 1) + count;
+		size_t shift_bits = (m_devices.size() - 1) + count;
 		size_t shift_bytes = shift_bits >> 3;
 		if(shift_bits & 7)
 			shift_bytes ++;
@@ -604,7 +593,7 @@ void JtagInterface::ScanDR(unsigned int device, const unsigned char* send_data, 
  */
 void JtagInterface::ScanDRDeferred(unsigned int /*device*/, const unsigned char* send_data, size_t count)
 {
-	if(m_devicecount != 1)
+	if(m_devices.size() != 1)
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
@@ -655,7 +644,7 @@ bool JtagInterface::IsSplitScanSupported()
  */
 void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
-	if(m_devicecount != 1)
+	if(m_devices.size() != 1)
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
@@ -683,7 +672,7 @@ void JtagInterface::ScanDRSplitWrite(unsigned int /*device*/, const unsigned cha
  */
 void JtagInterface::ScanDRSplitRead(unsigned int /*device*/, unsigned char* rcv_data, size_t count)
 {
-	if(m_devicecount != 1)
+	if(m_devices.size() != 1)
 	{
 		throw JtagExceptionWrapper(
 			"Bypassing extra devices not yet supported!",
@@ -725,7 +714,7 @@ void JtagInterface::CreateDummyDevices()
 	size_t dummypos = 0;
 	bool found_dummy = false;
 	size_t irbits = 0;
-	for(size_t i=0; i<m_devicecount; i++)
+	for(size_t i=0; i<m_devices.size(); i++)
 	{
 		if(m_devices[i] == NULL)
 		{

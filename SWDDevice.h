@@ -41,7 +41,7 @@
 
 	\ingroup features
  */
-class SWDDevice
+class SWDDevice : public TestableDevice
 {
 public:
 	/*

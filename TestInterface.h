@@ -36,6 +36,8 @@
 #ifndef TestInterface_h
 #define TestInterface_h
 
+class TestableDevice;
+
 /**
 	@brief An interface to an arbitrary test/debug protocol (may be JTAG, SWD, ICSP, etc)
  */
@@ -88,7 +90,16 @@ public:
 	virtual void InitializeChain(bool quiet = false) =0;		//name kept for compatibility with JTAG stuff
 																//but we use the same function for non-JTAG interfaces
 
+	/**
+		@brief Returns the number of devices attached to the interface
+
+		@return Device count
+	 */
+	size_t GetDeviceCount()
+	{ return m_devices.size(); }
+
 protected:
+
 };
 
 #endif
