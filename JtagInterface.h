@@ -284,9 +284,6 @@ protected:
 	///Number of shift operations performed on this interface
 	size_t m_perfShiftOps;
 
-	///Number of link errors successfully recovered from
-	size_t m_perfRecoverableErrs;
-
 	///Number of data bits shifted
 	size_t m_perfDataBits;
 
@@ -301,7 +298,6 @@ protected:
 
 public:
 	virtual size_t GetShiftOpCount();
-	virtual size_t GetRecoverableErrorCount();
 	virtual size_t GetDataBitCount();
 	virtual size_t GetModeBitCount();
 	virtual size_t GetDummyClockCount();

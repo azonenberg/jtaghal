@@ -50,7 +50,6 @@ using namespace std;
 JtagInterface::JtagInterface()
 {
 	m_perfShiftOps = 0;
-	m_perfRecoverableErrs = 0;
 	m_perfDataBits = 0;
 	m_perfModeBits = 0;
 	m_perfDummyClocks = 0;
@@ -760,18 +759,6 @@ void JtagInterface::SwapOutDummy(size_t pos, JtagDevice* realdev)
 size_t JtagInterface::GetShiftOpCount()
 {
 	return m_perfShiftOps;
-}
-
-/**
-	@brief Gets the number of errors this interface has recovered from (USB retransmits, etc)
-
-	@throw JtagException on failure
-
-	@return Number of recoverable errors
- */
-size_t JtagInterface::GetRecoverableErrorCount()
-{
-	return m_perfRecoverableErrs;
 }
 
 /**
