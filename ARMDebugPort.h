@@ -82,6 +82,17 @@ protected:
 	friend class ARMDebugMemAccessPort;
 	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr) =0;
 	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata) =0;
+
+protected:
+
+	///Access ports
+	std::map<uint8_t, ARMDebugAccessPort*> m_aps;
+
+	///The default Mem-AP used for memory access
+	ARMDebugMemAccessPort* m_defaultMemAP;
+
+	//The default Mem-AP used for debug register access
+	ARMDebugMemAccessPort* m_defaultRegisterAP;
 };
 
 #endif

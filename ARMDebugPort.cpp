@@ -38,5 +38,7 @@ ARMDebugPort::ARMDebugPort()
 
 ARMDebugPort::~ARMDebugPort()
 {
-
+	for(auto x : m_aps)
+		delete x.second;
+	m_aps.clear();
 }

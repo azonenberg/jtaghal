@@ -164,9 +164,7 @@ void ARMJtagDebugPort::PostInitProbes(bool /*quiet*/)
 
 ARMJtagDebugPort::~ARMJtagDebugPort()
 {
-	for(auto x : m_aps)
-		delete x.second;
-	m_aps.clear();
+
 }
 
 JtagDevice* ARMJtagDebugPort::CreateDevice(

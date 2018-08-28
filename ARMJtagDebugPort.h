@@ -227,15 +227,6 @@ protected:
 
 	///Part number (normally IDCODE_ARM_DAP_JTAG)
 	unsigned int m_partnum;
-
-	///Access ports
-	std::map<uint8_t, ARMDebugAccessPort*> m_aps;
-
-	///The default Mem-AP used for memory access
-	ARMDebugMemAccessPort* m_defaultMemAP;
-
-	//The default Mem-AP used for debug register access
-	ARMDebugMemAccessPort* m_defaultRegisterAP;
 };
 
 #endif
