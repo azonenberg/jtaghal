@@ -43,4 +43,30 @@ TestInterface::TestInterface()
 
 TestInterface::~TestInterface()
 {
+	for(auto p : m_devices)
+		delete p;
+	m_devices.clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+/**
+	@brief Gets the Nth device on the interface
+
+	@throw JtagException if the index is out of range
+
+	@param device Device index
+
+	@return The device object
+ */
+TestableDevice* TestInterface::GetDevice(unsigned int device)
+{
+	if(device >= m_devices.size())
+	{
+		throw JtagExceptionWrapper(
+			"Device index out of range",
+			"");
+	}
+	return m_devices[device];
 }

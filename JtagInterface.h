@@ -249,7 +249,6 @@ public:
 	//High-level JTAG interface (register level)
 	virtual void InitializeChain(bool quiet = false);
 	unsigned int GetIDCode(unsigned int device);
-	JtagDevice* GetDevice(unsigned int device);
 	void SetIR(unsigned int device, const unsigned char* data, size_t count);
 	void SetIRDeferred(unsigned int device, const unsigned char* data, size_t count);
 	void SetIR(unsigned int device, const unsigned char* data, unsigned char* data_out, size_t count);
@@ -257,6 +256,9 @@ public:
 	void ScanDRDeferred(unsigned int device, const unsigned char* send_data, size_t count);
 	void ScanDRSplitWrite(unsigned int device, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
 	void ScanDRSplitRead(unsigned int device, unsigned char* rcv_data, size_t count);
+
+	JtagDevice* GetJtagDevice(unsigned int device)
+	{ return dynamic_cast<JtagDevice*>(GetDevice(device)); }
 
 protected:
 	//Helpers for initialization

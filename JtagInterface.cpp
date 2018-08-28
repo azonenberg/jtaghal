@@ -58,17 +58,11 @@ JtagInterface::JtagInterface()
 }
 
 /**
-	@brief Interface destructor
-
-	Destroys all JtagDevice objects in the scan chain
+	@brief Generic destructor, nothing special
  */
 JtagInterface::~JtagInterface()
 {
-	for(size_t i=0; i<m_devices.size(); i++)
-	{
-		if(m_devices[i] != NULL)
-			delete m_devices[i];
-	}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,26 +356,6 @@ unsigned int JtagInterface::GetIDCode(unsigned int device)
 }
 
 /**
-	@brief Gets the Nth device in the chain
-
-	@throw JtagException if the index is out of range
-
-	@param device Device index
-
-	@return The device object
- */
-JtagDevice* JtagInterface::GetDevice(unsigned int device)
-{
-	if(device >= m_devices.size())
-	{
-		throw JtagExceptionWrapper(
-			"Device index out of range",
-			"");
-	}
-	return m_devices[device];
-}
-
-/**
 	@brief Sets the IR for a specific device in the chain.
 
 	Starts and ends in Run-Test-Idle state.
@@ -431,7 +405,7 @@ void JtagInterface::SetIRDeferred(unsigned int device, const unsigned char* data
 		//This is the sum of all IR widths of devices with LOWER indexes than us.
 		size_t leading_bits = 0;
 		for(size_t i=0; i<device; i++)
-			leading_bits += m_devices[i]->GetIRLength();
+			leading_bits += GetJtagDevice(i)->GetIRLength();
 
 		//Patch in the IR data we're sending
 		for(size_t i=0; i<count; i++)
@@ -484,7 +458,7 @@ void JtagInterface::SetIR(unsigned int device, const unsigned char* data, unsign
 		//This is the sum of all IR widths of devices with LOWER indexes than us.
 		size_t leading_bits = 0;
 		for(size_t i=0; i<device; i++)
-			leading_bits += m_devices[i]->GetIRLength();
+			leading_bits += GetJtagDevice(i)->GetIRLength();
 
 		//Patch in the IR data we're sending
 		for(size_t i=0; i<count; i++)
@@ -716,7 +690,7 @@ void JtagInterface::CreateDummyDevices()
 	size_t irbits = 0;
 	for(size_t i=0; i<m_devices.size(); i++)
 	{
-		if(m_devices[i] == NULL)
+		if(GetJtagDevice(i) == NULL)
 		{
 			if(found_dummy)
 			{
@@ -730,7 +704,7 @@ void JtagInterface::CreateDummyDevices()
 			}
 		}
 		else
-			irbits += m_devices[i]->GetIRLength();
+			irbits += GetJtagDevice(i)->GetIRLength();
 	}
 	if(!found_dummy)
 		return;
@@ -754,7 +728,7 @@ void JtagInterface::CreateDummyDevices()
  */
 void JtagInterface::SwapOutDummy(size_t pos, JtagDevice* realdev)
 {
-	auto olddev = m_devices[pos];
+	auto olddev = GetJtagDevice(pos);
 	if(dynamic_cast<JtagDummy*>(olddev) == NULL)
 	{
 		throw JtagExceptionWrapper(

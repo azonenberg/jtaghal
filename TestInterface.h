@@ -98,8 +98,12 @@ public:
 	size_t GetDeviceCount()
 	{ return m_devices.size(); }
 
+	TestableDevice* GetDevice(unsigned int device);
+
 protected:
 
+	///@brief Array of devices attached to this interface
+	std::vector<TestableDevice*> m_devices;
 };
 
 #endif
