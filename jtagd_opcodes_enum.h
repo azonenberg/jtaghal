@@ -10,7 +10,7 @@ enum jtagd_opcodes {
     JTAGD_OP_SHIFT_DATA = 0x07,
     JTAGD_OP_DUMMY_CLOCK = 0x08,
     JTAGD_OP_PERF_SHIFT = 0x09,
-    JTAGD_OP_PERF_RECOV = 0x0a,
+    //0x0a reserved for deleted opcode
     JTAGD_OP_PERF_DATA = 0x0b,
     JTAGD_OP_PERF_MODE = 0x0c,
     JTAGD_OP_PERF_DUMMY = 0x0d,

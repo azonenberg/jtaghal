@@ -77,9 +77,7 @@ jtagd_opcodes:
         # Server responds with uint64_t
         JTAGD_OP_PERF_SHIFT: 09
 
-        # Gets number of recoverable errors
-        # Server responds with uint64_t
-        JTAGD_OP_PERF_RECOV: 0a
+        # 0x0a reserved for deleted opcode
 
         # Gets number of data bits shifted
         # Server responds with uint64_t

@@ -32,6 +32,7 @@ set(JTAGHAL_SOURCES
     JtagInterface.cpp
     TestInterface.cpp
     DigilentJtagInterface.cpp
+    FTDIDriver.cpp
     FTDIJtagInterface.cpp
     NetworkedJtagInterface.cpp
     PipeJtagInterface.cpp

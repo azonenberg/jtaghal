@@ -383,15 +383,6 @@ size_t NetworkedJtagInterface::GetShiftOpCount()
 	return dout;
 }
 
-size_t NetworkedJtagInterface::GetRecoverableErrorCount()
-{
-	uint8_t op = JTAGD_OP_PERF_RECOV;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint64_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 8);
-	return dout;
-}
-
 size_t NetworkedJtagInterface::GetDataBitCount()
 {
 	uint8_t op = JTAGD_OP_PERF_DATA;

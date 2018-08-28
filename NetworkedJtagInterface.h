@@ -92,7 +92,6 @@ protected:
 	Socket m_socket;
 
 	virtual size_t GetShiftOpCount();
-	virtual size_t GetRecoverableErrorCount();
 	virtual size_t GetDataBitCount();
 	virtual size_t GetModeBitCount();
 	virtual size_t GetDummyClockCount();

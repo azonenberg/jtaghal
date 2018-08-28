@@ -108,6 +108,7 @@
 
 //JTAG adapter drivers
 #include "DigilentJtagInterface.h"
+#include "FTDIDriver.h"
 #include "FTDIJtagInterface.h"
 #include "NetworkedJtagInterface.h"
 #include "PipeJtagInterface.h"
