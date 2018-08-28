@@ -30,104 +30,71 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of JtagDevice
+	@brief Declaration of TestableDevice
  */
 
-#ifndef JtagDevice_h
-#define JtagDevice_h
+#ifndef TestableDevice_h
+#define TestableDevice_h
 
-class JtagInterface;
+#define RegisterConstant(c) m_constantMap[(#c)] = c
 
 /**
-	@brief A single TAP in the JTAG chain.
+	@brief A logical device connected to some sort of test interface (may or may not be JTAG).
 
-	May not correspond 1:1 with physical silicon dies since some parts contain multiple TAPs.
-
-	Most device classes in libjtaghal are derived from this class.
-
-	\ingroup features
+	Every device class in libjtaghal should derive directly or indirectly from this class.
  */
-class JtagDevice : public TestableDevice
+class TestableDevice
 {
 public:
-	JtagDevice(uint32_t idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~JtagDevice();
+	TestableDevice();
+	virtual ~TestableDevice();
 
-	unsigned int GetIDCode();
-
-	static JtagDevice* CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos);
-
-	virtual void PrintInfo();
-
-public:
+	virtual void PrintInfo() =0;
 
 	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
+		@brief Gets a human-readable description of this device.
 
-		@param data		IR data to send
+		Example: "Xilinx XC6SLX45 stepping 3"
+
+		@return Device description
 	 */
-	void SetIR(const unsigned char* data)
-	{ SetIR(data, m_irlength); }
+	virtual std::string GetDescription()=0;
 
 	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
+		@brief Does a post-initialization probe of the device to read debug ROMs etc.
 
-		@param data		IR data to send
+		@param quiet Do less noisy probing to reduce chance of triggering security lockdowns.
 	 */
-	void SetIRDeferred(const unsigned char* data)
-	{ SetIRDeferred(data, m_irlength); }
-
-	void SetIR(const unsigned char* data, int count);
-	void SetIRDeferred(const unsigned char* data, int count);
-	void SetIR(const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(const unsigned char* send_data, int count);
-	bool IsSplitScanSupported();
-	void ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned char* rcv_data, int count);
-	void SendDummyClocks(int n);
-	void SendDummyClocksDeferred(int n);
-	void ResetToIdle();
-	void Commit();
+	virtual void PostInitProbes(bool quiet) =0;
 
 	/**
-		@brief Returns the length of this device's instruction register
+		@brief Looks up the value for a named constant
+
+		This is mostly used by jtagsh for allowing registers to be poked in a more human-friendly fashion.
+
+		@param name		Name of the constant
+		@param value	Value (if found)
+
+		@return			True if found, false if not found
+
+		TODO: consider refactoring this to a separate base class?
 	 */
-	size_t GetIRLength()
-	{ return m_irlength; }
-
-	/**
-		@brief Returns the index of this device within the scan chain
-
-		Lower numbers are closer to TDO, higher closer to TDI.
-	 */
-	size_t GetChainIndex()
-	{ return m_pos; }
-
-	/**
-		@brief Returns the JEDEC ID code of this device
-	 */
-	uint32_t GetIdcode()
-	{ return m_idcode; }
-
-	void EnterShiftDR();
-	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
+	bool LookupConstant(std::string name, uint32_t& value)
+	{
+		if(m_constantMap.find(name) != m_constantMap.end())
+		{
+			value = m_constantMap[name];
+			return true;
+		}
+		else
+			return false;
+	}
 
 protected:
-	///Length of this device's instruction register, in bits
-	size_t m_irlength;
 
-	///32-bit JEDEC ID code of this device
-	uint32_t m_idcode;
-
-	///The JTAGInterface associated with this device
-	JtagInterface* m_iface;
-
-	///Position of this device in the interface's scan chain
-	size_t m_pos;
-
-	///Cached IR
-	unsigned char m_cachedIR[4];
+	///Map of constant names to values, used by jtagsh and other scripting support
+	std::map<std::string, uint32_t> m_constantMap;
 };
 
 #endif
+

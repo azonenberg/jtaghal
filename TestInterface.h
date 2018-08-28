@@ -30,104 +30,65 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of JtagDevice
+	@brief Declaration of TestInterface
  */
 
-#ifndef JtagDevice_h
-#define JtagDevice_h
-
-class JtagInterface;
+#ifndef TestInterface_h
+#define TestInterface_h
 
 /**
-	@brief A single TAP in the JTAG chain.
-
-	May not correspond 1:1 with physical silicon dies since some parts contain multiple TAPs.
-
-	Most device classes in libjtaghal are derived from this class.
-
-	\ingroup features
+	@brief An interface to an arbitrary test/debug protocol (may be JTAG, SWD, ICSP, etc)
  */
-class JtagDevice : public TestableDevice
+class TestInterface
 {
 public:
-	JtagDevice(uint32_t idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~JtagDevice();
+	TestInterface();
+	virtual ~TestInterface();
 
-	unsigned int GetIDCode();
-
-	static JtagDevice* CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos);
-
-	virtual void PrintInfo();
-
+	//Adapter info
 public:
+	/**
+		@brief Gets the manufacturer-assigned name for this programming adapter.
+
+		This is usually the model number but is sometimes something more generic like "Digilent Adept USB Device".
+
+		@return The device name
+	 */
+	virtual std::string GetName() =0;
 
 	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
+		@brief Gets the manufacturer-assigned serial number for this programming adapter, if any.
 
-		@param data		IR data to send
+		Derived classes may choose to return the user ID, an empty string, or another default value if no serial number
+		has been assigned.
+
+		@return The serial number
 	 */
-	void SetIR(const unsigned char* data)
-	{ SetIR(data, m_irlength); }
+	virtual std::string GetSerial() =0;
 
 	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
+		@brief Gets the user-assigned name for this JTAG adapter, if any.
 
-		@param data		IR data to send
+		Derived classes may choose to return the serial number, an empty string, or another default value if no name
+		has been assigned.
+
+		@return The name for this adapter.
 	 */
-	void SetIRDeferred(const unsigned char* data)
-	{ SetIRDeferred(data, m_irlength); }
-
-	void SetIR(const unsigned char* data, int count);
-	void SetIRDeferred(const unsigned char* data, int count);
-	void SetIR(const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(const unsigned char* send_data, int count);
-	bool IsSplitScanSupported();
-	void ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned char* rcv_data, int count);
-	void SendDummyClocks(int n);
-	void SendDummyClocksDeferred(int n);
-	void ResetToIdle();
-	void Commit();
+	virtual std::string GetUserID() =0;
 
 	/**
-		@brief Returns the length of this device's instruction register
+		@brief Gets the clock frequency, in Hz, of the JTAG interface
+
+		@return The clock frequency
 	 */
-	size_t GetIRLength()
-	{ return m_irlength; }
+	virtual int GetFrequency() =0;
 
-	/**
-		@brief Returns the index of this device within the scan chain
-
-		Lower numbers are closer to TDO, higher closer to TDI.
-	 */
-	size_t GetChainIndex()
-	{ return m_pos; }
-
-	/**
-		@brief Returns the JEDEC ID code of this device
-	 */
-	uint32_t GetIdcode()
-	{ return m_idcode; }
-
-	void EnterShiftDR();
-	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
+	//Probing / enumeration of attached resources
+public:
+	virtual void InitializeChain(bool quiet = false) =0;		//name kept for compatibility with JTAG stuff
+																//but we use the same function for non-JTAG interfaces
 
 protected:
-	///Length of this device's instruction register, in bits
-	size_t m_irlength;
-
-	///32-bit JEDEC ID code of this device
-	uint32_t m_idcode;
-
-	///The JTAGInterface associated with this device
-	JtagInterface* m_iface;
-
-	///Position of this device in the interface's scan chain
-	size_t m_pos;
-
-	///Cached IR
-	unsigned char m_cachedIR[4];
 };
 
 #endif

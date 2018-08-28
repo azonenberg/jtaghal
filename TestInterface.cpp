@@ -30,104 +30,17 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of JtagDevice
+	@brief Implementation of TestInterface
  */
+#include "jtaghal.h"
 
-#ifndef JtagDevice_h
-#define JtagDevice_h
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-class JtagInterface;
-
-/**
-	@brief A single TAP in the JTAG chain.
-
-	May not correspond 1:1 with physical silicon dies since some parts contain multiple TAPs.
-
-	Most device classes in libjtaghal are derived from this class.
-
-	\ingroup features
- */
-class JtagDevice : public TestableDevice
+TestInterface::TestInterface()
 {
-public:
-	JtagDevice(uint32_t idcode, JtagInterface* iface, size_t pos, size_t irlength);
-	virtual ~JtagDevice();
+}
 
-	unsigned int GetIDCode();
-
-	static JtagDevice* CreateDevice(uint32_t idcode, JtagInterface* iface, size_t pos);
-
-	virtual void PrintInfo();
-
-public:
-
-	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
-
-		@param data		IR data to send
-	 */
-	void SetIR(const unsigned char* data)
-	{ SetIR(data, m_irlength); }
-
-	/**
-		@brief Convenience wrapper - sets this device's IR without requiring a length
-
-		@param data		IR data to send
-	 */
-	void SetIRDeferred(const unsigned char* data)
-	{ SetIRDeferred(data, m_irlength); }
-
-	void SetIR(const unsigned char* data, int count);
-	void SetIRDeferred(const unsigned char* data, int count);
-	void SetIR(const unsigned char* data, unsigned char* data_out, int count);
-	void ScanDR(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRDeferred(const unsigned char* send_data, int count);
-	bool IsSplitScanSupported();
-	void ScanDRSplitWrite(const unsigned char* send_data, unsigned char* rcv_data, int count);
-	void ScanDRSplitRead(unsigned char* rcv_data, int count);
-	void SendDummyClocks(int n);
-	void SendDummyClocksDeferred(int n);
-	void ResetToIdle();
-	void Commit();
-
-	/**
-		@brief Returns the length of this device's instruction register
-	 */
-	size_t GetIRLength()
-	{ return m_irlength; }
-
-	/**
-		@brief Returns the index of this device within the scan chain
-
-		Lower numbers are closer to TDO, higher closer to TDI.
-	 */
-	size_t GetChainIndex()
-	{ return m_pos; }
-
-	/**
-		@brief Returns the JEDEC ID code of this device
-	 */
-	uint32_t GetIdcode()
-	{ return m_idcode; }
-
-	void EnterShiftDR();
-	void ShiftData(const unsigned char* send_data, unsigned char* rcv_data, int count);
-
-protected:
-	///Length of this device's instruction register, in bits
-	size_t m_irlength;
-
-	///32-bit JEDEC ID code of this device
-	uint32_t m_idcode;
-
-	///The JTAGInterface associated with this device
-	JtagInterface* m_iface;
-
-	///Position of this device in the interface's scan chain
-	size_t m_pos;
-
-	///Cached IR
-	unsigned char m_cachedIR[4];
-};
-
-#endif
+TestInterface::~TestInterface()
+{
+}

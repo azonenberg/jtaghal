@@ -33,6 +33,8 @@
 	@brief Declaration of SWDInterface
  */
 
+#include "ARMDebugAccessPort.h"
+#include "ARMDebugMemAccessPort.h"
 #include "ARMDebugPort.h"
 
 #ifndef SWDInterface_h
@@ -51,7 +53,8 @@
 	\li GetUserID()
 	\li GetFrequency()
  */
-class SWDInterface : public ARMDebugPort
+class SWDInterface	: public ARMDebugPort
+					, public TestInterface
 {
 public:
 	SWDInterface();
@@ -61,42 +64,6 @@ public:
 
 	//Setup stuff
 public:
-
-	/**
-		@brief Gets the manufacturer-assigned name for this programming adapter.
-
-		This is usually the model number but is sometimes something more generic like "Digilent Adept USB Device".
-
-		@return The device name
-	 */
-	virtual std::string GetName() =0;
-
-	/**
-		@brief Gets the manufacturer-assigned serial number for this programming adapter, if any.
-
-		Derived classes may choose to return the user ID, an empty string, or another default value if no serial number
-		has been assigned.
-
-		@return The serial number
-	 */
-	virtual std::string GetSerial() =0;
-
-	/**
-		@brief Gets the user-assigned name for this JTAG adapter, if any.
-
-		Derived classes may choose to return the serial number, an empty string, or another default value if no name
-		has been assigned.
-
-		@return The name for this adapter.
-	 */
-	virtual std::string GetUserID() =0;
-
-	/**
-		@brief Gets the clock frequency, in Hz, of the JTAG interface
-
-		@return The clock frequency
-	 */
-	virtual int GetFrequency() =0;
 
 	/**
 		@brief Performs a SW-DP write transaction

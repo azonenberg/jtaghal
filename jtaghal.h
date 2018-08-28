@@ -98,6 +98,8 @@
 #include "JtagException.h"
 
 //Base interfaces
+#include "TestInterface.h"
+#include "TestableDevice.h"
 #include "GPIOInterface.h"
 #include "JtagDevice.h"
 #include "JtagInterface.h"

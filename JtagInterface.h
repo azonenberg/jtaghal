@@ -131,7 +131,7 @@
 
 	\ingroup interfaces
  */
-class JtagInterface
+class JtagInterface : public TestInterface
 {
 public:
 	JtagInterface();
@@ -141,43 +141,6 @@ public:
 
 	//Setup stuff
 public:
-
-	/**
-		@brief Gets the manufacturer-assigned name for this programming adapter.
-
-		This is usually the model number but is sometimes something more generic like "Digilent Adept USB Device".
-
-		@return The device name
-	 */
-	virtual std::string GetName() =0;
-
-	/**
-		@brief Gets the manufacturer-assigned serial number for this programming adapter, if any.
-
-		Derived classes may choose to return the user ID, an empty string, or another default value if no serial number
-		has been assigned.
-
-		@return The serial number
-	 */
-	virtual std::string GetSerial() =0;
-
-	/**
-		@brief Gets the user-assigned name for this JTAG adapter, if any.
-
-		Derived classes may choose to return the serial number, an empty string, or another default value if no name
-		has been assigned.
-
-		@return The name for this adapter.
-	 */
-	virtual std::string GetUserID() =0;
-
-	/**
-		@brief Gets the clock frequency, in Hz, of the JTAG interface
-
-		@return The clock frequency
-	 */
-	virtual int GetFrequency() =0;
-
 	virtual void Commit();
 
 	//Low-level JTAG interface (wire level)
@@ -284,7 +247,7 @@ public:
 	virtual void ResetToIdle();		//TODO: Make this protected as well? Not likely to be needed for anything in well-written code
 
 	//High-level JTAG interface (register level)
-	void InitializeChain(bool quiet = false);
+	virtual void InitializeChain(bool quiet = false);
 	size_t GetDeviceCount();
 	unsigned int GetIDCode(unsigned int device);
 	JtagDevice* GetDevice(unsigned int device);

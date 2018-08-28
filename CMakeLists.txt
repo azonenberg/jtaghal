@@ -25,10 +25,12 @@ set(JTAGHAL_SOURCES
     JtagDummy.cpp
     JtagFPGA.cpp
     Microcontroller.cpp
+    TestableDevice.cpp
 
     DebuggerInterface.cpp
     GPIOInterface.cpp
     JtagInterface.cpp
+    TestInterface.cpp
     DigilentJtagInterface.cpp
     FTDIJtagInterface.cpp
     NetworkedJtagInterface.cpp
