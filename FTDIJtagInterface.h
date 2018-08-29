@@ -105,9 +105,6 @@ protected:
 		bool last_tms,
 		std::vector<unsigned char>& cmd_out);
 	void DoReadback(unsigned char* rcv_data, size_t count);
-
-protected:
-	void SharedCtorInit(uint32_t type, const std::string& layout);
 };
 
 #endif	//#ifdef HAVE_FTD2XX

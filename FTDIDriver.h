@@ -38,9 +38,6 @@
 
 #ifdef HAVE_FTD2XX
 
-#define FTDI_VID						0x0403	/* FTDI's USB vendor ID */
-#define PID_232H_JTAG					0x8028	/* Product ID for azonenberg's FT232H based JTAG system */
-
 #define BIT_MODE_RESET					0x00	/* Reset the MPSSE */
 #define BIT_MODE_MPSSE					0x02	/* MPSSE mode */
 
@@ -49,8 +46,13 @@
  */
 class FTDIDriver : public GPIOInterface
 {
+	//Construction / destruction
 public:
+	FTDIDriver(const std::string& serial, const std::string& layout);
 	virtual ~FTDIDriver();
+
+protected:
+	void SharedCtorInit(uint32_t type, const std::string& layout);
 
 	//Interface enumeration and discovery
 public:
