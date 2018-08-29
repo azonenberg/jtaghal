@@ -30,57 +30,87 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FTDIJtagInterface
+	@brief Implementation of FTDISWDInterface
  */
 
-#ifndef FTDIJtagInterface_h
-#define FTDIJtagInterface_h
-
-#include "JtagInterface.h"
+#include "jtaghal.h"
 
 #ifdef HAVE_FTD2XX
 
+#include <ftd2xx/ftd2xx.h>
+
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
 /**
-	@brief A JTAG adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
+	@brief Connects to an FTDI JTAG interface
 
-	\ingroup interfaces
+	@throw SWDException if the connection could not be establishes or the serial number is invalid
+
+	@param serial		Serial number of the device to connect to
+	@param layout		Adapter layout to use
  */
-class FTDIJtagInterface : public JtagInterface
-						, public FTDIDriver
+FTDISWDInterface::FTDISWDInterface(const string& serial, const string& layout)
+	: FTDIDriver(serial, layout)
 {
-public:
-	FTDIJtagInterface(const std::string& serial, const std::string& layout);
-	virtual ~FTDIJtagInterface();
+}
 
-	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void SendDummyClocks(size_t n);
-	virtual void SendDummyClocksDeferred(size_t n);
-	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
+/**
+	@brief Interface destructor
 
-	//Overrides to push JtagInterface functions into FTDIDriver implementations
-	virtual void Commit();
-	virtual std::string GetName();
-	virtual std::string GetSerial();
-	virtual std::string GetUserID();
-	virtual int GetFrequency();
+	Closes handles and disconnects from the adapter.
+ */
+FTDISWDInterface::~FTDISWDInterface()
+{
+}
 
-protected:
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Shim overrides to push SWDInterface functions into FTDIDriver
 
-protected:
-	//Helpers for small scan operations
-	void GenerateShiftPacket(
-		const unsigned char* send_data, size_t count,
-		bool want_read,
-		bool last_tms,
-		std::vector<unsigned char>& cmd_out);
-	void DoReadback(unsigned char* rcv_data, size_t count);
-};
+void FTDISWDInterface::Commit()
+{
+	FTDIDriver::Commit();
+}
 
-#endif	//#ifdef HAVE_FTD2XX
+string FTDISWDInterface::GetName()
+{
+	return GetName();
+}
+
+string FTDISWDInterface::GetSerial()
+{
+	return GetSerial();
+}
+
+string FTDISWDInterface::GetUserID()
+{
+	return FTDIDriver::GetUserID();
+}
+
+int FTDISWDInterface::GetFrequency()
+{
+	return FTDIDriver::GetFrequency();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Low level
+
+/**
+	@brief Performs a SW-DP write transaction
+ */
+void FTDISWDInterface::WriteWord(uint8_t reg_addr, uint32_t wdata)
+{
+
+}
+
+/**
+	@brief Performs a SW-DP read transaction
+ */
+uint32_t FTDISWDInterface::ReadWord(uint8_t reg_addr)
+{
+
+}
 
 #endif
-

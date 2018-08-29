@@ -84,16 +84,6 @@ public:
 		@brief Connects to the interface and figures out what we have attached to us
 	 */
 	virtual void InitializeDevice();
-
-	//Device(s) found on the SWD interface
-	//For now: only support for one
-	/*
-protected:
-	SWDDevice* m_device;
-
-public:
-	SWDDevice* GetDevice()
-	{ return m_device; }*/
 };
 
 #endif

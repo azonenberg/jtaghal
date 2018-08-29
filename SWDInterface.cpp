@@ -30,57 +30,25 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FTDIJtagInterface
+	@brief Implementation of SWDInterface
  */
 
-#ifndef FTDIJtagInterface_h
-#define FTDIJtagInterface_h
+#include "jtaghal.h"
 
-#include "JtagInterface.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#ifdef HAVE_FTD2XX
-
-/**
-	@brief A JTAG adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
-
-	\ingroup interfaces
- */
-class FTDIJtagInterface : public JtagInterface
-						, public FTDIDriver
+SWDInterface::SWDInterface()
 {
-public:
-	FTDIJtagInterface(const std::string& serial, const std::string& layout);
-	virtual ~FTDIJtagInterface();
+}
 
-	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void SendDummyClocks(size_t n);
-	virtual void SendDummyClocksDeferred(size_t n);
-	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
+SWDInterface::~SWDInterface()
+{
+}
 
-	//Overrides to push JtagInterface functions into FTDIDriver implementations
-	virtual void Commit();
-	virtual std::string GetName();
-	virtual std::string GetSerial();
-	virtual std::string GetUserID();
-	virtual int GetFrequency();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Autodetection
 
-protected:
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
-
-protected:
-	//Helpers for small scan operations
-	void GenerateShiftPacket(
-		const unsigned char* send_data, size_t count,
-		bool want_read,
-		bool last_tms,
-		std::vector<unsigned char>& cmd_out);
-	void DoReadback(unsigned char* rcv_data, size_t count);
-};
-
-#endif	//#ifdef HAVE_FTD2XX
-
-#endif
-
+void SWDInterface::InitializeDevice()
+{
+}

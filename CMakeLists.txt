@@ -30,10 +30,12 @@ set(JTAGHAL_SOURCES
     DebuggerInterface.cpp
     GPIOInterface.cpp
     JtagInterface.cpp
+    SWDInterface.cpp
     TestInterface.cpp
     DigilentJtagInterface.cpp
     FTDIDriver.cpp
     FTDIJtagInterface.cpp
+    FTDISWDInterface.cpp
     NetworkedJtagInterface.cpp
     PipeJtagInterface.cpp
 

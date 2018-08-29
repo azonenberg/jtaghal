@@ -43,6 +43,36 @@
 
 /**
 	@brief Common logic used by all FTDI adapters, regardless of transport layer selected
+
+	This adapter queues up to 4096 bytes of command+data before comitting to hardware.
+
+	GPIO pin mapping:
+
+	Index	| Name
+	--------|--------
+		0	| GPIOL0 (ADBUS4)
+		1	| GPIOL1 (ADBUS5)
+		2	| GPIOL2 (ADBUS6)
+		3	| GPIOL3 (ADBUS7)
+		4	| GPIOH0 (ACBUS0)
+		5	| GPIOH1 (ACBUS1)
+		6	| GPIOH2 (ACBUS2)
+		7	| GPIOH3 (ACBUS3)
+		8	| GPIOH4 (ACBUS4)
+		9	| GPIOH5 (ACBUS5)
+		10	| GPIOH6 (ACBUS6)
+		11	| GPIOH7 (ACBUS7)
+
+	Supported layouts:
+
+	Name | Example hardware | Pin configuration
+	-----|------------------|--------------------
+	hs1  | Digilent JTAG-HS1, Digilent JTAG-SMT2, azonenberg's usb-jtag-mini | ADBUS7 is active-high output enable
+	hs2  | Digilent JTAG-HS2 | ADBUS7...5 are active-high output enable
+	jtagkey | Amontec JTAGkey, Bus Blaster w/ JTAGkey compatible buffer | ADBUS4 is active-low output enable, ACBUS0 is TRST_N, ACBUS2 is active-low output enable for TRST_N
+
+
+	\ingroup interfaces
  */
 class FTDIDriver : public GPIOInterface
 {

@@ -30,57 +30,39 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of FTDIJtagInterface
+	@brief Declaration of FTDISWDInterface
  */
 
-#ifndef FTDIJtagInterface_h
-#define FTDIJtagInterface_h
+#ifndef FTDISWDInterface_h
+#define FTDISWDInterface_h
 
-#include "JtagInterface.h"
+#include "SWDInterface.h"
 
 #ifdef HAVE_FTD2XX
 
 /**
-	@brief A JTAG adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
+	@brief A SWD adapter using the FTDI chipset, accessed through libftd2xx (proprietary driver from FTDI)
 
 	\ingroup interfaces
  */
-class FTDIJtagInterface : public JtagInterface
+class FTDISWDInterface  : public SWDInterface
 						, public FTDIDriver
 {
 public:
-	FTDIJtagInterface(const std::string& serial, const std::string& layout);
-	virtual ~FTDIJtagInterface();
+	FTDISWDInterface(const std::string& serial, const std::string& layout);
+	virtual ~FTDISWDInterface();
 
-	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void SendDummyClocks(size_t n);
-	virtual void SendDummyClocksDeferred(size_t n);
-	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
+	//SWD bus transactions
+	virtual void WriteWord(uint8_t reg_addr, uint32_t wdata);
+	virtual uint32_t ReadWord(uint8_t reg_addr);
 
-	//Overrides to push JtagInterface functions into FTDIDriver implementations
+	//Overrides to push SWDInterface functions into FTDIDriver implementations
 	virtual void Commit();
 	virtual std::string GetName();
 	virtual std::string GetSerial();
 	virtual std::string GetUserID();
 	virtual int GetFrequency();
-
-protected:
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
-
-protected:
-	//Helpers for small scan operations
-	void GenerateShiftPacket(
-		const unsigned char* send_data, size_t count,
-		bool want_read,
-		bool last_tms,
-		std::vector<unsigned char>& cmd_out);
-	void DoReadback(unsigned char* rcv_data, size_t count);
 };
 
-#endif	//#ifdef HAVE_FTD2XX
-
 #endif
-
+#endif
