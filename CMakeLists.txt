@@ -1,8 +1,29 @@
 # CMake build script for jtaghal.
 # Intended to be integrated into a larger project, not built standalone.
 
+set(PROTOBUF_DIR ${CMAKE_BINARY_DIR}/protobufs)
+
+set(PROTO_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/jtaghal-net.proto
+)
+
+add_custom_command(
+	OUTPUT ${PROTOBUF_DIR}/jtaghal/jtaghal-net.pb.cc ${PROTOBUF_DIR}/jtaghal/jtaghal-net.pb.h
+	COMMAND mkdir -p ${PROTOBUF_DIR}
+	COMMAND protoc --proto_path=${CMAKE_SOURCE_DIR}/lib --cpp_out=${PROTOBUF_DIR} ${PROTO_FILES}
+	COMMENT "Building protocol buffer"
+	DEPENDS ${PROTO_FILES}
+)
+
+# disable warnings in generated protobuf code
+set_source_files_properties(${PROTOBUF_DIR}/jtaghal/jtaghal-net.pb.cc PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
+
+include_directories(${PROTOBUF_DIR})
+
 set(JTAGHAL_SOURCES
 	jtaghal.cpp
+
+	${PROTOBUF_DIR}/jtaghal/jtaghal-net.pb.cc
 
 	JtagException.cpp
 
@@ -83,8 +104,8 @@ set(JTAGHAL_SOURCES
 
 add_library(jtaghal SHARED
 	${JTAGHAL_SOURCES})
-target_link_libraries(jtaghal log)
-target_link_libraries(jtaghal xptools)
+
+target_link_libraries(jtaghal log xptools ${PROTOBUF_LIBRARIES})
 if(FTD2XX_LIB)
     target_link_libraries(jtaghal ftd2xx)
 endif()

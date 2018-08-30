@@ -17,12 +17,12 @@ message InfoRequest
 {
 	enum InfoType
 	{
-		Name		= 0,
-		Serial		= 1,
-		Userid		= 2,
-		Freq		= 3,
-		GpioPresent	= 4,
-		GpioCount	= 5
+		HwName		= 0;
+		HwSerial	= 1;
+		Userid		= 2;
+		Freq		= 3;
+		GpioPresent	= 4;
+		GpioCount	= 5;
 	};
 
 	InfoType req	= 1;
@@ -30,20 +30,20 @@ message InfoRequest
 
 message InfoReply
 {
-	optional	string	str	= 1;
-	optional	uint64	num	= 2;
+	string	str	= 1;
+	uint64	num	= 2;
 };
 
 //Flush buffers all the way down the pipe
 message FlushRequest
 {
-	//no content, opcode is all we need
+	//no content; opcode is all we need
 };
 
 //Tell the server we're leaving
 message DisconnectRequest
 {
-	//no content, opcode is all we need
+	//no content; opcode is all we need
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,12 +57,12 @@ message GpioPinState
 
 message GpioBankState
 {
-	repeated 	GpioPinState	= 1;
+	repeated 	GpioPinState states	= 1;
 };
 
 message GpioReadRequest
 {
-	//no content, opcode is all we need
+	//no content; opcode is all we need
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,16 +70,16 @@ message GpioReadRequest
 
 message JtagSplitScanSupportedRequest
 {
-	//no content, opcode is all we need
+	//no content; opcode is all we need
 };
 
 message JtagScanRequest
 {
-				bool	readRequested	= 1;	//true if we want data coming back from this scan transaction
-				uint32	totalLen		= 2;	//total number of TCK cycles to send
-				bool	setTmsAtEnd		= 3;	//true to strobe TMS at end of the transaction
-	optional	bytes	writeData		= 4;	//if set, must be at least totalLen bits long
-				bool	split			= 5;	//if set, do a split read-only or write-only transaction
+	bool	readRequested	= 1;	//true if we want data coming back from this scan transaction
+	uint32	totalLen		= 2;	//total number of TCK cycles to send
+	bool	setTmsAtEnd		= 3;	//true to strobe TMS at end of the transaction
+	bytes	writeData		= 4;	//if set; must be at least totalLen bits long
+	bool	split			= 5;	//if set; do a split read-only or write-only transaction
 };
 
 //only sent if readRequested is set in the matching JtagScanRequest
@@ -93,10 +93,10 @@ message JtagPerformanceRequest
 {
 	enum PerfCounter
 	{
-		ShiftOps			= 1,
-		DataBits			= 2,
-		ModeBits			= 3,
-		DummyClocks			= 4
+		ShiftOps			= 0;
+		DataBits			= 1;
+		ModeBits			= 2;
+		DummyClocks			= 3;
 	};
 
 	PerfCounter	req			= 1;
@@ -106,12 +106,12 @@ message JtagStateChangeRequest
 {
 	enum ChainState
 	{
-		TestLogicReset		= 1,
-		EnterShiftIR		= 2,
-		LeaveShiftIR		= 3,
-		EnterShiftDR		= 4,
-		LeaveShiftDR		= 5,
-		ResetToIdle			= 6,
+		TestLogicReset		= 0;
+		EnterShiftIR		= 1;
+		LeaveShiftIR		= 2;
+		EnterShiftDR		= 3;
+		LeaveShiftDR		= 4;
+		ResetToIdle			= 5;
 	};
 
 	ChainState nextstate	= 1;
