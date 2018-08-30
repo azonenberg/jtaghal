@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Connection banner
+
+//same message used for request and reply
+message Hello
+{
+	string	magic	= 1;	//always "JTAGHAL"
+	uint32	version = 2;	//always 1 for now
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Generic message types (not transport specific)
+
+message InfoRequest
+{
+	enum InfoType
+	{
+		Name		= 0,
+		Serial		= 1,
+		Userid		= 2,
+		Freq		= 3,
+		GpioPresent	= 4,
+		GpioCount	= 5
+	};
+
+	InfoType req	= 1;
+};
+
+message InfoReply
+{
+	optional	string	str	= 1;
+	optional	uint64	num	= 2;
+};
+
+//Flush buffers all the way down the pipe
+message FlushRequest
+{
+	//no content, opcode is all we need
+};
+
+//Tell the server we're leaving
+message DisconnectRequest
+{
+	//no content, opcode is all we need
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GPIO transport messages
+
+message GpioPinState
+{
+	bool value		= 1;
+	bool direction	= 2;
+};
+
+message GpioBankState
+{
+	repeated 	GpioPinState	= 1;
+};
+
+message GpioReadRequest
+{
+	//no content, opcode is all we need
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// JTAG transport messages
+
+message JtagSplitScanSupportedRequest
+{
+	//no content, opcode is all we need
+};
+
+message JtagScanRequest
+{
+				bool	readRequested	= 1;	//true if we want data coming back from this scan transaction
+				uint32	totalLen		= 2;	//total number of TCK cycles to send
+				bool	setTmsAtEnd		= 3;	//true to strobe TMS at end of the transaction
+	optional	bytes	writeData		= 4;	//if set, must be at least totalLen bits long
+				bool	split			= 5;	//if set, do a split read-only or write-only transaction
+};
+
+//only sent if readRequested is set in the matching JtagScanRequest
+message JtagScanReply
+{
+	uint32		len			= 1;	//total number of bits shifted
+	bytes		readData	= 2;
+};
+
+message JtagPerformanceRequest
+{
+	enum PerfCounter
+	{
+		ShiftOps			= 1,
+		DataBits			= 2,
+		ModeBits			= 3,
+		DummyClocks			= 4
+	};
+
+	PerfCounter	req			= 1;
+};
+
+message JtagStateChangeRequest
+{
+	enum ChainState
+	{
+		TestLogicReset		= 1,
+		EnterShiftIR		= 2,
+		LeaveShiftIR		= 3,
+		EnterShiftDR		= 4,
+		LeaveShiftDR		= 5,
+		ResetToIdle			= 6,
+	};
+
+	ChainState nextstate	= 1;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Top level message formats
