@@ -68,12 +68,17 @@ public:
 	/**
 		@brief Performs a SW-DP write transaction
 	 */
-	virtual void WriteWord(uint8_t reg_addr, uint32_t wdata) =0;
+	virtual void WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata) =0;
 
 	/**
 		@brief Performs a SW-DP read transaction
 	 */
-	virtual uint32_t ReadWord(uint8_t reg_addr) =0;
+	virtual uint32_t ReadWord(uint8_t reg_addr, bool ap) =0;
+
+	/**
+		@brief Reset the bus interface upon connecting to the target
+	 */
+	virtual void ResetInterface() =0;
 
 public:
 
