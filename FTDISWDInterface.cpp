@@ -76,12 +76,12 @@ void FTDISWDInterface::Commit()
 
 string FTDISWDInterface::GetName()
 {
-	return GetName();
+	return FTDIDriver::GetName();
 }
 
 string FTDISWDInterface::GetSerial()
 {
-	return GetSerial();
+	return FTDIDriver::GetSerial();
 }
 
 string FTDISWDInterface::GetUserID()

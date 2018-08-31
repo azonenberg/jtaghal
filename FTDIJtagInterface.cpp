@@ -76,12 +76,12 @@ void FTDIJtagInterface::Commit()
 
 string FTDIJtagInterface::GetName()
 {
-	return GetName();
+	return FTDIDriver::GetName();
 }
 
 string FTDIJtagInterface::GetSerial()
 {
-	return GetSerial();
+	return FTDIDriver::GetSerial();
 }
 
 string FTDIJtagInterface::GetUserID()
