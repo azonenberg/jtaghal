@@ -66,6 +66,13 @@ public:
 public:
 
 	/**
+		@brief Reset the bus interface upon connecting to the target
+	 */
+	virtual void ResetInterface() =0;
+
+	//Raw SWD read/write
+protected:
+	/**
 		@brief Performs a SW-DP write transaction
 	 */
 	virtual void WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata) =0;
@@ -74,11 +81,6 @@ public:
 		@brief Performs a SW-DP read transaction
 	 */
 	virtual uint32_t ReadWord(uint8_t reg_addr, bool ap) =0;
-
-	/**
-		@brief Reset the bus interface upon connecting to the target
-	 */
-	virtual void ResetInterface() =0;
 
 public:
 

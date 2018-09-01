@@ -102,6 +102,7 @@ FTDIDriver::FTDIDriver(const string& serial, const string& layout)
 FTDIDriver::~FTDIDriver()
 {
 	//Disable JTAG write enable and float pins
+	//FIXME: this needs to be done layout dependent!!!
 	SetGpioDirectionDeferred(3, true);
 	SetGpioValueDeferred(3, false);
 	WriteGpioState();
@@ -590,7 +591,7 @@ void FTDIDriver::WriteGpioState()
 	//Force low bits for JTAG pins
 	//	Bit0 = TCK = output (1)
 	//	Bit1 = TDI = output (1)
-	//	Bit2 = TDI = input (0)
+	//	Bit2 = TDO = input (0)
 	//	Bit3 = TMS = output (1)
 	//  TMS idles high, rest idle low
 	value_low = (value_low & 0xF0) | 0x08;

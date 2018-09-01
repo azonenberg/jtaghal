@@ -53,8 +53,9 @@ public:
 	virtual ~FTDISWDInterface();
 
 	//SWD bus transactions
-	virtual void WriteWord(uint8_t reg_addr, uint32_t wdata);
-	virtual uint32_t ReadWord(uint8_t reg_addr);
+	virtual void WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata);
+	virtual uint32_t ReadWord(uint8_t reg_addr, bool ap);
+	virtual void ResetInterface();
 
 	//Overrides to push SWDInterface functions into FTDIDriver implementations
 	virtual void Commit();
