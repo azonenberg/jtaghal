@@ -61,6 +61,8 @@ public:
 	/**
 		@brief Gets the manufacturer-assigned serial number for this programming adapter, if any.
 
+		This is a persistent, read-only string assigned by the manufacturer to identify this adapter.
+
 		Derived classes may choose to return the user ID, an empty string, or another default value if no serial number
 		has been assigned.
 
@@ -69,7 +71,9 @@ public:
 	virtual std::string GetSerial() =0;
 
 	/**
-		@brief Gets the user-assigned name for this JTAG adapter, if any.
+		@brief Gets the user-assigned name for this programming adapter, if any.
+
+		This is a persistent, user-writeable string ("hostname") used to identify this adapter.
 
 		Derived classes may choose to return the serial number, an empty string, or another default value if no name
 		has been assigned.
