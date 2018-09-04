@@ -63,6 +63,22 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// AP register access
 
+	//Well-defined DP registers (superset of supported registers for all ADI versions)
+	enum DpReg
+	{
+		REG_ABORT		= 0x00,	//write only
+		REG_DP_IDR		= 0x00,	//read only
+
+		REG_CTRL_STAT 	= 0x01,	//BANKSEL = 0
+		REG_TARGETID	= 0x01,	//BANKSEL = 2
+
+		REG_RESEND		= 0x02,	//read only
+		REG_AP_SELECT	= 0x02,	//write only
+
+		REG_RDBUFF 		= 0x03,
+		REG_TARGETSEL	= 0x03
+	};
+
 	//Well-defined AP registers
 	enum ApReg
 	{
@@ -80,6 +96,10 @@ protected:
 	//need to be a friend so that the Mem-AP can poke registers
 	//TODO: try to find a cleaner way to expose this?
 	friend class ARMDebugMemAccessPort;
+
+	//these use register numbers, not addresses
+	virtual uint32_t DPRegisterRead(DpReg addr) =0;
+	virtual void DPRegisterWrite(DpReg addr, uint32_t wdata) =0;
 	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr) =0;
 	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata) =0;
 

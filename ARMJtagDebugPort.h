@@ -181,14 +181,6 @@ public:
 		OP_READ = 1
 	};
 
-	//Well-defined DP registers
-	enum DpReg
-	{
-		REG_CTRL_STAT = 1,
-		REG_AP_SELECT = 2,
-		REG_RDBUFF = 3
-	};
-
 public:
 	ARMJtagDebugPortStatusRegister GetStatusRegister();
 	void PrintStatusRegister(ARMJtagDebugPortStatusRegister reg, bool children = true);
@@ -198,14 +190,14 @@ public:
 protected:
 	void ClearStatusRegisterErrors();
 
-	uint32_t DPRegisterRead(DpReg addr);
-	void DPRegisterWrite(DpReg addr, uint32_t wdata);
+	virtual uint32_t DPRegisterRead(DpReg addr);
+	virtual void DPRegisterWrite(DpReg addr, uint32_t wdata);
 
 	//need to be a friend so that the Mem-AP can poke registers
 	//TODO: try to find a cleaner way to expose this?
 	friend class ARMDebugMemAccessPort;
-	uint32_t APRegisterRead(uint8_t ap, ApReg addr);
-	void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata);
+	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr);
+	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata);
 
 	void EnableDebugging();
 

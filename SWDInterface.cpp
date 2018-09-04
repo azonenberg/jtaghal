@@ -47,8 +47,35 @@ SWDInterface::~SWDInterface()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AP/DP register access
+
+uint32_t SWDInterface::DPRegisterRead(DpReg addr)
+{
+	return ReadWord(addr * 4, false);	//convert from register ID to actual address offset
+}
+
+void SWDInterface::DPRegisterWrite(DpReg addr, uint32_t wdata)
+{
+	WriteWord(addr*4, wdata);			//convert from register ID to actual address offset
+}
+
+uint32_t SWDInterface::APRegisterRead(uint8_t ap, ApReg addr)
+{
+	//TODO: select the AP we're using
+	return ReadWord(addr * 4, true);	//convert from register ID to actual address offset
+}
+
+void SWDInterface::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
+{
+	//TODO: select the AP we're using
+
+	WriteWord(addr*4, wdata);			//convert from register ID to actual address offset
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Autodetection
 
 void SWDInterface::InitializeDevice()
 {
+	//Read the
 }

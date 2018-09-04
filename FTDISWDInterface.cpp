@@ -124,6 +124,8 @@ void FTDISWDInterface::ResetInterface()
 
 /**
 	@brief Performs a SW-DP write transaction
+
+	TODO: optimize to 1 transaction using overrun detection?
  */
 void FTDISWDInterface::WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata)
 {
@@ -163,7 +165,7 @@ void FTDISWDInterface::WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata)
 		(m_gpioDirection[1] << 5) |
 		(m_gpioDirection[2] << 6) |
 		(m_gpioDirection[3] << 7) |
-		0x0B
+		0x0B;
 
 	//Calculate the parity for the data
 	uint32_t dpartmp = (wdata >> 16) | (wdata >> 8) | (wdata >> 4) | (wdata >> 2) | (wdata >> 1) | wdata;
@@ -246,16 +248,104 @@ uint32_t FTDISWDInterface::ReadWord(uint8_t reg_addr, bool ap)
 {
 	//Host to target: 8 bit header
 	//LSB first: 1, AP / #DP, 1, A[2:3], Parity, 0, 1
+	uint8_t header = 0x85;
+	bool parity = true;
+	if(ap)
+	{
+		header |= 0x02;
+		parity ^= 1;
+	}
+	if(reg_addr & 4)
+	{
+		header |= 0x08;
+		parity ^= 1;
+	}
+	if(reg_addr & 8)
+	{
+		header |= 0x10;
+		parity ^= 1;
+	}
+	if(parity)
+		header |= 0x20;
 
-	//1 bit bus turnaround (tristate)
+	//We need to switch the TDO/SWDIO pin back and forth from output to tristate a couple of times.
+	//It's also a GPIO bitbang pin, though - so we need to reconfigure the low GPIO bank a bunch.
+	//Bit 1 = TDI = output (1) by default
+	unsigned char value_low =
+		(m_gpioValue[0] << 4) |
+		(m_gpioValue[1] << 5) |
+		(m_gpioValue[2] << 6) |
+		(m_gpioValue[3] << 7) |
+		0x08;
+	unsigned char dir_low =
+		(m_gpioDirection[0] << 4) |
+		(m_gpioDirection[1] << 5) |
+		(m_gpioDirection[2] << 6) |
+		(m_gpioDirection[3] << 7) |
+		0x0B;
 
-	//3 bit ACK from target
+	uint8_t cmdbuf[] =
+	{
+		//The header
+		header,
+
+		//Tristate TDI
+		MPSSE_SET_DATA_LOW,
+		value_low,
+		dir_low ^ 0x2,			//flip TDI to an input
+
+		//Send a 1-bit bus turnaround as tristate
+		MPSSE_DUMMY_CLOCK_BITS,
+		0x00,
+
+		//Read the three-bit ACK from the target
+		MPSSE_TXRX_BYTES,
+		0x02,
+		0x00,
+		0x00					//TDI is tristated so send data doesn't matter
+	};
+	WriteDataRaw(cmdbuf, sizeof(cmdbuf));
+
+	//Send everything up to the ACK then see what comes back (should be a single byte)
+	uint8_t ack = 0;
+	ReadData(&ack, 1);
+
+	//WAIT request? TODO
+	if(ack == 2)
+	{
+		LogError("TODO: Handle WAIT request from SW-DP\n");
+		return 0;
+	}
+
+	//Some strange response that isn't what we expect
+	else if(ack != 1)
+	{
+		LogError("Weird - we got something other than ACK or WAIT\n");
+		return 0;
+	}
 
 	//Read data from target to host: 32 bits, LSB first
-
 	//1 bit parity
-
 	//1 bit bus turnaround (tristate)
+	uint8_t rxd[5];
+	uint8_t databuf[] =
+	{
+		//Read the data plus parity bits
+		MPSSE_TXRX_BITS,
+		0x20,								//33 total bits
+		0x00, 0x00, 0x00, 0x00, 0x00,
+
+		//Send a bus turnaround cycle so the target can tristate the bus
+		MPSSE_DUMMY_CLOCK_BITS,
+		0x00,								//1 bit
+
+		//Reconfigure TDI to actually drive again
+		MPSSE_SET_DATA_LOW,
+		value_low,
+		dir_low
+	};
+	WriteDataRaw(databuf, sizeof(databuf));
+	ReadData(&rxd, 5);
 }
 
 #endif

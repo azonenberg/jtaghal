@@ -45,6 +45,8 @@
 
 	A SWD adapter provides access to a single SW-DP (TODO: or SWJ-DP) on a single ARM SoC.
 
+	Note that there is no ARMSWDDebugPort class; this class contains both the adapter and DP logic.
+
 	In order to support a new "dumb" SWD adapter without any higher level protocol offload, create a new derived class
 	and implement each of the following functions:
 
@@ -72,6 +74,11 @@ public:
 
 	//Raw SWD read/write
 protected:
+	virtual uint32_t DPRegisterRead(DpReg addr);
+	virtual void DPRegisterWrite(DpReg addr, uint32_t wdata);
+	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr);
+	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata);
+
 	/**
 		@brief Performs a SW-DP write transaction
 	 */
