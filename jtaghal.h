@@ -111,6 +111,7 @@
 #include "FTDIDriver.h"
 #include "FTDIJtagInterface.h"
 #include "FTDISWDInterface.h"
+#include "GlasgowSWDInterface.h"
 #include "NetworkedJtagInterface.h"
 #include "PipeJtagInterface.h"
 //#include "NocJtagInterface.h"

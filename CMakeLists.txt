@@ -57,6 +57,7 @@ set(JTAGHAL_SOURCES
     FTDIDriver.cpp
     FTDIJtagInterface.cpp
     FTDISWDInterface.cpp
+    GlasgowSWDInterface.cpp
     NetworkedJtagInterface.cpp
     PipeJtagInterface.cpp
 
@@ -106,6 +107,9 @@ add_library(jtaghal SHARED
 	${JTAGHAL_SOURCES})
 
 target_link_libraries(jtaghal log xptools ${PROTOBUF_LIBRARIES})
+if(USB_LIB)
+    target_link_libraries(jtaghal usb-1.0)
+endif()
 if(FTD2XX_LIB)
     target_link_libraries(jtaghal ftd2xx)
 endif()
