@@ -56,7 +56,7 @@ uint32_t SWDInterface::DPRegisterRead(DpReg addr)
 
 void SWDInterface::DPRegisterWrite(DpReg addr, uint32_t wdata)
 {
-	WriteWord(addr*4, wdata);			//convert from register ID to actual address offset
+	WriteWord(addr*4, false, wdata);			//convert from register ID to actual address offset
 }
 
 uint32_t SWDInterface::APRegisterRead(uint8_t ap, ApReg addr)
@@ -68,8 +68,7 @@ uint32_t SWDInterface::APRegisterRead(uint8_t ap, ApReg addr)
 void SWDInterface::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 {
 	//TODO: select the AP we're using
-
-	WriteWord(addr*4, wdata);			//convert from register ID to actual address offset
+	WriteWord(addr*4, true, wdata);			//convert from register ID to actual address offset
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
