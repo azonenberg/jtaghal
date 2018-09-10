@@ -49,6 +49,26 @@ TestInterface::~TestInterface()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Queue management
+
+/**
+	@brief Commits the outstanding transactions to the adapter.
+
+	No-op unless the adapter supports queueing of multiple writes.
+
+	This function is automatically called when any readback is performed. Most adapter classes will automatically call
+	it when the transmit queue reaches a certain size.
+
+	This function can be called at any time to ensure all pending operations have executed.
+
+	@throw JtagException in case of error
+ */
+void TestInterface::Commit()
+{
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
 /**

@@ -89,6 +89,8 @@ public:
 	 */
 	virtual int GetFrequency() =0;
 
+	virtual void Commit();
+
 	//Probing / enumeration of attached resources
 public:
 	virtual void InitializeChain(bool quiet = false) =0;		//name kept for compatibility with JTAG stuff

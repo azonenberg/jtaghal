@@ -139,10 +139,6 @@ public:
 
 	//GetInterfaceCount() is a strongly recommended static member function for each derived class
 
-	//Setup stuff
-public:
-	virtual void Commit();
-
 	//Low-level JTAG interface (wire level)
 public:
 	/**
