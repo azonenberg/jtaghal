@@ -2,6 +2,7 @@
 # Intended to be integrated into a larger project, not built standalone.
 
 set(PROTOBUF_DIR ${CMAKE_BINARY_DIR}/protobufs)
+include_directories(${PROTOBUF_DIR})
 
 set(PROTO_FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/jtaghal-net.proto
@@ -17,8 +18,6 @@ add_custom_command(
 
 # disable warnings in generated protobuf code
 set_source_files_properties(${PROTOBUF_DIR}/jtaghal/jtaghal-net.pb.cc PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
-
-include_directories(${PROTOBUF_DIR})
 
 set(JTAGHAL_SOURCES
 	jtaghal.cpp

@@ -21,8 +21,6 @@ message InfoRequest
 		HwSerial	= 1;
 		Userid		= 2;
 		Freq		= 3;
-		GpioPresent	= 4;
-		GpioCount	= 5;
 	};
 
 	InfoType req	= 1;
@@ -52,7 +50,7 @@ message DisconnectRequest
 message GpioPinState
 {
 	bool value		= 1;
-	bool direction	= 2;
+	bool is_output	= 2;
 };
 
 message GpioBankState
@@ -85,8 +83,7 @@ message JtagScanRequest
 //only sent if readRequested is set in the matching JtagScanRequest
 message JtagScanReply
 {
-	uint32		len			= 1;	//total number of bits shifted
-	bytes		readData	= 2;
+	bytes		readData	= 1;
 };
 
 message JtagPerformanceRequest
@@ -108,14 +105,33 @@ message JtagStateChangeRequest
 	{
 		TestLogicReset		= 0;
 		EnterShiftIR		= 1;
-		LeaveShiftIR		= 2;
+		LeaveExitIR			= 2;
 		EnterShiftDR		= 3;
-		LeaveShiftDR		= 4;
+		LeaveExitDR			= 4;
 		ResetToIdle			= 5;
 	};
 
-	ChainState nextstate	= 1;
+	ChainState state	= 1;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Top level message formats
+
+message JtaghalPacket
+{
+	oneof Payload
+	{
+		Hello							hello				= 1;
+		InfoRequest						infoRequest			= 2;
+		InfoReply						infoReply			= 3;
+		FlushRequest					flushRequest		= 4;
+		DisconnectRequest				disconnectRequest	= 5;
+		GpioBankState					bankState			= 6;
+		GpioReadRequest					gpioReadRequest		= 7;
+		JtagSplitScanSupportedRequest	splitRequest		= 8;
+		JtagScanRequest					scanRequest			= 9;
+		JtagScanReply					scanReply			= 10;
+		JtagPerformanceRequest			perfRequest			= 11;
+		JtagStateChangeRequest			stateRequest		= 12;
+	};
+};

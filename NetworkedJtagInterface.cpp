@@ -34,8 +34,53 @@
  */
 #include "jtaghal.h"
 #include "jtagd_opcodes_enum.h"
+#include "ProtobufHelpers.h"
 
 using namespace std;
+
+bool SendMessage(Socket& s, const JtaghalPacket& msg)
+{
+	string buf;
+	if(!msg.SerializeToString(&buf))
+	{
+		LogWarning("Failed to serialize protobuf\n");
+		return false;
+	}
+	if(!s.SendPascalString(buf))
+	{
+		//LogWarning("Connection to %s dropped (while sending protobuf)\n", hostname.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool RecvMessage(Socket& s, JtaghalPacket& msg)
+{
+	string buf;
+	if(!s.RecvPascalString(buf))
+	{
+		//LogWarning("Connection to %s dropped (while reading protobuf)\n", hostname.c_str());
+		return false;
+	}
+	if(!msg.ParseFromString(buf))
+	{
+		LogWarning("Failed to parse protobuf\n");
+		return false;
+	}
+	return true;
+}
+
+bool RecvMessage(Socket& s, JtaghalPacket& msg, JtaghalPacket::PayloadCase expectedType)
+{
+	if(!RecvMessage(s, msg))
+		return false;
+	if(msg.Payload_case() != expectedType)
+	{
+		LogWarning("Got incorrect message type\n");
+		return false;
+	}
+	return true;
+}
 
 /**
 	@brief Creates the interface object but does not connect to a server.
@@ -53,7 +98,7 @@ NetworkedJtagInterface::NetworkedJtagInterface()
 	@param server	Hostname of the server to connect to
 	@param port		Port number (in host byte ordering) the server is running on
  */
-void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
+void NetworkedJtagInterface::Connect(const string& server, uint16_t port)
 {
 	//Connect to the port
 	if(!m_socket.Connect(server, port))
@@ -71,23 +116,59 @@ void NetworkedJtagInterface::Connect(const std::string& server, uint16_t port)
 			"");
 	}
 
+	//Send the ClientHello
+	JtaghalPacket packet;
+	auto h = packet.mutable_hello();
+	h->set_magic("JTAGHAL");
+	h->set_version(1);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send clienthello",
+			"");
+	}
+
+	//Get the server-hello message
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kHello))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get serverhello",
+			"");
+	}
+	auto sh = packet.hello();
+	if( (sh.magic() != "JTAGHAL") || (sh.version() != 1) )
+	{
+		throw JtagExceptionWrapper(
+			"ServerHello has wrong magic/version",
+			"");
+	}
+
 	//All good, query the GPIO stats
 	if(IsGPIOCapable())
 	{
-		uint8_t op = JTAGD_OP_GET_GPIO_PIN_COUNT;
-		m_socket.SendLooped((unsigned char*)&op, 1);
-		uint8_t pincount;
-		m_socket.RecvLooped(&pincount, 1);
-
-		for(int i=0; i<pincount; i++)
-		{
-			m_gpioValue.push_back(false);
-			m_gpioDirection.push_back(false);
-		}
-
 		//Load the GPIO pin state from the server
 		ReadGpioState();
 	}
+
+	//Check if we support split scans
+	packet.mutable_splitrequest();
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send splitScanSupportedRequest",
+			"");
+	}
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get reply",
+			"");
+	}
+	auto r = packet.inforeply();
+	if(r.num())
+		m_splitScanSupported = true;
+	else
+		m_splitScanSupported = false;
 }
 
 /**
@@ -99,8 +180,9 @@ NetworkedJtagInterface::~NetworkedJtagInterface()
 	{
 		if(m_socket.IsValid())
 		{
-			uint8_t op = JTAGD_OP_QUIT;
-			m_socket.SendLooped((unsigned char*)&op, 1);
+			JtaghalPacket packet;
+			packet.mutable_disconnectrequest();
+			SendMessage(m_socket, packet);
 		}
 	}
 	catch(const JtagInterface& ex)
@@ -112,7 +194,7 @@ NetworkedJtagInterface::~NetworkedJtagInterface()
 /**
 	@brief Returns the protocol version
  */
-std::string NetworkedJtagInterface::GetAPIVersion()
+string NetworkedJtagInterface::GetAPIVersion()
 {
 	return "1.0";
 }
@@ -125,161 +207,212 @@ int NetworkedJtagInterface::GetInterfaceCount()
 	return 1;
 }
 
-std::string NetworkedJtagInterface::GetName()
+string NetworkedJtagInterface::GetName()
 {
-	uint8_t op = JTAGD_OP_GET_NAME;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	string str;
-	m_socket.RecvPascalString(str);
-	return str;
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_inforequest();
+	r->set_req(InfoRequest::HwName);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().str();
 }
 
-std::string NetworkedJtagInterface::GetSerial()
+string NetworkedJtagInterface::GetSerial()
 {
-	uint8_t op = JTAGD_OP_GET_SERIAL;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	string str;
-	m_socket.RecvPascalString(str);
-	return str;
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_inforequest();
+	r->set_req(InfoRequest::HwSerial);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().str();
 }
 
-std::string NetworkedJtagInterface::GetUserID()
+string NetworkedJtagInterface::GetUserID()
 {
-	uint8_t op = JTAGD_OP_GET_USERID;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	string str;
-	m_socket.RecvPascalString(str);
-	return str;
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_inforequest();
+	r->set_req(InfoRequest::Userid);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().str();
 }
 
 int NetworkedJtagInterface::GetFrequency()
 {
-	uint8_t op = JTAGD_OP_GET_FREQ;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint32_t freq;
-	m_socket.RecvLooped((unsigned char*)&freq, 4);
-	return freq;
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_inforequest();
+	r->set_req(InfoRequest::Freq);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().num();
 }
 
 void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
+	size_t bytesize =  ceil(count / 8.0f);
 
-	int bytesize =  ceil(count / 8.0f);
+	//Send the request data
+	JtaghalPacket packet;
+	auto r = packet.mutable_scanrequest();
+	r->set_readrequested(rcv_data != NULL);
+	r->set_totallen(count);
+	r->set_settmsatend(last_tms);
+	r->set_writedata(string((char*)send_data, bytesize));
+	r->set_split(false);				//not doing a split transfer
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send scanRequest",
+			"");
+	}
 
-	//Send the opcode and data
-	uint8_t op = JTAGD_OP_SHIFT_DATA;
-	if(rcv_data == NULL)
-		op = JTAGD_OP_SHIFT_DATA_WO;
-	BufferedSend((unsigned char*)&op, 1);
-	uint8_t t = last_tms;
-	BufferedSend((unsigned char*)&t, 1);
-	uint32_t c = count;
-	BufferedSend((unsigned char*)&c, 4);
-	BufferedSend(send_data, bytesize);
-	SendFlush();
-
-	//Read response data
+	//Get the reply
 	if(rcv_data != NULL)
-		m_socket.RecvLooped(rcv_data, bytesize);
+	{
+		//Get the reply
+		if(!RecvMessage(m_socket, packet, JtaghalPacket::kScanReply))
+		{
+			throw JtagExceptionWrapper(
+				"Failed to get scanReply",
+				"");
+		}
+		auto r = packet.scanreply();
+		if(r.readdata().size() != bytesize)
+		{
+			throw JtagExceptionWrapper(
+				"RX byte length mismatch",
+				"");
+		}
+		memcpy(rcv_data, r.readdata().c_str(), bytesize);
+	}
 
 	m_perfShiftTime += GetTime() - start;
 }
 
 bool NetworkedJtagInterface::IsSplitScanSupported()
 {
-	uint8_t op = JTAGD_OP_SPLIT_SUPPORTED;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint8_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 1);
-	return (dout != 0);
+	return m_splitScanSupported;
 }
 
 bool NetworkedJtagInterface::ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
 {
 	double start = GetTime();
+	size_t bytesize =  ceil(count / 8.0f);
 
-	int bytesize =  ceil(count / 8.0f);
-
-	//Send the opcode and data
-	uint8_t op = JTAGD_OP_SHIFT_DATA_WRITE_ONLY;
-	BufferedSend((unsigned char*)&op, 1);
-	uint8_t t = last_tms;
-	BufferedSend((unsigned char*)&t, 1);
-	uint32_t c = count;
-	BufferedSend((unsigned char*)&c, 4);
-	uint8_t want_response = 0;
-	if(rcv_data != NULL)
-		want_response = 1;
-	BufferedSend((unsigned char*)&want_response, 1);
-	BufferedSend(send_data, bytesize);
-	SendFlush();
-
-	//Read status byte
-	uint8_t status;
-	m_socket.RecvLooped(&status, 1);
-
-	//0 = OK, 1 = deferred, negative = failure
-	switch(status)
+	//Send the request data
+	JtaghalPacket packet;
+	auto r = packet.mutable_scanrequest();
+	r->set_readrequested(rcv_data != NULL);
+	r->set_totallen(count);
+	r->set_settmsatend(last_tms);
+	r->set_writedata(string((char*)send_data, bytesize));
+	r->set_split(true);
+	if(!SendMessage(m_socket, packet))
 	{
-	case 0:
-		//Read response data
-		if(rcv_data != NULL)
-			m_socket.RecvLooped(rcv_data, bytesize);
-		m_perfShiftTime += GetTime() - start;
-		return false;
-
-	case 1:
-		//Read was deferred
-		m_perfShiftTime += GetTime() - start;
-		return true;
-
-	default:
 		throw JtagExceptionWrapper(
-			"ShiftDataWriteOnly() failed server-side",
+			"Failed to send scanRequest",
 			"");
-		break;
 	}
+
+	m_perfShiftTime += GetTime() - start;
+	return true;
 }
 
 bool NetworkedJtagInterface::ShiftDataReadOnly(unsigned char* rcv_data, size_t count)
 {
-	if(rcv_data == NULL)
-		return true;
-
 	double start = GetTime();
-	int bytesize =  ceil(count / 8.0f);
+	size_t bytesize =  ceil(count / 8.0f);
 
-	//Send the opcode and length
-	uint8_t op = JTAGD_OP_SHIFT_DATA_READ_ONLY;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint32_t c = count;
-	m_socket.SendLooped((unsigned char*)&c, 4);
-
-	//Read back
-	uint8_t status;
-	m_socket.RecvLooped(&status, 1);
-
-	//0 = already done, 1 = deferred, negative = failure
-	switch(status)
+	//Send the request data
+	JtaghalPacket packet;
+	auto r = packet.mutable_scanrequest();
+	r->set_readrequested(true);
+	r->set_totallen(count);
+	//tms is a dontcare
+	r->set_writedata("");
+	r->set_split(true);
+	if(!SendMessage(m_socket, packet))
 	{
-	case 0:
-		//read is done already
-		return true;
-
-	case 1:
-		//Read was deferred so read it now
-		if(rcv_data != NULL)
-			m_socket.RecvLooped(rcv_data, bytesize);
-		m_perfShiftTime += GetTime() - start;
-		return false;
-
-	default:
 		throw JtagExceptionWrapper(
-			"ShiftDataWriteOnly() failed server-side",
+			"Failed to send scanRequest",
 			"");
-		break;
 	}
+
+	//Get the reply
+	if(rcv_data != NULL)
+	{
+		//Get the reply
+		if(!RecvMessage(m_socket, packet, JtaghalPacket::kScanReply))
+		{
+			throw JtagExceptionWrapper(
+				"Failed to get scanReply",
+				"");
+		}
+		auto r = packet.scanreply();
+		if(r.readdata().size() != bytesize)
+		{
+			throw JtagExceptionWrapper(
+				"RX byte length mismatch",
+				"");
+		}
+		memcpy(rcv_data, r.readdata().c_str(), bytesize);
+	}
+
+	m_perfShiftTime += GetTime() - start;
+	return true;
 }
 
 void NetworkedJtagInterface::ShiftTMS(bool /*tdi*/, const unsigned char* /*send_data*/, size_t /*count*/)
@@ -293,82 +426,127 @@ void NetworkedJtagInterface::SendDummyClocks(size_t n)
 {
 	double start = GetTime();
 
-	uint8_t op = JTAGD_OP_DUMMY_CLOCK;
-	BufferedSend((unsigned char*)&op, 1);
-	uint32_t c = n;
-	BufferedSend((unsigned char*)&c, 4);
-	Commit();
+	//Send the request data
+	JtaghalPacket packet;
+	auto r = packet.mutable_scanrequest();
+	r->set_readrequested(false);
+	r->set_totallen(n);
+	//tms is a dontcare
+	r->set_writedata("");
+	r->set_split(false);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send scanRequest",
+			"");
+	}
 
 	m_perfShiftTime += GetTime() - start;
 }
 
 void NetworkedJtagInterface::SendDummyClocksDeferred(size_t n)
 {
-	double start = GetTime();
-
-	uint8_t op = JTAGD_OP_DUMMY_CLOCK_DEFERRED;
-	BufferedSend((unsigned char*)&op, 1);
-	uint32_t c = n;
-	BufferedSend((unsigned char*)&c, 4);
-
-	m_perfShiftTime += GetTime() - start;
+	//TODO: separate protobuf API for this?
+	SendDummyClocks(n);
 }
 
 void NetworkedJtagInterface::TestLogicReset()
 {
-	uint8_t op = JTAGD_OP_TLR;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::TestLogicReset);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::EnterShiftIR()
 {
-	uint8_t op = JTAGD_OP_ENTER_SIR;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::EnterShiftIR);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::LeaveExit1IR()
 {
-	uint8_t op = JTAGD_OP_LEAVE_E1IR;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::LeaveExitIR);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::EnterShiftDR()
 {
-	uint8_t op = JTAGD_OP_ENTER_SDR;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::EnterShiftDR);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::LeaveExit1DR()
 {
-	uint8_t op = JTAGD_OP_LEAVE_E1DR;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::LeaveExitDR);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::ResetToIdle()
 {
-	uint8_t op = JTAGD_OP_RESET_IDLE;
-	BufferedSend((unsigned char*)&op, 1);
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_staterequest();
+	r->set_state(JtagStateChangeRequest::ResetToIdle);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send infoRequest",
+			"");
+	}
 }
 
 void NetworkedJtagInterface::Commit()
 {
-	uint8_t op = JTAGD_OP_COMMIT;
-	BufferedSend((unsigned char*)&op, 1);
-	SendFlush();
+	//Send the flush request
+	JtaghalPacket packet;
+	packet.mutable_flushrequest();
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send flushRequest",
+			"");
+	}
 
-	//Wait for an ACK packet (single 0x00) to come back
-	uint8_t dummy;
-	m_socket.RecvLooped(&dummy, 1);
-}
-
-/**
-	@brief Flushes the BufferedSend queue
- */
-void NetworkedJtagInterface::SendFlush()
-{
-	//Send and clear the buffer
-	m_socket.SendLooped(&m_sendbuf[0], m_sendbuf.size());
-	m_sendbuf.clear();
+	//TODO: should this be a barrier sync where we block?
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,38 +554,58 @@ void NetworkedJtagInterface::SendFlush()
 
 size_t NetworkedJtagInterface::GetShiftOpCount()
 {
+	/*
 	uint8_t op = JTAGD_OP_PERF_SHIFT;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 	uint64_t dout;
 	m_socket.RecvLooped((unsigned char*)&dout, 8);
 	return dout;
+	*/
+	throw JtagExceptionWrapper(
+		"Unimplemented",
+		"");
 }
 
 size_t NetworkedJtagInterface::GetDataBitCount()
 {
+	/*
 	uint8_t op = JTAGD_OP_PERF_DATA;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 	uint64_t dout;
 	m_socket.RecvLooped((unsigned char*)&dout, 8);
 	return dout;
+	*/
+	throw JtagExceptionWrapper(
+		"Unimplemented",
+		"");
 }
 
 size_t NetworkedJtagInterface::GetModeBitCount()
 {
+	/*
 	uint8_t op = JTAGD_OP_PERF_MODE;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 	uint64_t dout;
 	m_socket.RecvLooped((unsigned char*)&dout, 8);
 	return dout;
+	*/
+	throw JtagExceptionWrapper(
+		"Unimplemented",
+		"");
 }
 
 size_t NetworkedJtagInterface::GetDummyClockCount()
 {
+	/*
 	uint8_t op = JTAGD_OP_PERF_DUMMY;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 	uint64_t dout;
 	m_socket.RecvLooped((unsigned char*)&dout, 8);
 	return dout;
+	*/
+	throw JtagExceptionWrapper(
+		"Unimplemented",
+		"");
 }
 
 //GetShiftTime is measured clientside so no need to override
@@ -422,32 +620,66 @@ size_t NetworkedJtagInterface::GetDummyClockCount()
  */
 bool NetworkedJtagInterface::IsGPIOCapable()
 {
-	uint8_t op = JTAGD_OP_HAS_GPIO;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint8_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 1);
-	return (dout != 0);
+	//Send the gpioReadRequest
+	JtaghalPacket packet;
+	packet.mutable_gpioreadrequest();
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send gpioReadRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kBankState))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get bankState",
+			"");
+	}
+	auto state = packet.bankstate();
+	if(state.states_size() != 0)
+		return true;
+	else
+		return false;
 }
 
 void NetworkedJtagInterface::ReadGpioState()
 {
-	uint8_t op = JTAGD_OP_READ_GPIO_STATE;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-
-	int count = m_gpioDirection.size();
-	uint8_t* buf = new uint8_t[count];
-	m_socket.RecvLooped(buf, count);
-	for(int i=0; i<count; i++)
+	//Send the gpioReadRequest
+	JtaghalPacket packet;
+	packet.mutable_gpioreadrequest();
+	if(!SendMessage(m_socket, packet))
 	{
-		uint8_t val = buf[i];
-		m_gpioValue[i] = (val & 1) ? true : false;
-		m_gpioDirection[i] = (val & 2) ? true : false;
+		throw JtagExceptionWrapper(
+			"Failed to send gpioReadRequest",
+			"");
 	}
-	delete[] buf;
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kBankState))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get bankState",
+			"");
+	}
+	auto state = packet.bankstate();
+
+	//Enlarge our GPIO state buffer as needed
+	m_gpioDirection.resize(state.states_size());
+	m_gpioValue.resize(state.states_size());
+
+	//Crunch the incoming data
+	for(ssize_t i=0; i<state.states_size(); i++)
+	{
+		m_gpioValue[i] = state.states(i).value();
+		m_gpioDirection[i] = state.states(i).is_output();
+	}
 }
 
 void NetworkedJtagInterface::WriteGpioState()
 {
+	/*
 	uint8_t op = JTAGD_OP_WRITE_GPIO_STATE;
 	m_socket.SendLooped((unsigned char*)&op, 1);
 
@@ -461,19 +693,8 @@ void NetworkedJtagInterface::WriteGpioState()
 			);
 	}
 	m_socket.SendLooped((unsigned char*)&pinstates[0], count);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// I/O buffering
-
-/**
-	@brief Queues data for sending to the socket, but doesn't send immediately.
-
-	@param buf		Data to send
-	@param count	Number of bytes to send
- */
-void NetworkedJtagInterface::BufferedSend(const unsigned char* buf, int count)
-{
-	for(int i=0; i<count; i++)
-		m_sendbuf.push_back(buf[i]);
+	*/
+	throw JtagExceptionWrapper(
+		"Unimplemented",
+		"");
 }
