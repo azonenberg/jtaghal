@@ -553,58 +553,94 @@ void NetworkedJtagInterface::Commit()
 
 size_t NetworkedJtagInterface::GetShiftOpCount()
 {
-	/*
-	uint8_t op = JTAGD_OP_PERF_SHIFT;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint64_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 8);
-	return dout;
-	*/
-	throw JtagExceptionWrapper(
-		"Unimplemented",
-		"");
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_perfrequest();
+	r->set_req(JtagPerformanceRequest::ShiftOps);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send perfRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().num();
 }
 
 size_t NetworkedJtagInterface::GetDataBitCount()
 {
-	/*
-	uint8_t op = JTAGD_OP_PERF_DATA;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint64_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 8);
-	return dout;
-	*/
-	throw JtagExceptionWrapper(
-		"Unimplemented",
-		"");
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_perfrequest();
+	r->set_req(JtagPerformanceRequest::DataBits);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send perfRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().num();
 }
 
 size_t NetworkedJtagInterface::GetModeBitCount()
 {
-	/*
-	uint8_t op = JTAGD_OP_PERF_MODE;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint64_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 8);
-	return dout;
-	*/
-	throw JtagExceptionWrapper(
-		"Unimplemented",
-		"");
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_perfrequest();
+	r->set_req(JtagPerformanceRequest::ModeBits);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send perfRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().num();
 }
 
 size_t NetworkedJtagInterface::GetDummyClockCount()
 {
-	/*
-	uint8_t op = JTAGD_OP_PERF_DUMMY;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-	uint64_t dout;
-	m_socket.RecvLooped((unsigned char*)&dout, 8);
-	return dout;
-	*/
-	throw JtagExceptionWrapper(
-		"Unimplemented",
-		"");
+	//Send the infoRequest
+	JtaghalPacket packet;
+	auto r = packet.mutable_perfrequest();
+	r->set_req(JtagPerformanceRequest::DummyClocks);
+	if(!SendMessage(m_socket, packet))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to send perfRequest",
+			"");
+	}
+
+	//Get the reply
+	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
+	{
+		throw JtagExceptionWrapper(
+			"Failed to get infoReply",
+			"");
+	}
+	return packet.inforeply().num();
 }
 
 //GetShiftTime is measured clientside so no need to override
