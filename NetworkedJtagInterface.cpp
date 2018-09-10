@@ -33,7 +33,6 @@
 	@brief Implementation of NetworkedJtagInterface
  */
 #include "jtaghal.h"
-#include "jtagd_opcodes_enum.h"
 #include "ProtobufHelpers.h"
 
 using namespace std;
