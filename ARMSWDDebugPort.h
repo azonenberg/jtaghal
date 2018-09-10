@@ -30,93 +30,17 @@
 /**
 	@file
 	@author Andrew D. Zonenberg
-	@brief Declaration of SWDInterface
+	@brief Declaration of ARMSWDDebugPort.h
  */
-
-#include "ARMDebugAccessPort.h"
-#include "ARMDebugMemAccessPort.h"
-#include "ARMDebugPort.h"
-
-#ifndef SWDInterface_h
-#define SWDInterface_h
+#ifndef ARMSWDDebugPort.h
+#define ARMSWDDebugPort.h
 
 /**
-	@brief Abstract representation of a SWD adapter.
-
-	A SWD adapter provides access to a single SW-DP (TODO: or SWJ-DP) on a single ARM SoC.
-
-	Note that there is no ARMSWDDebugPort class; this class contains both the adapter and DP logic.
-
-	In order to support a new "dumb" SWD adapter without any higher level protocol offload, create a new derived class
-	and implement each of the following functions:
-
-	\li GetName()
-	\li GetSerial()
-	\li GetUserID()
-	\li GetFrequency()
+	@brief An ARM debug port connected over SWD. May be either a SW-DP or SWJ-DP.
  */
-class SWDInterface	: public TestInterface
+class ARMSWDDebugPort : public ARMDebugPort
 {
 public:
-	SWDInterface();
-	virtual ~SWDInterface();
-
-	//GetInterfaceCount() is a strongly recommended static member function for each derived class
-
-	//Setup stuff
-public:
-	virtual void PrintStatusRegister();
-
-	/**
-		@brief Reset the bus interface upon connecting to the target
-	 */
-	virtual void ResetInterface() =0;
-
-	//Debug interface
-public:
-	/*
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Memory access via AHB
-
-	///Read a single 32-bit word of memory (TODO support smaller sizes)
-	virtual uint32_t ReadMemory(uint32_t address);
-
-	///Writes a single 32-bit word of memory (TODO support smaller sizes)
-	virtual void WriteMemory(uint32_t address, uint32_t value);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Debug register access via APB
-
-	virtual uint32_t ReadDebugRegister(uint32_t address);
-	virtual void WriteDebugRegister(uint32_t address, uint32_t value);
-	*/
-	//Raw SWD read/write
-protected:
-/*
-	virtual uint32_t DPRegisterRead(DpReg addr);
-	virtual void DPRegisterWrite(DpReg addr, uint32_t wdata);
-	virtual uint32_t APRegisterRead(uint8_t ap, ApReg addr);
-	virtual void APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata);*/
-
-	/**
-		@brief Performs a SW-DP write transaction
-	 */
-	virtual void WriteWord(uint8_t reg_addr, bool ap, uint32_t wdata) =0;
-
-	/**
-		@brief Performs a SW-DP read transaction
-	 */
-	virtual uint32_t ReadWord(uint8_t reg_addr, bool ap) =0;
-
-public:
-
-	//Scanning stuff
-public:
-
-	/**
-		@brief Connects to the interface and figures out what we have attached to us
-	 */
-	virtual void InitializeChain(bool quiet = false);
 };
 
 #endif
