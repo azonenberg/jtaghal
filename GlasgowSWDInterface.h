@@ -49,6 +49,11 @@
 class GlasgowSWDInterface  : public SWDInterface
 {
 public:
+	static int GetInterfaceCount();
+	static std::string GetAPIVersion();
+	static std::string GetSerialNumber(int index);
+	static std::string GetDescription(int index);
+
 	GlasgowSWDInterface(const std::string& serial);
 	virtual ~GlasgowSWDInterface();
 

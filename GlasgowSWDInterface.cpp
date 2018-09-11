@@ -33,6 +33,7 @@
 	@brief Implementation of GlasgowSWDInterface
  */
 
+#include <functional>
 #include "jtaghal.h"
 
 #if HAVE_LIBUSB
@@ -41,6 +42,124 @@
 #define PID_GLASGOW		0x9db1
 
 using namespace std;
+
+static void ForEachGlasgowDevice(std::function<bool(libusb_device_descriptor *, libusb_device_handle *)> fn)
+{
+	int ret;
+
+	libusb_context *context;
+	if((ret = libusb_init(&context)) != 0) {
+		throw JtagExceptionWrapper(
+			"libusb_init failed",
+			libusb_error_name(ret));
+	}
+
+	ssize_t device_count;
+	libusb_device **device_list;
+	if((device_count = libusb_get_device_list(context, &device_list)) < 0) {
+		libusb_exit(context);
+
+		throw JtagExceptionWrapper(
+			"libusb_get_device_list failed",
+			libusb_error_name(device_count));
+	}
+
+	for(int i = 0; i < device_count; i++) {
+		libusb_device *device = device_list[i];
+		libusb_device_descriptor device_desc;
+		if((ret = libusb_get_device_descriptor(device, &device_desc)) != 0) {
+			LogError("Cannot get USB device descriptor for device %03d:%03d\n",
+			         libusb_get_bus_number(device),
+			         libusb_get_port_number(device));
+			continue;
+		}
+
+		if(device_desc.idVendor != VID_QIHW || device_desc.idProduct != PID_GLASGOW)
+			continue;
+
+		libusb_device_handle *device_handle;
+		if((ret = libusb_open(device, &device_handle)) != 0) {
+			LogError("Cannot open Glasgow device %03d:%03d\n",
+			         libusb_get_bus_number(device),
+			         libusb_get_port_number(device));
+			continue;
+		}
+
+		bool done = fn(&device_desc, device_handle);
+
+		libusb_close(device_handle);
+
+		if(done) break;
+	}
+
+	libusb_free_device_list(device_list, /*unref_devices=*/true);
+
+	libusb_exit(context);
+}
+
+int GlasgowSWDInterface::GetInterfaceCount()
+{
+	int count = 0;
+
+	ForEachGlasgowDevice([&](libusb_device_descriptor *, libusb_device_handle *) {
+		count++;
+		return false;
+	});
+
+	return count;
+}
+
+string GlasgowSWDInterface::GetAPIVersion()
+{
+	return "";
+}
+
+string GlasgowSWDInterface::GetSerialNumber(int index)
+{
+	int ret;
+	int curr_index = 0;
+	char device_serial[64] = {};
+
+	ForEachGlasgowDevice([&](libusb_device_descriptor *desc, libusb_device_handle *handle) {
+		if(curr_index == index) {
+			if((ret = libusb_get_string_descriptor_ascii(handle, desc->iSerialNumber,
+					(uint8_t *)device_serial, sizeof(device_serial))) != 0) {
+				strncpy(device_serial, "(error)", sizeof(device_serial));
+			}
+
+			return true;
+		} else {
+			index++;
+			return false;
+		}
+	});
+
+	return device_serial;
+}
+
+string GlasgowSWDInterface::GetDescription(int index)
+{
+	int curr_index = 0;
+	uint16_t revision = 0;
+
+	ForEachGlasgowDevice([&](libusb_device_descriptor *desc, libusb_device_handle *) {
+		if(curr_index == index) {
+			revision = desc->bcdDevice;
+
+			return true;
+		} else {
+			index++;
+			return false;
+		}
+	});
+
+	string description = "Glasgow rev";
+	description += 'A' + (revision & 0xff) - 1;
+	if((revision >> 8) == 0xa0 || (revision >> 8) == 0x00) {
+		description += " (no firmware)";
+	}
+	return description;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
