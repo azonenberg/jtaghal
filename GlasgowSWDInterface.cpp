@@ -118,13 +118,16 @@ string GlasgowSWDInterface::GetSerialNumber(int index)
 {
 	int ret;
 	int curr_index = 0;
-	char device_serial[64] = {};
+	string serial;
 
 	ForEachGlasgowDevice([&](libusb_device_descriptor *desc, libusb_device_handle *handle) {
 		if(curr_index == index) {
+			char serial_array[64] = {};
 			if((ret = libusb_get_string_descriptor_ascii(handle, desc->iSerialNumber,
-					(uint8_t *)device_serial, sizeof(device_serial))) != 0) {
-				strncpy(device_serial, "(error)", sizeof(device_serial));
+					(uint8_t *)serial_array, sizeof(serial_array))) < 0) {
+				serial = string("(error: ") + libusb_error_name(ret) + ")";
+			} else {
+				serial = string(serial_array, ret);
 			}
 
 			return true;
@@ -134,7 +137,7 @@ string GlasgowSWDInterface::GetSerialNumber(int index)
 		}
 	});
 
-	return device_serial;
+	return serial;
 }
 
 string GlasgowSWDInterface::GetDescription(int index)
@@ -216,7 +219,7 @@ GlasgowSWDInterface::GlasgowSWDInterface(const string& serial)
 
 		char device_serial[64];
 		if((ret = libusb_get_string_descriptor_ascii(device_handle, device_desc.iSerialNumber,
-				(uint8_t *)device_serial, sizeof(device_serial))) != 0) {
+				(uint8_t *)device_serial, sizeof(device_serial))) < 0) {
 			LogError("Cannot get serial number for Glasgow device %03d:%03d\n",
 			         libusb_get_bus_number(device),
 			         libusb_get_port_number(device));
@@ -224,7 +227,7 @@ GlasgowSWDInterface::GlasgowSWDInterface(const string& serial)
 			continue;
 		}
 
-		if(serial == "" || serial == device_serial) {
+		if(serial == "" || serial == string(device_serial, ret)) {
 			m_device = libusb_ref_device(device);
 			m_handle = device_handle;
 			m_serial = device_serial;
