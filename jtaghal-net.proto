@@ -8,6 +8,13 @@ message Hello
 {
 	string	magic	= 1;	//always "JTAGHAL"
 	uint32	version = 2;	//always 1 for now
+	enum TransportType
+	{
+		TRANSPORT_JTAG	= 0;
+		TRANSPORT_SWD	= 1;
+	};
+
+	TransportType transport		= 3;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

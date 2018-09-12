@@ -120,6 +120,7 @@ void NetworkedJtagInterface::Connect(const string& server, uint16_t port)
 	auto h = packet.mutable_hello();
 	h->set_magic("JTAGHAL");
 	h->set_version(1);
+	h->set_transport(Hello::TRANSPORT_JTAG);
 	if(!SendMessage(m_socket, packet))
 	{
 		throw JtagExceptionWrapper(
@@ -139,6 +140,14 @@ void NetworkedJtagInterface::Connect(const string& server, uint16_t port)
 	{
 		throw JtagExceptionWrapper(
 			"ServerHello has wrong magic/version",
+			"");
+	}
+
+	//Make sure the server is JTAG
+	if(sh.transport() != Hello::TRANSPORT_JTAG)
+	{
+		throw JtagExceptionWrapper(
+			"Tried to connect to server as JTAG, but the server is using a different transport protocol",
 			"");
 	}
 
