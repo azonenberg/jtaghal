@@ -28,64 +28,44 @@
 ***********************************************************************************************************************/
 
 /**
-	@file NetworkedJtagInterface.h
+	@file ServerInterface.h
 	@author Andrew D. Zonenberg
-	@brief Declaration of NetworkedJtagInterface
+	@brief Declaration of ServerInterface
  */
-
-#ifndef NetworkedJtagInterface_h
-#define NetworkedJtagInterface_h
+#ifndef ServerInterface_h
+#define ServerInterface_h
 
 /**
-	@brief Thin wrapper around TCP sockets for talking to a jtagd instance
+	@brief Transport-agnostic code for talking to a jtagd instance
 
-	\ingroup interfaces
+	Contains logic for GPIO, querying adapter information, etc
  */
-class NetworkedJtagInterface
-	: public ServerInterface
-	, public JtagInterface
+class ServerInterface : public GPIOInterface
 {
 public:
-	NetworkedJtagInterface();
-	virtual ~NetworkedJtagInterface();
+	ServerInterface();
+	virtual ~ServerInterface();
 
-	void Connect(const std::string& server, uint16_t port);
+	static std::string GetAPIVersion();
+	static int GetInterfaceCount();
 
-	//shims that just push stuff up to base class
+	//Setup stuff
 	virtual std::string GetName();
 	virtual std::string GetSerial();
 	virtual std::string GetUserID();
 	virtual int GetFrequency();
 
-	//Low-level JTAG interface
-	virtual void ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual void SendDummyClocks(size_t n);
-	virtual void SendDummyClocksDeferred(size_t n);
-	virtual void Commit();
-	virtual bool IsSplitScanSupported();
-	virtual bool ShiftDataWriteOnly(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count);
-	virtual bool ShiftDataReadOnly(unsigned char* rcv_data, size_t count);
-
-	//Mid level JTAG interface
-	virtual void TestLogicReset();
-	virtual void EnterShiftIR();
-	virtual void LeaveExit1IR();
-	virtual void EnterShiftDR();
-	virtual void LeaveExit1DR();
-	virtual void ResetToIdle();
-
-	//Explicit TMS shifting is no longer allowed, only state-level interface
-private:
-	virtual void ShiftTMS(bool tdi, const unsigned char* send_data, size_t count);
+	//GPIO stuff
+	virtual void ReadGpioState();
+	virtual void WriteGpioState();
+	bool IsGPIOCapable();
 
 protected:
+	/// @brief The TCP socket used for communication with the server
+	Socket m_socket;
 
-	virtual size_t GetShiftOpCount();
-	virtual size_t GetDataBitCount();
-	virtual size_t GetModeBitCount();
-	virtual size_t GetDummyClockCount();
-
-	bool	m_splitScanSupported;
+protected:
+	void DoConnect(const std::string& server, uint16_t port, int transport);
 };
 
 #endif

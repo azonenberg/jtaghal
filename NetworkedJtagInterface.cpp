@@ -37,56 +37,19 @@
 
 using namespace std;
 
-bool SendMessage(Socket& s, const JtaghalPacket& msg)
-{
-	string buf;
-	if(!msg.SerializeToString(&buf))
-	{
-		LogWarning("Failed to serialize protobuf\n");
-		return false;
-	}
-	if(!s.SendPascalString(buf))
-	{
-		//LogWarning("Connection to %s dropped (while sending protobuf)\n", hostname.c_str());
-		return false;
-	}
-	return true;
-}
-
-bool RecvMessage(Socket& s, JtaghalPacket& msg)
-{
-	string buf;
-	if(!s.RecvPascalString(buf))
-	{
-		//LogWarning("Connection to %s dropped (while reading protobuf)\n", hostname.c_str());
-		return false;
-	}
-	if(!msg.ParseFromString(buf))
-	{
-		LogWarning("Failed to parse protobuf\n");
-		return false;
-	}
-	return true;
-}
-
-bool RecvMessage(Socket& s, JtaghalPacket& msg, JtaghalPacket::PayloadCase expectedType)
-{
-	if(!RecvMessage(s, msg))
-		return false;
-	if(msg.Payload_case() != expectedType)
-	{
-		LogWarning("Got incorrect message type\n");
-		return false;
-	}
-	return true;
-}
-
 /**
 	@brief Creates the interface object but does not connect to a server.
  */
 NetworkedJtagInterface::NetworkedJtagInterface()
-	: m_socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)
 {
+}
+
+/**
+	@brief Disconnects from the server
+ */
+NetworkedJtagInterface::~NetworkedJtagInterface()
+{
+
 }
 
 /**
@@ -99,66 +62,10 @@ NetworkedJtagInterface::NetworkedJtagInterface()
  */
 void NetworkedJtagInterface::Connect(const string& server, uint16_t port)
 {
-	//Connect to the port
-	if(!m_socket.Connect(server, port))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to connect to server",
-			"");
-	}
-
-	//Set no-delay flag
-	if(!m_socket.DisableNagle())
-	{
-		throw JtagExceptionWrapper(
-			"Failed to set TCP_NODELAY",
-			"");
-	}
-
-	//Send the ClientHello
-	JtaghalPacket packet;
-	auto h = packet.mutable_hello();
-	h->set_magic("JTAGHAL");
-	h->set_version(1);
-	h->set_transport(Hello::TRANSPORT_JTAG);
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send clienthello",
-			"");
-	}
-
-	//Get the server-hello message
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kHello))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get serverhello",
-			"");
-	}
-	auto sh = packet.hello();
-	if( (sh.magic() != "JTAGHAL") || (sh.version() != 1) )
-	{
-		throw JtagExceptionWrapper(
-			"ServerHello has wrong magic/version",
-			"");
-	}
-
-	//Make sure the server is JTAG
-	if(sh.transport() != Hello::TRANSPORT_JTAG)
-	{
-		throw JtagExceptionWrapper(
-			"Tried to connect to server as JTAG, but the server is using a different transport protocol",
-			"");
-	}
-
-	//All good, query the GPIO stats
-	if(IsGPIOCapable())
-	{
-		//Load the GPIO pin state from the server
-		ReadGpioState();
-	}
+	ServerInterface::DoConnect(server, port, Hello::TRANSPORT_JTAG);
 
 	//Check if we support split scans
+	JtaghalPacket packet;
 	packet.mutable_splitrequest();
 	if(!SendMessage(m_socket, packet))
 	{
@@ -179,132 +86,24 @@ void NetworkedJtagInterface::Connect(const string& server, uint16_t port)
 		m_splitScanSupported = false;
 }
 
-/**
-	@brief Disconnects from the server
- */
-NetworkedJtagInterface::~NetworkedJtagInterface()
-{
-	try
-	{
-		if(m_socket.IsValid())
-		{
-			JtaghalPacket packet;
-			packet.mutable_disconnectrequest();
-			SendMessage(m_socket, packet);
-		}
-	}
-	catch(const JtagInterface& ex)
-	{
-		//Ignore errors in the write_looped call since we're disconnecting anyway
-	}
-}
-
-/**
-	@brief Returns the protocol version
- */
-string NetworkedJtagInterface::GetAPIVersion()
-{
-	return "1.0";
-}
-
-/**
-	@brief Returns the constant 1.
- */
-int NetworkedJtagInterface::GetInterfaceCount()
-{
-	return 1;
-}
-
 string NetworkedJtagInterface::GetName()
 {
-	//Send the infoRequest
-	JtaghalPacket packet;
-	auto r = packet.mutable_inforequest();
-	r->set_req(InfoRequest::HwName);
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send infoRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get infoReply",
-			"");
-	}
-	return packet.inforeply().str();
+	return ServerInterface::GetName();
 }
 
 string NetworkedJtagInterface::GetSerial()
 {
-	//Send the infoRequest
-	JtaghalPacket packet;
-	auto r = packet.mutable_inforequest();
-	r->set_req(InfoRequest::HwSerial);
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send infoRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get infoReply",
-			"");
-	}
-	return packet.inforeply().str();
+	return ServerInterface::GetSerial();
 }
 
 string NetworkedJtagInterface::GetUserID()
 {
-	//Send the infoRequest
-	JtaghalPacket packet;
-	auto r = packet.mutable_inforequest();
-	r->set_req(InfoRequest::Userid);
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send infoRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get infoReply",
-			"");
-	}
-	return packet.inforeply().str();
+	return ServerInterface::GetUserID();
 }
 
 int NetworkedJtagInterface::GetFrequency()
 {
-	//Send the infoRequest
-	JtaghalPacket packet;
-	auto r = packet.mutable_inforequest();
-	r->set_req(InfoRequest::Freq);
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send infoRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kInfoReply))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get infoReply",
-			"");
-	}
-	return packet.inforeply().num();
+	return ServerInterface::GetFrequency();
 }
 
 void NetworkedJtagInterface::ShiftData(bool last_tms, const unsigned char* send_data, unsigned char* rcv_data, size_t count)
@@ -653,92 +452,3 @@ size_t NetworkedJtagInterface::GetDummyClockCount()
 }
 
 //GetShiftTime is measured clientside so no need to override
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// GPIO stuff
-
-/**
-	@brief Checks whether the remote JTAG adapter provides GPIO capability.
-
-	@return True if GPIO capable.
- */
-bool NetworkedJtagInterface::IsGPIOCapable()
-{
-	//Send the gpioReadRequest
-	JtaghalPacket packet;
-	packet.mutable_gpioreadrequest();
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send gpioReadRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kBankState))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get bankState",
-			"");
-	}
-	auto state = packet.bankstate();
-	if(state.states_size() != 0)
-		return true;
-	else
-		return false;
-}
-
-void NetworkedJtagInterface::ReadGpioState()
-{
-	//Send the gpioReadRequest
-	JtaghalPacket packet;
-	packet.mutable_gpioreadrequest();
-	if(!SendMessage(m_socket, packet))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to send gpioReadRequest",
-			"");
-	}
-
-	//Get the reply
-	if(!RecvMessage(m_socket, packet, JtaghalPacket::kBankState))
-	{
-		throw JtagExceptionWrapper(
-			"Failed to get bankState",
-			"");
-	}
-	auto state = packet.bankstate();
-
-	//Enlarge our GPIO state buffer as needed
-	m_gpioDirection.resize(state.states_size());
-	m_gpioValue.resize(state.states_size());
-
-	//Crunch the incoming data
-	for(ssize_t i=0; i<state.states_size(); i++)
-	{
-		m_gpioValue[i] = state.states(i).value();
-		m_gpioDirection[i] = state.states(i).is_output();
-	}
-}
-
-void NetworkedJtagInterface::WriteGpioState()
-{
-	/*
-	uint8_t op = JTAGD_OP_WRITE_GPIO_STATE;
-	m_socket.SendLooped((unsigned char*)&op, 1);
-
-	int count = m_gpioDirection.size();
-	vector<uint8_t> pinstates;
-	for(int i=0; i<count; i++)
-	{
-		pinstates.push_back(
-			m_gpioValue[i] |
-			(m_gpioDirection[i] << 1)
-			);
-	}
-	m_socket.SendLooped((unsigned char*)&pinstates[0], count);
-	*/
-	throw JtagExceptionWrapper(
-		"Unimplemented",
-		"");
-}

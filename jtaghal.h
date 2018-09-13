@@ -106,12 +106,13 @@
 #include "SWDDevice.h"
 #include "SWDInterface.h"
 
-//JTAG adapter drivers
+//JTAG/SWD adapter drivers
 #include "DigilentJtagInterface.h"
 #include "FTDIDriver.h"
 #include "FTDIJtagInterface.h"
 #include "FTDISWDInterface.h"
 #include "GlasgowSWDInterface.h"
+#include "ServerInterface.h"
 #include "NetworkedJtagInterface.h"
 #include "PipeJtagInterface.h"
 //#include "NocJtagInterface.h"

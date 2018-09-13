@@ -26,80 +26,81 @@ set(JTAGHAL_SOURCES
 
 	JtagException.cpp
 
-    FirmwareImage.cpp
-    ByteArrayFirmwareImage.cpp
-    RawBinaryFirmwareImage.cpp
-    CPLDBitstream.cpp
-    FPGABitstream.cpp
+	FirmwareImage.cpp
+	ByteArrayFirmwareImage.cpp
+	RawBinaryFirmwareImage.cpp
+	CPLDBitstream.cpp
+	FPGABitstream.cpp
 
-    SerialNumberedDevice.cpp
-    LockableDevice.cpp
+	SerialNumberedDevice.cpp
+	LockableDevice.cpp
 
 	AttachedMemoryDevice.cpp
-    DebuggableDevice.cpp
-    ProgrammableDevice.cpp
-    ProgrammableLogicDevice.cpp
-    JtagDevice.cpp
-    CPLD.cpp
-    FPGA.cpp
-    JtagDummy.cpp
-    JtagFPGA.cpp
-    Microcontroller.cpp
-    TestableDevice.cpp
+	DebuggableDevice.cpp
+	ProgrammableDevice.cpp
+	ProgrammableLogicDevice.cpp
+	JtagDevice.cpp
+	CPLD.cpp
+	FPGA.cpp
+	JtagDummy.cpp
+	JtagFPGA.cpp
+	Microcontroller.cpp
+	TestableDevice.cpp
 
-    DebuggerInterface.cpp
-    GPIOInterface.cpp
-    JtagInterface.cpp
-    SWDInterface.cpp
-    TestInterface.cpp
-    DigilentJtagInterface.cpp
-    FTDIDriver.cpp
-    FTDIJtagInterface.cpp
-    FTDISWDInterface.cpp
-    GlasgowSWDInterface.cpp
-    NetworkedJtagInterface.cpp
-    PipeJtagInterface.cpp
+	DebuggerInterface.cpp
+	GPIOInterface.cpp
+	JtagInterface.cpp
+	SWDInterface.cpp
+	TestInterface.cpp
+	DigilentJtagInterface.cpp
+	FTDIDriver.cpp
+	FTDIJtagInterface.cpp
+	FTDISWDInterface.cpp
+	GlasgowSWDInterface.cpp
+	ServerInterface.cpp
+	NetworkedJtagInterface.cpp
+	PipeJtagInterface.cpp
 
-    ARMAPBDevice.cpp
-    ARMCoreSightDevice.cpp
-    ARMFlashPatchBreakpoint.cpp
-    ARMv7Processor.cpp
-    ARMv7MProcessor.cpp
-    ARMv8Processor.cpp
-    ARMCortexA57.cpp
-    ARMCortexA9.cpp
-    ARMCortexM4.cpp
-    ARM7TDMISProcessor.cpp
-    ARMDebugAccessPort.cpp
-    ARMDebugMemAccessPort.cpp
+	ARMAPBDevice.cpp
+	ARMCoreSightDevice.cpp
+	ARMFlashPatchBreakpoint.cpp
+	ARMv7Processor.cpp
+	ARMv7MProcessor.cpp
+	ARMv8Processor.cpp
+	ARMCortexA57.cpp
+	ARMCortexA9.cpp
+	ARMCortexM4.cpp
+	ARM7TDMISProcessor.cpp
+	ARMDebugAccessPort.cpp
+	ARMDebugMemAccessPort.cpp
 	ARMDebugPort.cpp
-    ARMJtagDebugPort.cpp
-    ARMDevice.cpp
+	ARMJtagDebugPort.cpp
+	ARMDevice.cpp
 
-    FreescaleDevice.cpp
-    FreescaleMicrocontroller.cpp
-    FreescaleIMXDevice.cpp
-    FreescaleIMXSmartDMA.cpp
+	FreescaleDevice.cpp
+	FreescaleMicrocontroller.cpp
+	FreescaleIMXDevice.cpp
+	FreescaleIMXSmartDMA.cpp
 
-    MicrochipDevice.cpp
-    MicrochipMicrocontroller.cpp
-    MicrochipPIC32Device.cpp
+	MicrochipDevice.cpp
+	MicrochipMicrocontroller.cpp
+	MicrochipPIC32Device.cpp
 
-    STMicroDevice.cpp
-    STMicroMicrocontroller.cpp
-    STM32Device.cpp
+	STMicroDevice.cpp
+	STMicroMicrocontroller.cpp
+	STM32Device.cpp
 
-    XilinxDevice.cpp
-    XilinxCPLD.cpp
-    XilinxCoolRunnerIIDevice.cpp
-    XilinxFPGA.cpp
-    Xilinx7SeriesDevice.cpp
-    XilinxUltrascaleDevice.cpp
-    XilinxSpartan3ADevice.cpp
-    XilinxSpartan6Device.cpp
-    XilinxFPGABitstream.cpp
-    Xilinx3DFPGABitstream.cpp
-    XilinxCPLDBitstream.cpp
+	XilinxDevice.cpp
+	XilinxCPLD.cpp
+	XilinxCoolRunnerIIDevice.cpp
+	XilinxFPGA.cpp
+	Xilinx7SeriesDevice.cpp
+	XilinxUltrascaleDevice.cpp
+	XilinxSpartan3ADevice.cpp
+	XilinxSpartan6Device.cpp
+	XilinxFPGABitstream.cpp
+	Xilinx3DFPGABitstream.cpp
+	XilinxCPLDBitstream.cpp
 	)
 
 add_library(jtaghal SHARED
