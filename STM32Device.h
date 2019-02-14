@@ -161,6 +161,8 @@ protected:
 	uint32_t m_flashSfrBase;
 	uint32_t m_flashMemoryBase;
 	uint32_t m_sramMemoryBase;
+	uint32_t m_uniqueIDBase;
+	uint32_t m_flashSizeBase;
 
 	bool m_locksProbed;
 	int m_protectionLevel;

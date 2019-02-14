@@ -54,22 +54,28 @@ STM32Device::STM32Device(
 			"");
 	}
 
-	//Look up RAM size (TODO can we get this from descriptors somehow?)
+	//Look up RAM size (TODO can we get this from descriptors somehow? common within a family?)
 	switch(m_deviceID)
 	{
 		case STM32F411E:
-			m_ramKB = 128;
+			m_ramKB 			= 128;
+			m_flashSfrBase		= 0x40023C00;
+			m_uniqueIDBase		= 0x1fff7a10;
+			m_flashSizeBase		= 0x1fff7a20;
+			break;
+
+		case STM32F777:
+			m_ramKB				= 512;
+			m_flashSfrBase		= 0x40023C00;
+			m_uniqueIDBase		= 0x1ff0F420;
+			m_flashSizeBase		= 0x1ff0F440;
 			break;
 
 		default:
 			m_ramKB = 0;
 	}
 
-	//uint32_t id = m_dap->ReadMemory(0xe0042000);
-	//LogDebug("id = %08x\n", id);
-
 	//TODO: How portable are these addresses?
-	m_flashSfrBase		= 0x40023C00;
 	m_flashMemoryBase	= 0x08000000;
 	m_sramMemoryBase	= 0x20000000;
 
@@ -115,7 +121,7 @@ void STM32Device::PostInitProbes(bool quiet)
 	{
 		try
 		{
-			m_flashKB = m_dap->ReadMemory(0x1fff7a20) >> 16;	//F_ID, flash size in kbytes
+			m_flashKB = m_dap->ReadMemory(m_flashSizeBase) >> 16;	//F_ID, flash size in kbytes
 		}
 		catch(const JtagException& e)
 		{
@@ -135,9 +141,9 @@ void STM32Device::PostInitProbes(bool quiet)
 		try
 		{
 			uint32_t serial[3];
-			serial[0] = m_dap->ReadMemory(0x1fff7a10);
-			serial[1] = m_dap->ReadMemory(0x1fff7a14);
-			serial[2] = m_dap->ReadMemory(0x1fff7a18);
+			serial[0] = m_dap->ReadMemory(m_uniqueIDBase);
+			serial[1] = m_dap->ReadMemory(m_uniqueIDBase+4);
+			serial[2] = m_dap->ReadMemory(m_uniqueIDBase+8);
 			m_waferX = serial[0] >> 16;
 			m_waferY = serial[0] & 0xffff;
 			m_waferNum = serial[1] & 0xff;
@@ -231,6 +237,10 @@ string STM32Device::GetDescription()
 	{
 		case STM32F411E:
 			name = "STM32F411E";
+			break;
+
+		case STM32F777:
+			name = "STM32F777";
 			break;
 	}
 

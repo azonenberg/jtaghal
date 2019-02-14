@@ -75,19 +75,17 @@ void ARMJtagDebugPort::PostInitProbes(bool /*quiet*/)
 		if(idr.word == 0)
 			break;
 
-		/*
-		LogDebug("Found AP with ID 0x%08x\n", idr.word);
+		LogTrace("Found AP with ID 0x%08x\n", idr.word);
 		{
 			LogIndenter li;
-			LogDebug("Type:         %x\n", idr.bits.type);
-			LogDebug("Variant:      %x\n", idr.bits.variant);
-			LogDebug("Reserved:     %x\n", idr.bits.reserved_zero);
-			LogDebug("Is mem AP:    %x\n", idr.bits.is_mem_ap);
-			LogDebug("Identity:     %x\n", idr.bits.identity);
-			LogDebug("Continuation: %x\n", idr.bits.continuation);
-			LogDebug("Revision:     %x\n", idr.bits.revision);
+			LogTrace("Type:         %x\n", idr.bits.type);
+			LogTrace("Variant:      %x\n", idr.bits.variant);
+			LogTrace("Reserved:     %x\n", idr.bits.reserved_zero);
+			LogTrace("Is mem AP:    %x\n", idr.bits.is_mem_ap);
+			LogTrace("Identity:     %x\n", idr.bits.identity);
+			LogTrace("Continuation: %x\n", idr.bits.continuation);
+			LogTrace("Revision:     %x\n", idr.bits.revision);
 		}
-		*/
 
 		//Sanity check that it's a valid ARM DAP
 		if( (idr.bits.continuation != 0x4) || (idr.bits.identity != 0x3b) )

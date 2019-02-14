@@ -166,6 +166,7 @@ void ARMDebugMemAccessPort::FindRootRomTable()
 {
 	//Get the base address of the debug base
 	uint32_t debug_base = m_dp->APRegisterRead(m_apnum, ARMDebugPort::REG_MEM_BASE);
+	LogTrace("DEBUG_BASE is 0x%08x\n", debug_base);
 
 	//If the debug base is 0xffffffff, then we can't do anything (no ROM)
 	if(debug_base == 0xffffffff)

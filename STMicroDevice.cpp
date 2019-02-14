@@ -97,8 +97,11 @@ JtagDevice* STMicroDevice::CreateDevice(unsigned int idcode, JtagInterface* ifac
 	{
 		case STM32F411E:
 			return STM32Device::CreateDevice(devicetype, rev, idcode_raw, iface, pos);
+		case STM32F777:
+			return STM32Device::CreateDevice(devicetype, rev, idcode_raw, iface, pos);
 
 		default:
+			LogDebug("devicetype = %x\n", devicetype);
 			throw JtagExceptionWrapper(
 			"Unknown STMicro part - probably not yet supported",
 			"");
