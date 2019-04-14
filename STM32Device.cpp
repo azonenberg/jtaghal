@@ -57,6 +57,13 @@ STM32Device::STM32Device(
 	//Look up RAM size (TODO can we get this from descriptors somehow? common within a family?)
 	switch(m_deviceID)
 	{
+		case STM32F103:
+			m_ramKB				= 96;
+			m_flashSfrBase		= 0x40022000;
+			m_uniqueIDBase		= 0x1ffff7e8;
+			m_flashSizeBase		= 0x1ffff7e0;
+			break;
+		
 		case STM32F411E:
 			m_ramKB 			= 128;
 			m_flashSfrBase		= 0x40023C00;
@@ -235,6 +242,10 @@ string STM32Device::GetDescription()
 	string name = "(unknown STM32";
 	switch(m_devicetype)
 	{
+		case STM32F103:
+			name = "STM32F103";
+			break;
+		
 		case STM32F411E:
 			name = "STM32F411E";
 			break;

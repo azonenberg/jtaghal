@@ -522,19 +522,37 @@ void ARMJtagDebugPort::APRegisterWrite(uint8_t ap, ApReg addr, uint32_t wdata)
 		PokeBit(txd, i, PeekBit(&addr_flags, i));
 	for(int i=0; i<32; i++)
 		PokeBit(txd, i+3, PeekBit(wdata_p, i));
-
-	//Get the data back and extract the reply
+		
+	int i = 0;
+	int nmax = 50;
 	unsigned char rxd[5];
-	ScanDR(txd, rxd, 35);
 	uint8_t ack_out = 0;
-	for(int i=0; i<3; i++)
-		PokeBit(&ack_out, i, PeekBit(rxd, i));
-
-	//If the original ACK-out was a "wait", we have to do something
-	if(ack_out == WAIT)
+	for(; i<nmax; i++)
 	{
+		//Get the data back and extract the reply
+		ScanDR(txd, rxd, 35);
+		for(int i=0; i<3; i++)
+			PokeBit(&ack_out, i, PeekBit(rxd, i));
+
+		//If the original ACK-out was a "wait", we have to do something
+		if(ack_out != WAIT)
+			break;
+			
+		//No go? Try again after a millisecond
+		if(i == 1)
+			LogTrace("No go, trying again after 1 ms\n");
+		if(i >= 1)
+			usleep(1 * 1000);
+	}
+	if(i > 1)
+		LogTrace("Poll ended after %d ms\n", i);
+
+	//Give up if we still got nothing
+	if(i == nmax)
+	{
+		DebugAbort();
 		throw JtagExceptionWrapper(
-			"Don't know what to do with WAIT request from DAP",
+			"Failed to write AP register (still waiting after way too long)",
 			"");
 	}
 
@@ -632,32 +650,52 @@ uint32_t ARMJtagDebugPort::DPRegisterRead(DpReg addr)
 void ARMJtagDebugPort::DPRegisterWrite(DpReg addr, uint32_t wdata)
 {
 	SetIR(INST_DPACC);
-
-	//Send the 3-bit A / RnW field to request the write
-	uint8_t addr_flags = (addr << 1) | OP_WRITE;
-	uint8_t txd[5] = {0};
-	uint8_t* wdata_p = (uint8_t*)&wdata;
-	for(int i=0; i<3; i++)
-		PokeBit(txd, i, PeekBit(&addr_flags, i));
-	for(int i=0; i<32; i++)
-		PokeBit(txd, i+3, PeekBit(wdata_p, i));
-	unsigned char rxd[5];
-	ScanDR(txd, rxd, 35);
-
-	//Send a read request to get the response code
-	addr_flags = (addr << 1) | OP_READ;
-	for(int i=0; i<3; i++)
-		PokeBit(txd, i, PeekBit(&addr_flags, i));
-	for(int i=0; i<32; i++)
-		PokeBit(txd, i+3, 0);
-	ScanDR(txd, rxd, 35);
-	uint8_t ack_out = 0;
-	for(int i=0; i<3; i++)
-		PokeBit(&ack_out, i, PeekBit(rxd, i));
-	if(ack_out != OK_OR_FAULT)
+	
+	int i = 0;
+	int nmax = 50;
+	for(; i<nmax; i++)
 	{
+		//Send the 3-bit A / RnW field to request the write
+		uint8_t addr_flags = (addr << 1) | OP_WRITE;
+		uint8_t txd[5] = {0};
+		uint8_t* wdata_p = (uint8_t*)&wdata;
+		for(int i=0; i<3; i++)
+			PokeBit(txd, i, PeekBit(&addr_flags, i));
+		for(int i=0; i<32; i++)
+			PokeBit(txd, i+3, PeekBit(wdata_p, i));
+		unsigned char rxd[5];
+		ScanDR(txd, rxd, 35);
+
+		//Send a read request to get the response code
+		addr_flags = (addr << 1) | OP_READ;
+		for(int i=0; i<3; i++)
+			PokeBit(txd, i, PeekBit(&addr_flags, i));
+		for(int i=0; i<32; i++)
+			PokeBit(txd, i+3, 0);
+		ScanDR(txd, rxd, 35);
+		uint8_t ack_out = 0;
+		for(int i=0; i<3; i++)
+			PokeBit(&ack_out, i, PeekBit(rxd, i));
+
+		//If the original ACK-out was a "wait", we have to do something
+		if(ack_out != WAIT)
+			break;
+			
+		//No go? Try again after a millisecond
+		if(i == 1)
+			LogTrace("No go, trying again after 1 ms\n");
+		if(i >= 1)
+			usleep(1 * 1000);
+	}
+	if(i > 1)
+		LogTrace("Poll ended after %d ms\n", i);
+
+	//Give up if we still got nothing
+	if(i == nmax)
+	{
+		DebugAbort();
 		throw JtagExceptionWrapper(
-			"Don't know what to do with WAIT request from DAP",
+			"Failed to write DP register (still waiting after way too long)",
 			"");
 	}
 }
