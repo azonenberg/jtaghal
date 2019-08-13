@@ -170,7 +170,8 @@ void ARMv7MProcessor::PrintRegisters()
 
 void ARMv7MProcessor::Reset()
 {
-
+	//Write AIRCR with a reboot request
+	WriteMemory(0xe000ed0c, 0x05fa0004);
 }
 
 void ARMv7MProcessor::AddFlashPatchUnit(ARMFlashPatchBreakpoint* fpb)
