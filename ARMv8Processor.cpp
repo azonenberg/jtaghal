@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2019 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -140,6 +140,13 @@ void ARMv8Processor::PrintIDRegister(ARMv8DebugIDRegister did)
 
 void ARMv8Processor::PrintRegisters()
 {
+}
+
+void ARMv8Processor::Reset()
+{
+	throw JtagExceptionWrapper(
+		"Soft reset not implemented for this CPU yet",
+		"");
 }
 
 /**

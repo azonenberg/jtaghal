@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2019 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -63,7 +63,7 @@ STM32Device::STM32Device(
 			m_uniqueIDBase		= 0x1ffff7e8;
 			m_flashSizeBase		= 0x1ffff7e0;
 			break;
-		
+
 		case STM32F411E:
 			m_ramKB 			= 128;
 			m_flashSfrBase		= 0x40023C00;
@@ -245,7 +245,7 @@ string STM32Device::GetDescription()
 		case STM32F103:
 			name = "STM32F103";
 			break;
-		
+
 		case STM32F411E:
 			name = "STM32F411E";
 			break;
@@ -630,14 +630,6 @@ void STM32Device::Erase()
 {
 	LogTrace("Erasing...\n");
 
-	//TODO: What other STM32 devices is this valid for?
-	if(m_devicetype != STM32F411E)
-	{
-		throw JtagExceptionWrapper(
-			"STM32Device::Erase() not tested for any parts other than STM32F411E",
-			"");
-	}
-
 	//Look up FLASH_OPTCR
 	uint32_t optcr = m_dap->ReadMemory(m_flashSfrBase + FLASH_OPTCR);
 	LogTrace("FLASH_OPTCR = %08x\n", optcr);
@@ -696,6 +688,14 @@ bool STM32Device::BlankCheck()
 	}
 
 	return blank;
+}
+
+/**
+	@brief Performs a soft reset of the CPU
+ */
+void STM32Device::Reset()
+{
+	GetCPU()->Reset();
 }
 
 /**

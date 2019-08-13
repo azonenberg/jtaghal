@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2018 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2019 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -119,6 +119,13 @@ JtagDevice* FreescaleIMXDevice::CreateDevice(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // General device info
+
+void FreescaleIMXDevice::Reset()
+{
+	throw JtagExceptionWrapper(
+		"Soft reset not implemented for this CPU yet",
+		"");
+}
 
 string FreescaleIMXDevice::GetDescription()
 {
