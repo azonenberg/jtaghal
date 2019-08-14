@@ -647,13 +647,7 @@ void STM32Device::Erase()
 	//Wait for it to finish the erase operation
 	PollUntilFlashNotBusy();
 
-	//Make sure we really erased it
-	if(!BlankCheck())
-	{
-		throw JtagExceptionWrapper(
-			"STM32Device::Erase() failed somehow. We did everything we could to erase but it's not blank!",
-			"");
-	}
+	//Don't blank check by default
 }
 
 bool STM32Device::BlankCheck()
@@ -707,7 +701,14 @@ FirmwareImage* STM32Device::LoadFirmwareImage(const unsigned char* data, size_t 
 {
 	ByteArrayFirmwareImage* img = new ByteArrayFirmwareImage;
 	img->raw_bitstream_len = len;
-	img->raw_bitstream = new uint8_t[len];
+
+	//Round length up to nearest full word
+	size_t roundlen = len;
+	if(len & 0x3)
+		roundlen = len - (len & 3) + 4;
+	img->raw_bitstream = new uint8_t[roundlen];
+	memset(img->raw_bitstream, 0, roundlen);
+
 	memcpy(img->raw_bitstream, data, len);
 	return img;
 }
@@ -715,19 +716,30 @@ FirmwareImage* STM32Device::LoadFirmwareImage(const unsigned char* data, size_t 
 /**
 	@brief Programs a firmware image to the device
 
-	For now, assume we are blank when we start.
-
 	For now. assume the image is a flat binary to be burned to flash.
  */
 void STM32Device::Program(FirmwareImage* image)
 {
-	//TODO: use specialized firmware format for MCU firmware
+	//TODO: take ELF images directly?
 	auto bimage = dynamic_cast<ByteArrayFirmwareImage*>(image);
 	if(!bimage)
 	{
 		throw JtagExceptionWrapper(
 			"STM32Device::Program() needs a byte array firmware image",
 			"");
+	}
+
+	//Halt the CPU
+	GetCPU()->DebugHalt();
+
+	//Check if the beginning of the vector table is blank.
+	//If not blank, trigger a bulk erase
+	//This is a quick check for normally-programmed chips.
+	//If the vector table is blank but there's data later in memory, a user-initiated bulk erase is required.
+	if(m_dap->ReadMemory(m_flashMemoryBase) != 0xffffffff)
+	{
+		LogDebug("Flash is not blank, erasing...\n");
+		Erase();
 	}
 
 	//Unlock flash and make sure it's ready
@@ -766,4 +778,7 @@ void STM32Device::Program(FirmwareImage* image)
 		//Clear PG bit to exit programming mode
 		m_dap->WriteMemory(m_flashSfrBase + FLASH_CR, oldcr);
 	}
+
+	//AUtomatically reset at the end
+	Reset();
 }
