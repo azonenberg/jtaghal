@@ -730,7 +730,8 @@ void STM32Device::Program(FirmwareImage* image)
 	}
 
 	//Halt the CPU
-	GetCPU()->DebugHalt();
+	auto cpu = GetCPU();
+	cpu->DebugHalt();
 
 	//Check if the beginning of the vector table is blank.
 	//If not blank, trigger a bulk erase
@@ -779,6 +780,7 @@ void STM32Device::Program(FirmwareImage* image)
 		m_dap->WriteMemory(m_flashSfrBase + FLASH_CR, oldcr);
 	}
 
-	//AUtomatically reset at the end
-	Reset();
+	//Automatically reset/resume at the end
+	cpu->Reset();
+	cpu->DebugResume();
 }
