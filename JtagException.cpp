@@ -83,47 +83,32 @@ JtagException::JtagException(
 string JtagException::GetDescription() const
 {
 	//Parse the pathname at slashes
-	vector<string> path_segments;
-	string seg;
-	for(size_t i=0; i<m_file.length(); i++)
+	int j = 0;
+	size_t i = m_file.length() - 1;
+	// size_t may be unsigned, so we don't use a for(), and instead check i before we decrement it
+	while (1)
 	{
 		//Separator
 		if(m_file[i] == '/' || m_file[i] == '\\')
-		{
-			if(!seg.empty())
-			{
-				path_segments.push_back(seg);
-				seg = "";
-			}
-			continue;
-		}
-
-		//Character
-		seg += m_file[i];
+			j++;
+		if (i == 0 || j == 3)
+			break;
+		i--;
 	}
-	if(!seg.empty())
-		path_segments.push_back(seg);
-
-	//Generate the short file name
-	string shortfile;
-	for(size_t i=0; i<path_segments.size() && i<3; i++)
-		shortfile = path_segments[path_segments.size() - i - 1] + string("/") + shortfile;
-	if(path_segments.size() > 3)
-		shortfile = ".../" + shortfile;
-	//TODO: add earlier part of path?
 
 	char temp_buf[2048];
 	snprintf(
 		temp_buf,
 		sizeof(temp_buf)-1,
 		"JtagException object thrown from %s\n"
-		"    File        : %s\n"
+		"    File        : %s%s\n"
 		"    Line        : %d\n"
 		"    Library err : %s\n"
 		"    System err  : %s\n"
 		"    Message     : %s\n",
 			m_prettyfunction.c_str(),
-			shortfile.c_str(),
+			(i > 0) ? "..." : "",
+			m_file.c_str() + i,
 			m_line,
 			m_lib_error.c_str(),
 			m_system_error.c_str(),
