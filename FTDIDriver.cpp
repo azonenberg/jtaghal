@@ -72,9 +72,14 @@ FTDIDriver::FTDIDriver(const string& serial, const string& layout)
 		FT_OPEN_BY_SERIAL_NUMBER,
 		&m_context)))
 	{
-		throw JtagExceptionWrapper(
-			"FT_OpenEx() failed",
-			"");
+		if(FT_OK != (err = FT_Open(
+			std::stoi(serial.c_str()),
+			&m_context)))
+		{
+			throw JtagExceptionWrapper(
+				"FT_OpenEx() && FT_OPen() both failed",
+				"");
+		}
 	}
 
 	//Get some info
