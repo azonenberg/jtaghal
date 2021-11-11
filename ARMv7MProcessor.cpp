@@ -191,9 +191,8 @@ void ARMv7MProcessor::DebugHalt()
 	LogIndenter li;
 
 	//Set C_DEBUGEN and C_HALT on consecutive writes.
-	//When we halt, also mask interrupts
 	WriteRegisterByIndex(DHCSR, 0xa05f0001);
-	WriteRegisterByIndex(DHCSR, 0xa05f000b);
+	WriteRegisterByIndex(DHCSR, 0xa05f0003);
 
 	//Poll DHCSR.S_HALT until the CPU stops
 	while(true)

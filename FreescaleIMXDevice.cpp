@@ -66,6 +66,10 @@ FreescaleIMXDevice::FreescaleIMXDevice(
 		m_devid = IMX_6_DUAL_LITE;
 		break;
 
+	case IMX_6_QUAD:
+		m_devid = IMX_6_QUAD;
+		break;
+
 	default:
 		throw JtagExceptionWrapper(
 			"Invalid i.mx IDCODE",
@@ -132,6 +136,10 @@ string FreescaleIMXDevice::GetDescription()
 	const char* desc = "";
 	switch(m_devid)
 	{
+		case IMX_6_QUAD:
+			desc = "Quad";
+			break;
+
 		case IMX_6_DUAL_LITE:
 			desc = "Dual Lite";
 			break;

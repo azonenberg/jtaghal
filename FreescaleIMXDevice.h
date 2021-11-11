@@ -45,7 +45,8 @@ class FreescaleIMXSmartDMA;
 enum ImxDeviceIDs
 {
 	IMX_6_SOLO		= 0x891B,
-	IMX_6_DUAL_LITE	= 0x891A
+	IMX_6_DUAL_LITE	= 0x891A,
+	IMX_6_QUAD		= 0x191C
 };
 
 /**
