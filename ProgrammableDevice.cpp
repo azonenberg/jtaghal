@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
-* Copyright (c) 2012-2016 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2023 Andrew D. Zonenberg                                                                          *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -55,7 +55,7 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname)
 	fseek(fp, 0, SEEK_END);
 	size_t len = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	unsigned char* image = new unsigned char[len];
+	unsigned char* image = new unsigned char[len+1];
 	if(len != fread(image, 1, len, fp))
 	{
 		fclose(fp);
@@ -66,6 +66,9 @@ FirmwareImage* ProgrammableDevice::LoadFirmwareImage(string fname)
 			"");
 	}
 	fclose(fp);
+
+	//CPLD bitstream parsers want null terminated bitstreams
+	image[len] = 0;
 
 	//Parse it
 	try
