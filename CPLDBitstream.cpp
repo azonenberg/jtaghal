@@ -59,7 +59,7 @@ CPLDBitstream::~CPLDBitstream()
 {
 	if(fuse_data)
 	{
-		delete fuse_data;
+		delete[] fuse_data;
 		fuse_data = NULL;
 	}
 }
